@@ -48,6 +48,7 @@ def _episode_body(row: dict) -> dict:
         "agent_run_id": row["agent_run_id"],
         "department_id": row["department_id"],
         "kernel_request_id": row["kernel_request_id"],
+        "scope_id": row["scope_id"],          # the site: memory can answer "what happened at Airport" (scoped-applications.md §4.6)
     }
     return {
         "kind": "activity",
@@ -70,7 +71,7 @@ async def main() -> int:
     con = await asyncpg.connect(
         host=ENV.get("DB_HOST", "127.0.0.1"),
         port=int(ENV.get("DB_PORT", "5432")),
-        database=ENV.get("DB_NAME", "subello_txtschedules"),
+        database=ENV.get("DB_NAME", "txtschedules"),
         user=ENV.get("DB_USER", "txtschedules_rw"),
         password=ENV.get("DB_PASSWORD", ""),
     )
@@ -85,7 +86,7 @@ async def main() -> int:
         rows = await con.fetch(
             """SELECT id, occurred_at, actor_member_id, source, action, screen, route,
                       entity_type, entity_id, before, after, request_id, session_id,
-                      agent_run_id, department_id, kernel_request_id
+                      agent_run_id, department_id, kernel_request_id, scope_id
                  FROM activity_log WHERE id > $1 ORDER BY id LIMIT $2""",
             last_id, BATCH_LIMIT,
         )

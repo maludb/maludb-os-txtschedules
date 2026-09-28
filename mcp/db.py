@@ -12,6 +12,7 @@ import datetime
 import decimal
 import hashlib
 import hmac
+import os
 import time
 from pathlib import Path
 
@@ -32,6 +33,11 @@ request_run_id: contextvars.ContextVar[int | None] = contextvars.ContextVar("run
 request_token: contextvars.ContextVar[str] = contextvars.ContextVar("token", default="")
 
 
+_ENV_KEYS = ("DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "MCP_RECORDS_DB_USER", "MCP_RECORDS_DB_PASSWORD",
+             "MCP_ACTIVITY_DB_USER", "MCP_ACTIVITY_DB_PASSWORD", "ACTION_TOKEN_KEY", "ACTIONS_RELAY_KEY", "APP_KEY",
+             "OS_INTERNAL_URL", "OS_APPLICATION_TOKEN", "MALUDB_API_URL", "MALUDB_API_TOKEN")
+
+
 def load_env() -> dict[str, str]:
     env: dict[str, str] = {}
     if ENV_PATH.exists():
@@ -44,6 +50,10 @@ def load_env() -> dict[str, str]:
             if len(v) >= 2 and v[0] in "\"'" and v[-1] == v[0]:
                 v = v[1:-1]
             env[k.strip()] = v
+    # A real environment variable wins over the file (as in app/bootstrap.php) — how the proofs run without a config/.env.
+    for k in _ENV_KEYS:
+        if os.environ.get(k):
+            env[k] = os.environ[k]
     return env
 
 
@@ -76,7 +86,7 @@ async def make_pool(user: str, password: str) -> asyncpg.Pool:
     return await asyncpg.create_pool(
         host=ENV.get("DB_HOST", "127.0.0.1"),
         port=int(ENV.get("DB_PORT", "5432")),
-        database=ENV.get("DB_NAME", "hr"),
+        database=ENV.get("DB_NAME", "txtschedules"),
         user=user,
         password=password,
         min_size=1,
