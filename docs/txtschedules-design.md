@@ -230,7 +230,7 @@ behind it); shifts are at most 16 hours; the minor flag carries an end date, nev
 
 The installer's `plan` runs at the end of **every** phase (the lesson of 2026-09-28's ZozoCal install). Size, by
 Projects' measure (seven slices, 48 actions, 23 tools in a day and a half on the exemplar and workers): similar —
-thirteen migrations, seven slices, ~45 actions, ~24 tools.
+fourteen migrations, seven slices, ~45 actions, ~24 tools.
 
 ## 11. Ports, names and files
 
@@ -266,9 +266,16 @@ The owner's nine decisions are §9 (D1–D9). The four questions Phase 0 left op
 
 ## 13. State
 
+**Phase 1 schema additions (db/014, 2026-09-28)**, found in the tool-surface review as Projects' Phase 1 found its own:
+`mcp_hours_weekly` (a person's scheduled paid hours per site and week against their limit and the overtime threshold),
+`ts_coverage_candidates(shift)` (main-restaurant staff, free, no hard rule broken, fewest hours first, asked by
+`coverage.fill`/`schedule.build` at the site), and a **leak closed in db/013**: a staff member could read a *draft*
+shift assigned to them through `mcp_shifts` — a draft is the managers' until it is published. The proof is now **86
+checks**, all passing (ten new: the draft rule, hours, coverage candidates and who may ask).
+
 **Phase 0 answers applied 2026-09-28 (db edited in place — nothing was deployed — and re-proven).** The database
 `subello_txtschedules` was dropped and recreated as postgres and db/001–013 applied clean again (no warnings). The proof
-(`db/proof/phase0_proof.sql`) now has **76 checks**, all passing — the 57 of Phase 0 plus 19 for the answers: a default
+(`db/proof/phase0_proof.sql`) had **76 checks** after the answers (86 with db/014), all passing — the 57 of Phase 0 plus 19 for the answers: a default
 used when the person has no rate of their own; an own rate winning over the default; Sam's shift priced at the default
 (70.00) and Priya's at her own (82.50); the week's labor 14.5 h and 152.50 against a budget; raising the default raising
 the effective rate of everyone without a rate of their own and no one else's (Sam's shift 100.00, Priya's unchanged); a

@@ -191,7 +191,7 @@ SELECT s.id AS shift_id, s.scope_id AS site_id, s.week_id, s.position_id, p.name
   JOIN positions p ON p.id = s.position_id
   LEFT JOIN members m ON m.id = s.assignee_member_id
   LEFT JOIN staff_positions sp ON sp.member_id = s.assignee_member_id AND sp.position_id = s.position_id
- WHERE s.assignee_member_id = app_current_member_id()
+ WHERE (s.assignee_member_id = app_current_member_id() AND s.published_at IS NOT NULL)      -- a draft is the managers' until it is published (FR-B4)
     OR (s.scope_id IN (SELECT ts_scopes_with_right('schedule.view_own')) AND s.published_at IS NOT NULL)
     OR s.scope_id IN (SELECT ts_scopes_with_right('schedule.build'));
 

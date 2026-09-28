@@ -153,6 +153,33 @@ INSERT INTO notification_prefs (member_id) VALUES (26);
 SELECT pg_temp.check((SELECT by_email AND by_sms FROM notification_prefs WHERE member_id = 26), 'notification preferences start with email AND text on (reminders go by both)');
 RESET ROLE;
 
+-- ---------------------------------------------------------------- 2c. Phase 1 additions (db/014) and the draft rule
+SET ROLE txtschedules_rw;
+INSERT INTO schedule_weeks (scope_id, week_start) SELECT 102, d + 14 FROM fx;
+INSERT INTO shifts (scope_id, week_id, position_id, starts_at, ends_at, assignee_member_id)
+SELECT 102, w.id, p.id, (fx.d + 14 + time '17:00') AT TIME ZONE 'America/Chicago', (fx.d + 14 + time '22:00') AT TIME ZONE 'America/Chicago', 26
+  FROM fx, schedule_weeks w, positions p WHERE w.scope_id = 102 AND w.week_start = fx.d + 14 AND p.scope_id = 102 AND p.name = 'Server';
+RESET ROLE;
+SET ROLE txtschedules_records_ro;
+SELECT set_config('app.member_id', '26', true);
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_shifts WHERE published_at IS NULL), 'Priya cannot read a DRAFT shift assigned to her (a draft is the managers'' until published)');
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_hours_weekly WHERE week_start = (SELECT d + 14 FROM fx)), 'and her hours do not count the draft week for her');
+SELECT pg_temp.check((SELECT scheduled_hours FROM mcp_hours_weekly WHERE member_id = 26 AND week_start = (SELECT d FROM fx)) = 5.50, 'Priya''s week: 5.5 paid hours (her one published shift)');
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_hours_weekly WHERE member_id = 28), 'Priya sees no one else''s hours');
+SELECT set_config('app.member_id', '1', true);
+SELECT pg_temp.check((SELECT scheduled_hours FROM mcp_hours_weekly WHERE member_id = 26 AND week_start = (SELECT d + 14 FROM fx)) = 5.00, 'the owner (schedule.build) sees the draft week''s 5 h plan');
+SELECT pg_temp.check((SELECT NOT over_overtime AND NOT near_overtime AND max_hours_week IS NULL FROM mcp_hours_weekly WHERE member_id = 28 AND week_start = (SELECT d FROM fx)), 'Sam: 5 of 40 hours — not near overtime');
+-- coverage candidates for the open Airport shift (11:00-15:00 the day after next): eligible = Airport-main staff, free, no hard rule
+SELECT pg_temp.check((SELECT array_agg(member_id ORDER BY member_id) FROM ts_coverage_candidates((SELECT open1 FROM sh))) = ARRAY[26::bigint, 28, 29],
+                     'coverage candidates: Priya, Sam and the minor — main restaurant Airport, free; not Marco (main Downtown), not the holder');
+SELECT pg_temp.check((SELECT hours_this_week FROM ts_coverage_candidates((SELECT open1 FROM sh)) WHERE member_id = 28) = 5.00
+                     AND (SELECT min(hours_this_week) FROM ts_coverage_candidates((SELECT open1 FROM sh))) = 0, 'each with the hours already that week; fewest first');
+SELECT set_config('app.member_id', '26', true);
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM ts_coverage_candidates((SELECT open1 FROM sh))), 'staff without coverage.fill get no candidates');
+SELECT set_config('app.member_id', '27', true);
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM ts_coverage_candidates((SELECT open1 FROM sh))), 'nor does a manager of another restaurant (Marco is only staff at Airport)');
+RESET ROLE;
+
 -- ---------------------------------------------------------------- 3. integrity: overlap, published is kept
 SET ROLE txtschedules_rw;
 SELECT pg_temp.refused($q$INSERT INTO shifts (scope_id, week_id, position_id, starts_at, ends_at, assignee_member_id)
