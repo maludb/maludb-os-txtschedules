@@ -2,11 +2,11 @@
   "schema": "maludb-os.application/1",
   "catalog_key": "txtschedules",
   "name": "txtSchedules",
-  "description": "Restaurant staff scheduling \u2014 each restaurant's week built and published by its managers; staff see their shifts on their phones and offer, pick up, swap and give shifts within the restaurant's trade settings; time off with balances; labor against a budget and a covers forecast.",
+  "description": "Restaurant staff scheduling — each restaurant's week built and published by its managers; staff see their shifts on their phones and offer, pick up, swap and give shifts within the restaurant's trade settings; time off with balances; labor against a budget and a covers forecast.",
   "business_area": "Operations",
   "category": "calendar",
   "icon": "feather-calendar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "criticality": "high",
   "vhost": {
     "label": "txtschedules",
@@ -35,8 +35,6 @@
       "MCP_RECORDS_DB_PASSWORD",
       "MCP_ACTIVITY_DB_USER",
       "MCP_ACTIVITY_DB_PASSWORD",
-      "MCP_RECORDS_PORT",
-      "MCP_ACTIVITY_PORT",
       "APP_INTERNAL_PORT",
       "ACTION_TOKEN_KEY",
       "ACTIONS_RELAY_KEY",
@@ -55,34 +53,12 @@
     ]
   },
   "services": [
-    "deploy/txtschedules-records-mcp.service",
-    "deploy/txtschedules-activity-mcp.service",
     "deploy/txtschedules-activity-ingest.service",
     "deploy/txtschedules-activity-ingest.timer",
     "deploy/txtschedules-directory-sync.service",
-    "deploy/txtschedules-directory-sync.timer",
-    "deploy/txtschedules-notifications.service",
-    "deploy/txtschedules-notifications.timer"
+    "deploy/txtschedules-directory-sync.timer"
   ],
   "endpoints": [
-    {
-      "name": "Records MCP",
-      "kind": "mcp",
-      "path": "/mcp/records",
-      "port_env": "MCP_RECORDS_PORT",
-      "auth_kind": "bearer",
-      "agent_reachable": true,
-      "mcp_surface_version": "1.0"
-    },
-    {
-      "name": "Activity MCP",
-      "kind": "mcp",
-      "path": "/mcp/activity",
-      "port_env": "MCP_ACTIVITY_PORT",
-      "auth_kind": "bearer",
-      "agent_reachable": true,
-      "mcp_surface_version": "1.0"
-    },
     {
       "name": "Web UI",
       "kind": "ui",
@@ -312,7 +288,7 @@
   "shares": [
     {
       "tool": "time_off_taken",
-      "description": "Approved time off per person for a period at one restaurant \u2014 for HR's records and pay. Facts about people, so only an application that changes the directory (HR) may read it, keyed by the kernel's member id.",
+      "description": "Approved time off per person for a period at one restaurant — for HR's records and pay. Facts about people, so only an application that changes the directory (HR) may read it, keyed by the kernel's member id.",
       "scoped": true,
       "people": true
     }
