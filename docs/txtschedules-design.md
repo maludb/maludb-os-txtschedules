@@ -85,8 +85,8 @@ installable; push later), **fair workweek** (D8). Legal compliance is never clai
 |---|---|---|
 | The mirror | `members`, `departments`, `department_members`, **`sites`**, **`member_site_roles`**, `sso_nonces`, `member_sessions`, `directory_sync_state` | the kernel's ids; a site is a kernel scope (`scope_id`) at a kernel location (`location_id`, shared with Reservations) |
 | Roles | `ts_rights`, `ts_roles`, `ts_role_rights`, `mcp_app_roles` | `ts_has_right(right, site)` |
-| Restaurants | `site_settings` (week, currency, **trade settings**, reminders, overtime), `day_parts`, `app_settings` | seeded by `ts_site_materialise()` |
-| People | `positions` (**`default_wage_rate`**), `staff_profiles` (**main restaurant**, max hours, minor), `staff_positions` (**`wage_override`**), `certification_kinds`, `certifications`, `position_certifications` | effective rate = `COALESCE(wage_override, default_wage_rate)` — `ts_effective_rate()` for the writer, inlined in the views |
+| Restaurants | `site_settings` (week, currency, **trade settings**, reminders, **time-off hours per day**, overtime), `day_parts`, `app_settings` | seeded by `ts_site_materialise()` |
+| People | `positions` (**`default_wage_rate`**), `staff_profiles` (**main restaurant**, max hours, minor), `staff_positions` (**`wage_override`**), `certification_kinds` (**per restaurant**, D15), `certifications` (verified by a manager), `position_certifications` | effective rate = `COALESCE(wage_override, default_wage_rate)` — `ts_effective_rate()` for the writer, inlined in the views |
 | Availability, time off | `availability_rules`, `time_off_types`, `time_off_balances`, `time_off_requests`, `time_off_ledger`, `blackout_dates` | balances move only through `ts_time_off_post()`; decisions `ts_time_off_decide/cancel()` |
 | Schedule | `schedule_weeks`, `shifts`, `schedule_templates`, `template_shifts` | no overlap for one person (exclusion constraint); a published shift is cancelled, never deleted; changes after publishing stamped |
 | Rules | `rule_kinds` (12), `rule_presets` (generic), `site_rules`, `rule_overrides` | `ts_assignment_warnings()` — the one engine |
@@ -116,7 +116,7 @@ Each becomes one records-MCP tool (Phase 1), answered from the `mcp_*` views for
 6. What do the rules say about giving this person this shift? (`check_assignment`)
 7. What warnings does this week have, and which were overridden, by whom and why? (`week_warnings`, `overrides`)
 8. How many hours does a person have this week, and are they near overtime or their own limit? (`hours_this_week`)
-9. What are a person's positions, main restaurant and certifications — which are expiring? (`staff_profile`, `expiring_certifications`)
+9. What are a person's positions, main restaurant and certifications — which are expired, due, missing or to verify? (`staff_profile`, `certification_kinds`, `certifications`, `certifications_due`)
 10. What is someone's availability, and what changes wait for approval? (`availability`)
 11. What time off is requested, approved, or overlapping a date — and a person's balances? (`time_off`, `time_off_balances`)
 12. What is waiting for a manager at a restaurant: time off, availability, exchanges? (`pending_requests`)
@@ -135,14 +135,14 @@ Each becomes one records-MCP tool (Phase 1), answered from the `mcp_*` views for
 **Staff (phone):** Home (my next shift with who else is on, my week, open requests, announcements) · My schedule
 (week and list) · Team schedule (the published week by day, positions) · Shift (details; offer / swap / give; its
 history) · Marketplace (offered and open shifts I can take, with why not when I cannot) · My requests (time off,
-availability, trades — their state) · Availability · Time off (request, balances) · Announcements · Settings
+availability, trades — their state) · Availability · Time off (request, balances) · My certifications (see, add, correct — a manager verifies) · Announcements · Settings
 (notifications; calendar feed link; texts need a phone verified in the OS).
 
 **Managers (tablet and desktop, usable on a phone):** Week builder (rows by staff or position, days across, drag to
 move and stretch, the same as buttons; hours per person; labor vs budget; warnings on each shift; staffing needs
 beside the forecast) · Day view by hour · Templates · Approvals inbox (time off, availability, trades — with each
 exchange's warnings) · Coverage (a gap → eligible list → offer to one or several) · Staff and positions (profile,
-main restaurant, positions and wages, certifications) · Forecast (covers per day-part, ratios) · Budget ·
+main restaurant, positions and wages) · Certifications (the restaurant's kinds and which positions need each; who is expired, due, missing or to verify) · Forecast (covers per day-part, ratios) · Budget ·
 Announcements · Reports (hours, labor vs budget, open shifts unfilled, exchanges, overtime, overrides — each a CSV).
 
 **Admin:** Restaurant settings (week, trades — D2, reminders, overtime), Rules (severity and parameters per rule),
@@ -215,8 +215,15 @@ A site switcher in the shell for a person who holds several (the launcher's choi
 | D10 | **Wages: a default rate per position for the restaurant, and a rate on each employee that overrides it** | `positions.default_wage_rate`, `staff_positions.wage_override`, the views |
 | D11 | **Person-level facts cross only to HR** (the `people` share, `directory.writes` consumers) | `maludb-os.json` `shares[]` |
 | D12 | **Shift reminders by both text and email**; a coverage request never goes outside the main restaurant | `notification_prefs`; `ts_exchange_check_taker()` |
+| D13 | **Hours a day a time-off request counts is a per-restaurant setting** (default 8; no constant anywhere) | `site_settings.time_off_day_hours`; `ts_time_off_hours()` and the request trigger (db/007); `site_settings_save` |
+| D14 | **An agent approving time off pauses for a person** (the approval category `other`) | `maludb-os.json` `approvals[]` (`time_off_approve`) |
+| D15 | **Certifications are a screen of their own**: kinds per restaurant (name, expiry tracked or not, days of warning, the positions that need each), a person's cards with expiry, a manager's due list, a card the person enters is **verified by a manager**; the rules engine's `cert_required` reads the restaurant's kinds and required positions | db/006, db/009, db/013 (`mcp_certification_kinds`, `mcp_certifications`, `mcp_certifications_due`); slice 4 |
+| D16 | **No accrual rules in version 1**: a balance changes only by a grant, an approval, a cancellation or an adjustment | db/007 `ts_time_off_post()` |
+| D17 | **(The owner delegated.)** Trades keep their split actions — approve, decline, choose, accept, refuse — because each is a different right, log event and approval; and **`wage.update` is one event** for an employee's rate and a position's default, so one approval entry covers both | the manifest; `maludb-os.json` `approvals[]` |
 
-Design choices of this document (the owner may overturn any): rights are only ever per site; the first site a person
+Design choices of this document (the owner may overturn any): an unverified certification **counts** as held (a manager sees it "to verify"; a
+missing or expired one is what the rule warns of); a person's card is entered per restaurant kind (the action adds it for each restaurant they work
+at where the kind exists); a person editing a verified card clears its verification; a manager entering a card verifies it; rights are only ever per site; the first site a person
 is granted at is their main restaurant; a coverage request needs no approval (a manager or shift lead made it);
 `claim_mode` first-wins by default; an offer expires at the shift's start; the rules preset is "generic" (no law
 behind it); shifts are at most 16 hours; the minor flag carries an end date, never a date of birth.
@@ -226,14 +233,14 @@ behind it); shifts are at most 16 hours; the minor flag carries an end date, nev
 | Phase | Deliverable | Gate |
 |---|---|---|
 | 0 | this document; the schema db/001–013, proven; the kit; `maludb-os.json`, `os/`, `skills/`, `deploy/`; the installer's plan | owner's go |
-| 1 | **written 2026-09-28:** `docs/txtschedules-mcp-tool-surface.md` (29 records tools + 6 activity tools + the `time_off_taken` share), `docs/txtschedules-action-manifest.md` (38 screens, 65 actions, 12 pausing for agents), `mcp/action_registry.json`, and eight specs in `docs/build-specs/` (`sso-shell` and seven slices) with **shifts-marketplace as the exemplar** | **approved together, before any PHP** |
+| 1 | **written 2026-09-28:** `docs/txtschedules-mcp-tool-surface.md` (31 records tools + 6 activity tools + the `time_off_taken` share), `docs/txtschedules-action-manifest.md` (42 screens, 69 actions, 13 pausing for agents), `mcp/action_registry.json`, and eight specs in `docs/build-specs/` (`sso-shell` and seven slices) with **shifts-marketplace as the exemplar** | **approved together, before any PHP** |
 | 2 | `/sso`, `/sso/logout`, the mirror and its timer, the ingest bridge, the nxl shell (phone-first, site switcher, command bar), `/api/v1/health`, the vhost; installed beside the kernel | hand-off replay refused; a scope not held refused; 375 and 1280 |
 | 3 | slices: **(1) shifts and the marketplace** (the exemplar: my schedule, team schedule, the shift, offer/pick up/give/swap, approvals of trades, coverage) → **(2) the week builder** (weeks, drafts, templates, publish, warnings and overrides) → **(3) availability and time off** (balances, blackout, approvals) → **(4) people and positions** (profiles, main restaurant, wages, certifications) → **(5) labor and forecast** (budget, covers, ratios, needs; the K7 read) → **(6) announcements and notifications** (outbox, email, K6 SMS, reminders, calendar feed) → **(7) settings, rules and reports** | each slice: screens + handlers + logging + manifest entries + tools, proven at 375 and 1280 |
 | 4 | the two MCP servers with the run-facts gate; `app_roles`; the registry on the kernel; skills imported; the expert and the scheduler proposed | the command bar answers "who is on Friday"; an agent's publish pauses |
 | 5 | the kernel installer's `apply` (the owner's), DNS and proxy, sites and grants; the end-to-end proof | a staff member launches on a phone into their restaurant and trades a shift |
 
-The installer's `plan` runs at the end of **every** phase (the lesson of 2026-09-28's ZozoCal install). Size as specified in Phase 1: fourteen migrations, **eight specs (sso-shell + seven slices), 38 screens, 65 actions
-(12 pause for an agent), 29 records tools, 6 activity tools**; Projects (seven slices, 48 actions, 23 tools) took a day
+The installer's `plan` runs at the end of **every** phase (the lesson of 2026-09-28's ZozoCal install). Size as specified in Phase 1: fourteen migrations, **eight specs (sso-shell + seven slices), 42 screens, 69 actions
+(13 pause for an agent), 31 records tools, 6 activity tools**; Projects (seven slices, 48 actions, 23 tools) took a day
 and a half on the exemplar and workers — this is a little larger, and its slices are smaller.
 
 ## 11. Ports, names and files
@@ -268,7 +275,36 @@ The owner's nine decisions are §9 (D1–D9). The four questions Phase 0 left op
 4. **Reminders — both (D12).** By text and by email; each person's notification preferences start with both on; the
    text is K6's (30 a member a day counts) and its refusals never stop the email.
 
+### The Phase 1 decisions (the owner, 2026-09-28)
+
+1. **Hours a day of time off — per restaurant (D13).** `site_settings.time_off_day_hours`, default 8, editable by the
+   admin (`settings.manage`); a request that gives no hours counts, for each calendar day it touches in the restaurant's
+   time zone, the hours it covers capped at that setting; stored with the request, so a change of the setting alters new
+   requests only. The hard-coded 8 is gone from the schema, the specs and the tool surface.
+2. **An agent approving time off pauses for a person — fine (D14).**
+3. **The certifications screen — added (D15).** A restaurant's kinds (name, whether an expiry is tracked, days of
+   warning, the positions that need it), a person's cards with expiry (add, edit, remove; a document upload is out of
+   scope), a manager's "due" view (expired, due, missing, to verify), a phone screen for staff to see and add their own, a
+   manager verifying. `cert_required` uses the restaurant's kinds and required positions, ignores expiry for a kind that
+   does not track it, and names what is missing or expired. Tools: `certification_kinds`, `certifications`,
+   `certifications_due` (replacing `expiring_certifications`); actions: `certification_kind_save`, `_archive`,
+   `certification_add`, `_update`, `_remove`, `_verify`.
+4. **No accrual rules — fine (D16).**
+5. **Split trade actions and the shared `wage.update` event — kept (D17), the owner's "you decide".**
+
 ## 13. State
+
+**The Phase 1 decisions applied, 2026-09-28.** Time off's hours a day is `site_settings.time_off_day_hours` (D13) and
+certifications are the restaurant's own with a screen, a due list and a verifying manager (D15) — db/005–007, 009 and 013
+edited in place (nothing deployed), `subello_txtschedules` dropped and recreated, all fourteen migrations re-applied
+clean. The proof is **129 checks**, all passing (36 new: the setting drives days to hours, per restaurant, capped, for new
+requests only, and refuses 0 and 25; kinds per restaurant and seeded, a kind unique in its restaurant, a position never
+needing another restaurant's kind; missing, expired, current and untracked cards; hard or soft; an archived kind; who sees
+which cards; the due list — expired, due, missing, to verify; the verify flow); the claim race **4 of 4**. The manifest is
+now **42 screens and 69 actions** (`certifications`, `certification-kind-add`, `certification-kind-edit`,
+`my-certifications`; `certification_update`, `_verify`, `certification_kind_save`, `_archive`), 12 pausing for agents
+(`certification_verify` among them; `maludb-os.json` `approvals[]` is 12 entries — one log event covers a wage and a position default); the tool surface **31 records tools** (`certification_kinds`, `certifications`,
+`certifications_due`) and 6 activity tools; the registry rebuilt, `--check` OK.
 
 **Phase 1 — the checkpoint set, written 2026-09-28.** `docs/txtschedules-mcp-tool-surface.md` (29 records tools including `app_roles`, 6 activity tools, the `time_off_taken` share for Phase 4, the four gated functions), `docs/txtschedules-action-manifest.md` (38 screens, 65 actions), `mcp/action_registry.json` (built, `--check` OK, no unresolved endpoint, no phantom parameter), and `docs/build-specs/`: `sso-shell` (Phase 2), `shifts-marketplace` (**the exemplar**), `week-builder`, `availability-time-off`, `people-positions`, `labor-forecast`, `announcements-notifications`, `settings-rules-reports` — each with its screens, files, query functions, handlers, manifest entries, events and a proof list. Also: db/014 and one column (`day_parts.service_name`) from the review. **Awaiting the owner's checkpoint before any PHP.**
 

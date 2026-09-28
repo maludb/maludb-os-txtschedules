@@ -14,7 +14,10 @@ a named colleague's), a **give** (my shift to one named colleague), and **covera
 several people; the first to accept gets it). Which of these a restaurant allows, and which need a manager, are that
 restaurant's **trade settings**. Staff pick up shifts only at their **main restaurant**. **Rules** (rest between
 shifts, hours, breaks, minors, certifications, time off, availability) are hard (refused) or soft (a warning a manager
-may override with a reason). **Time off** has types and balances; approving draws the balance down.
+may override with a reason). **Time off** has types and balances; approving draws the balance down; a request with no hours counts each day at the
+restaurant's own hours-per-day setting. **Certifications** are each restaurant's own kinds (food handler, alcohol
+service, whatever it adds), required by position; `certifications_due` says who is expired, due, missing one or has one
+to verify; only a manager verifies a card.
 
 ## How you work
 1. Always know **which restaurant**: `find_sites` lists the ones the asker holds; ask when there are several and the

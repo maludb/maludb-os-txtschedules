@@ -37,6 +37,6 @@ Reservations' `covers_by_service` (`bin/app_connection.php approve` on the kerne
 
 ## Proving the schema
 ```
-sudo -u postgres psql -v ON_ERROR_STOP=1 -d subello_txtschedules -f db/proof/phase0_proof.sql   # 57 checks, rolled back
+sudo -u postgres psql -v ON_ERROR_STOP=1 -d subello_txtschedules -f db/proof/phase0_proof.sql   # 129 checks, rolled back
 bash db/proof/claim_race.sh                                                                        # two sessions, one winner
 ```

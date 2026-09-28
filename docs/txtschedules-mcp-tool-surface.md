@@ -46,7 +46,9 @@ may call it too.
 | `find_staff` | Listing or looking up staff by name, restaurant, position, main restaurant, on or off the schedule. **Call before any action that needs a person** | 9 | `mcp_members`, `mcp_staff`, `mcp_staff_positions` | `q?`, `site_id?`, `position_id?`, `main_site_id?`, `on_schedule?`, `limit` | held (names of the site's staff); build (profiles) |
 | `find_positions` | A restaurant's positions (server, host, line cook …) with their area and colour; the default hourly rate for `labor`. **Call before any action that needs a position** | 9 | `mcp_positions` | `site_id?`, `q?`, `include_archived?` | held; pay: labor |
 | `staff_profile` | One person in full: main restaurant, positions (which is primary; each rate for `labor`, and the person's own effective rate for themself), maximum hours, minor flag and its end date, certifications (expiring marked), sites held with roles, the week's hours | 9 | `mcp_staff`, `mcp_staff_positions`, `mcp_certifications`, `mcp_member_site_roles`, `mcp_hours_weekly` | `member_id?` (default: the caller) | own; another: build at their main restaurant; pay: labor or own |
-| `expiring_certifications` | Which certifications are expired or expire within N days, per person, so a manager can act before a shift is refused | 9 | `mcp_certifications`, `mcp_members` | `site_id?`, `within_days?` (default 30), `limit` | build |
+| `certification_kinds` | This restaurant's certification kinds — name, whether an expiry is tracked, the days of warning, and which positions need each. **Call before an action that names a kind** (`certification_add`, `certification_kind_save`) | 9 | `mcp_certification_kinds`, `mcp_positions` | `site_id?`, `include_archived?` | held |
+| `certifications` | A person's certifications: kind, issued, expires, expired or due soon, and whether a manager has verified the card | 9 | `mcp_certifications`, `mcp_certification_kinds` | `member_id?` (default: the caller), `site_id?`, `limit` | own; another: build at the kind's restaurant |
+| `certifications_due` | Who at a restaurant has a certification that is **expired**, **due** within its warning days, **missing** for a position they work that needs it, or **to verify** — most urgent first, so a manager acts before a shift is refused. Replaces `expiring_certifications` | 9 | `mcp_certifications_due`, `mcp_certification_kinds` | `site_id?`, `state?` (expired, due, missing, to_verify), `position_id?`, `limit` | build; a person's own rows |
 
 ### Schedule
 | Tool | Call it when | Answers | Reads | Key params | Gate |
@@ -81,7 +83,7 @@ may call it too.
 | `site_rules` | The rules a restaurant runs — each rule's severity (hard, soft, off) and parameters — and the preset they came from; what each rule means | 16 | `mcp_site_rules`, `rule_kinds`, `rule_presets` | `site_id`, `rule_key?` | held |
 | `announcements` | The live announcements for a restaurant, pinned first; for the poster, who has read each | 17 | `mcp_announcements` | `site_id?`, `mine?`, `limit` | held (the audience the caller belongs to); read counts: announce.post |
 | `exchange_report` | Trades over a period: how many of each kind, how many taken, declined, expired; time to approval; who picks up most and who offers most; open shifts that went unfilled | 18 | `mcp_exchanges`, `mcp_shifts` | `site_id`, `from?`, `to?`, `group_by?` (kind, person, week) | build |
-| `records_search` | The long tail: one SELECT over the views named in its docstring (`mcp_sites`, `mcp_members`, `mcp_member_site_roles`, `mcp_positions`, `mcp_staff`, `mcp_staff_positions`, `mcp_certifications`, `mcp_availability`, `mcp_time_off_types`, `mcp_time_off_balances`, `mcp_time_off_requests`, `mcp_blackout_dates`, `mcp_schedule_weeks`, `mcp_shifts`, `mcp_templates`, `mcp_template_shifts`, `mcp_exchanges`, `mcp_exchange_claims`, `mcp_site_rules`, `mcp_rule_overrides`, `mcp_labor_budgets`, `mcp_labor_weekly`, `mcp_hours_weekly`, `mcp_day_parts`, `mcp_forecast_covers`, `mcp_staffing_ratios`, `mcp_announcements`) | any | all views | `sql` | as the views; 5 s timeout; 200 rows |
+| `records_search` | The long tail: one SELECT over the views named in its docstring (`mcp_sites`, `mcp_members`, `mcp_member_site_roles`, `mcp_positions`, `mcp_staff`, `mcp_staff_positions`, `mcp_certification_kinds`, `mcp_certifications`, `mcp_certifications_due`, `mcp_availability`, `mcp_time_off_types`, `mcp_time_off_balances`, `mcp_time_off_requests`, `mcp_blackout_dates`, `mcp_schedule_weeks`, `mcp_shifts`, `mcp_templates`, `mcp_template_shifts`, `mcp_exchanges`, `mcp_exchange_claims`, `mcp_site_rules`, `mcp_rule_overrides`, `mcp_labor_budgets`, `mcp_labor_weekly`, `mcp_hours_weekly`, `mcp_day_parts`, `mcp_forecast_covers`, `mcp_staffing_ratios`, `mcp_announcements`) | any | all views | `sql` | as the views; 5 s timeout; 200 rows |
 
 **Not tools of the records server, on purpose:** the base tables (no privilege), `mcp_access_tokens` (the servers'
 own), and any write.
@@ -111,7 +113,7 @@ is set on it); Phase 4 adds the function and its proof.
 
 1 `who_is_on` · 2 `my_shifts` · 3 `week_schedule` + `get_shift` + `find_templates` · 4 `marketplace` · 5 `coverage_candidates` ·
 6 `check_assignment` + `get_shift` · 7 `week_warnings` + `overrides` · 8 `hours_this_week` · 9 `staff_profile` + `find_staff` +
-`find_positions` + `expiring_certifications` · 10 `availability` · 11 `time_off` + `time_off_balances` + `my_requests` ·
+`find_positions` + `certification_kinds` + `certifications` + `certifications_due` · 10 `availability` · 11 `time_off` + `time_off_balances` + `my_requests` ·
 12 `pending_requests` + `my_requests` · 13 `shift_history` + `exchange_history` · 14 `labor_vs_budget` · 15 `staffing_needs` ·
 16 `site_settings` + `site_rules` + `find_sites` · 17 `announcements` · 18 `exchange_report` · 19 `who_did` + `site_activity` ·
 20 `draft_history` · 21 `app_roles` + `records_search` + `activity_search`.
@@ -130,7 +132,9 @@ Every row carries **`scope_id`** (the site). `shift.create` — `after.position_
 — `after.hours`, `after.balance_hours` · `balance.adjust` — `after.type`, `after.delta_hours`, `after.reason` (**hours,
 never pay**) · `wage.update` — `after.scope` (employee or position_default), `after.member_id`, `after.position_id`,
 **never the rate** · `settings.update` — `before`/`after` of the changed fields (never a rate) · `announcement.post` —
-`after.audience`, `after.recipients` (count).
+`after.audience`, `after.recipients` (count) · `certification.add` / `.update` / `.remove` / `.verify` — `after.member_id`, `after.kind_id`, `after.expires_on`,
+`after.verified` · `certification_kind.save` / `.archive` — `before`/`after` of name, track_expiry, warn_days, position_ids. **`timeoff.request`'s `after.hours`
+is what the request counts — the restaurant's hours-per-day setting is in `settings.update`.**
 
 ## Entity resolution for the action tools (the registry's `resolve` block)
 
@@ -150,7 +154,8 @@ never pay**) · `wage.update` — `after.scope` (employee or position_default), 
 | `request` | `time_off` | `q` | `request_id` | `label` |
 | `rule` | `site_rules` | `q` | `rule_key` | `name` |
 | `announcement` | `announcements` | `q` | `announcement_id` | `title` |
-| `certification` | `staff_profile` (the screen supplies the id) | — | `certification_id` | — |
+| `certification` | `certifications` (the screen supplies the id) | `q` (a person and a kind) | `certification_id` | `label` |
+| `certification_kind`, `kind` | `certification_kinds` | `q` (name) | `kind_id` | `name` |
 
 `find_sites`, `find_staff`, `find_positions` and `find_templates` are the directory tools of this application (as HR's
 `find_people`), on the records server — so an action's `colleague` or `position` resolves without leaving it. A shift or

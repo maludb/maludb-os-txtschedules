@@ -148,7 +148,9 @@
           "find_positions",
           "find_templates",
           "staff_profile",
-          "expiring_certifications",
+          "certification_kinds",
+          "certifications",
+          "certifications_due",
           "availability",
           "time_off",
           "time_off_balances",
@@ -175,6 +177,8 @@
           "time_off_cancel",
           "availability_submit",
           "availability_remove",
+          "certification_add",
+          "certification_update",
           "shift_offer",
           "shift_give",
           "shift_swap",
@@ -210,7 +214,8 @@
           "find_staff",
           "find_positions",
           "find_templates",
-          "expiring_certifications",
+          "certification_kinds",
+          "certifications_due",
           "availability",
           "time_off",
           "pending_requests",
@@ -290,6 +295,10 @@
     },
     {
       "action": "wage_update",
+      "category": "other"
+    },
+    {
+      "action": "certification_verify",
       "category": "other"
     }
   ],

@@ -45,7 +45,11 @@ screens, the agents, the decisions, the state), then — once Phase 1 exists —
   overrides it — effective rate = the employee's own when set, else the position's default; cost, budgets and the
   views use the effective rate; D11 person-level facts cross only to HR (a `people` share, `directory.writes`
   consumers) — `time_off_taken`; D12 shift reminders go by both text and email (preferences default both on; K6's
-  refusals never stop the email), and a coverage request never goes outside the main restaurant.**
+  refusals never stop the email), and a coverage request never goes outside the main restaurant; D13 the hours a day
+  a time-off request counts is a per-restaurant setting (`site_settings.time_off_day_hours`, default 8 — never a
+  constant); D14 an agent approving time off pauses for a person; D15 certifications are the restaurant's own kinds
+  with a screen, a due list and a verifying manager (an unverified card counts, a manager entering one verifies it);
+  D16 no accrual rules; D17 the split trade actions and the one `wage.update` event stay.**
 - Integrity lives in the database: one person never holds overlapping shifts (the exclusion constraint); a published
   shift is cancelled, never deleted; a balance moves only through `ts_time_off_post()`; an exchange changes hands only
   through the `ts_exchange_*()` functions (the row lock makes one claim win); the rules engine is
@@ -67,6 +71,7 @@ screens, the agents, the decisions, the state), then — once Phase 1 exists —
   `app/activity.php`, `app/partial_update.php`, `mcp/db.py`, `mcp/server_common.py`, `mcp/activity_ingest.py`,
   `bin/build_action_registry.php`, `bin/mint_mcp_token.php`, `app/directory.php`, `bin/directory_sync.php`,
   `html/sso.php`, `html/sso/logout.php` — adapted for sites (`mirror_apply_scope`, `mirror_apply_holding`).
-- **State (2026-09-28): Phase 0 complete** — the design, the schema db/001–013 proven (57/57 and the race 4/4), the
-  kit, `maludb-os.json`, the agents' job descriptions, the skills, `deploy/` templates. Next: Phase 1 (the tool
-  surface, the manifest, the slice specs) for the owner's checkpoint. The record: `docs/txtschedules-design.md` §13.
+- **State (2026-09-28): Phase 0 complete; Phase 1 written and revised for the owner's answers (D13–D17)** — the
+  design, the schema db/001–014 proven (**129/129** and the race 4/4), the kit, `maludb-os.json`, the agents' job
+  descriptions, the skills, `deploy/` templates, the tool surface (31 records + 6 activity tools), the manifest (42
+  screens, 69 actions), the registry and eight slice specs. Next: the owner's approval of Phase 1, then Phase 2. The record: `docs/txtschedules-design.md` §13.

@@ -1,6 +1,6 @@
 {
     "generated_from": "docs/business-os-action-manifest.md",
-    "generated_at": "2026-09-28T21:56:24+00:00",
+    "generated_at": "2026-09-28T22:49:42+00:00",
     "screens": {
         "dashboard": {
             "screen": "dashboard",
@@ -327,6 +327,48 @@
             "built": false,
             "stub": false
         },
+        "certifications": {
+            "screen": "certifications",
+            "url": "/certifications/",
+            "section": "People and positions",
+            "when": "a restaurant's certification kinds and who is expired or due or missing one or has one to verify",
+            "params": [
+                "site",
+                "state",
+                "position"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "certification-kind-add": {
+            "screen": "certification-kind-add",
+            "url": "/certifications/kinds/new",
+            "section": "People and positions",
+            "when": "to add a certification kind to a restaurant",
+            "params": [
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "certification-kind-edit": {
+            "screen": "certification-kind-edit",
+            "url": "/certifications/kinds/{id}/edit",
+            "section": "People and positions",
+            "when": "to change a certification kind: its name and expiry and warning days and the positions that need it",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "my-certifications": {
+            "screen": "my-certifications",
+            "url": "/certifications/mine",
+            "section": "People and positions",
+            "when": "their own certifications on the phone — see them and add one and correct one",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
         "forecast": {
             "screen": "forecast",
             "url": "/forecast",
@@ -378,7 +420,7 @@
             "screen": "site-settings",
             "url": "/site/",
             "section": "Restaurant settings, rules and reports",
-            "when": "a restaurant's week and trade settings and reminders and overtime",
+            "when": "a restaurant's week and trade settings and reminders and time off hours per day and overtime",
             "params": [
                 "site"
             ],
@@ -1530,7 +1572,7 @@
                     "name": "hours",
                     "required": false,
                     "repeated": false,
-                    "hint": "empty counts the working days"
+                    "hint": "empty counts each day at the restaurant's hours per day"
                 },
                 {
                     "name": "note",
@@ -1886,16 +1928,16 @@
             "endpoint": "/staff/certifications/add.php",
             "params": [
                 {
-                    "name": "member",
-                    "required": true,
-                    "repeated": false,
-                    "hint": ""
-                },
-                {
                     "name": "kind",
                     "required": true,
                     "repeated": false,
-                    "hint": "food_handler or alcohol_service"
+                    "hint": "one of the restaurant's kinds such as Food handler"
+                },
+                {
+                    "name": "member",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "empty is the caller"
                 },
                 {
                     "name": "issued_on",
@@ -1920,7 +1962,42 @@
             "confirm": false,
             "approval": null,
             "log_event": "certification.add",
-            "who": "build",
+            "who": "own (a manager for anyone)",
+            "built": false
+        },
+        "certification_update": {
+            "action": "certification_update",
+            "section": "People and positions",
+            "endpoint": "/staff/certifications/update.php",
+            "params": [
+                {
+                    "name": "certification",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": null,
+                    "note": "any of issued_on"
+                },
+                {
+                    "name": "expires_on",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "reference",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "certification.update",
+            "who": "own (a manager for anyone)",
             "built": false
         },
         "certification_remove": {
@@ -1939,7 +2016,100 @@
             "confirm": true,
             "approval": null,
             "log_event": "certification.remove",
+            "who": "own (a manager for anyone)",
+            "built": false
+        },
+        "certification_verify": {
+            "action": "certification_verify",
+            "section": "People and positions",
+            "endpoint": "/staff/certifications/verify.php",
+            "params": [
+                {
+                    "name": "certification",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "verified",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                }
+            ],
+            "undo": "the opposite",
+            "confirm": false,
+            "approval": "other",
+            "log_event": "certification.verify",
             "who": "build",
+            "built": false
+        },
+        "certification_kind_save": {
+            "action": "certification_kind_save",
+            "section": "People and positions",
+            "endpoint": "/certifications/kinds/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "name",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "track_expiry",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "warn_days",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "0 to 365"
+                },
+                {
+                    "name": "positions",
+                    "required": false,
+                    "repeated": true,
+                    "hint": "the positions that need it"
+                },
+                {
+                    "name": "kind",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "to change an existing one"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "certification_kind.save",
+            "who": "admin",
+            "built": false
+        },
+        "certification_kind_archive": {
+            "action": "certification_kind_archive",
+            "section": "People and positions",
+            "endpoint": "/certifications/kinds/archive.php",
+            "params": [
+                {
+                    "name": "kind",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore",
+            "confirm": true,
+            "approval": null,
+            "log_event": "certification_kind.archive",
+            "who": "admin",
             "built": false
         },
         "position_save": {
@@ -2413,6 +2583,12 @@
                     "required": false,
                     "repeated": false,
                     "hint": "0 to 2880"
+                },
+                {
+                    "name": "time_off_day_hours",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "what a day off counts when a request gives no hours from 0.25 to 24"
                 },
                 {
                     "name": "overtime_weekly_hours",

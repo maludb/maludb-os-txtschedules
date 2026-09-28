@@ -31,7 +31,7 @@
 - **Params:** **bold** = required; `[]` = repeated; parentheses = a hint (no comma or semicolon inside; no note after the
   last parameter). A param named for a record (`site`, `position`, `member`, `colleague`, `assignee`, `shift`,
   `swap_shift`, `exchange`, `week`, `template`, `time_off_type`, `request`, `availability`, `blackout`, `rule`,
-  `announcement`, `certification`) accepts an id or a name, resolved through txtSchedules' own tool (`docs/txtschedules-mcp-tool-surface.md`,
+  `announcement`, `certification`, `kind`) accepts an id or a name, resolved through txtSchedules' own tool (`docs/txtschedules-mcp-tool-surface.md`,
   resolution table). Times are **the site's local time** (`2026-10-09 17:00`); the handler stores UTC. `any field of X` =
   X's fields, all optional, a partial update. `override_reason` is required when the change breaks a soft rule: it is
   written as a `rule.override` row beside the action's own.
@@ -179,7 +179,7 @@ Actions (base `/time-off/`):
 
 | Action | File | Params | Undo | Confirm | Agent approval | Log | Who |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `time_off_request` | `request.php` | **time_off_type**, **starts_at** (site local as 2026-10-09 09:00), **ends_at** (site local as 2026-10-11 17:00), hours (empty counts the working days), note, member, site | time_off_cancel | | | `timeoff.request` | own (a manager for anyone) |
+| `time_off_request` | `request.php` | **time_off_type**, **starts_at** (site local as 2026-10-09 09:00), **ends_at** (site local as 2026-10-11 17:00), hours (empty counts each day at the restaurant's hours per day), note, member, site | time_off_cancel | | | `timeoff.request` | own (a manager for anyone) |
 | `time_off_approve` | `approve.php` | **request**, note | time_off_cancel | | other | `timeoff.approve` | approve |
 | `time_off_decline` | `decline.php` | **request**, note | — | | | `timeoff.decline` | approve |
 | `time_off_cancel` | `cancel.php` | **request** | — | ✔ | | `timeoff.cancel` | own or approve |
@@ -201,6 +201,10 @@ Screens:
 | `positions-list` | `/positions/` | a restaurant's positions with their default rate for whoever may see it (params: `site`) |
 | `position-add` | `/positions/new` | to add a position (params: `site`) |
 | `position-edit` | `/positions/{id}/edit` | to change a position |
+| `certifications` | `/certifications/` | a restaurant's certification kinds and who is expired or due or missing one or has one to verify (params: `site`, `state`, `position`) |
+| `certification-kind-add` | `/certifications/kinds/new` | to add a certification kind to a restaurant (params: `site`) |
+| `certification-kind-edit` | `/certifications/kinds/{id}/edit` | to change a certification kind: its name and expiry and warning days and the positions that need it |
+| `my-certifications` | `/certifications/mine` | their own certifications on the phone — see them and add one and correct one |
 
 Actions (base `/staff/`):
 
@@ -208,8 +212,17 @@ Actions (base `/staff/`):
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `staff_save` | `save.php` | **member**, main_site (the restaurant they may pick up shifts at), max_hours_week, is_minor (yes or no), minor_until (a date), active (yes or no), notes, positions[] (position names and the first is primary) | restore prior | | | `staff.save` | build |
 | `wage_update` | `wage.php` | **member**, **position**, rate (the person's own hourly rate and empty removes it so the position's default applies) | restore prior | ✔ | other | `wage.update` | pay |
-| `certification_add` | `certifications/add.php` | **member**, **kind** (food_handler or alcohol_service), issued_on, expires_on, reference | certification_remove | | | `certification.add` | build |
-| `certification_remove` | `certifications/remove.php` | **certification** | — | ✔ | | `certification.remove` | build |
+| `certification_add` | `certifications/add.php` | **kind** (one of the restaurant's kinds such as Food handler), member (empty is the caller), issued_on, expires_on, reference | certification_remove | | | `certification.add` | own (a manager for anyone) |
+| `certification_update` | `certifications/update.php` | **certification**, any of issued_on, expires_on, reference | restore prior | | | `certification.update` | own (a manager for anyone) |
+| `certification_remove` | `certifications/remove.php` | **certification** | — | ✔ | | `certification.remove` | own (a manager for anyone) |
+| `certification_verify` | `certifications/verify.php` | **certification**, verified (yes or no) | the opposite | | other | `certification.verify` | build |
+
+Actions (base `/certifications/`):
+
+| Action | File | Params | Undo | Confirm | Agent approval | Log | Who |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `certification_kind_save` | `kinds/save.php` | **site**, **name**, track_expiry (yes or no), warn_days (0 to 365), positions[] (the positions that need it), kind (to change an existing one) | restore prior | | | `certification_kind.save` | admin |
+| `certification_kind_archive` | `kinds/archive.php` | **kind** | restore | ✔ | | `certification_kind.archive` | admin |
 
 Actions (base `/positions/`):
 
@@ -261,7 +274,7 @@ Screens:
 
 | Screen id | URL | When the user wants… |
 | --- | --- | --- |
-| `site-settings` | `/site/` | a restaurant's week and trade settings and reminders and overtime (params: `site`) |
+| `site-settings` | `/site/` | a restaurant's week and trade settings and reminders and time off hours per day and overtime (params: `site`) |
 | `day-parts` | `/site/day-parts` | the restaurant's day-parts (lunch and dinner) (params: `site`) |
 | `time-off-types` | `/site/time-off` | the time-off types and the blackout dates (params: `site`) |
 | `rules` | `/rules/` | the rules the restaurant runs and each one's severity (params: `site`) |
@@ -271,7 +284,7 @@ Actions (base `/site/`):
 
 | Action | File | Params | Undo | Confirm | Agent approval | Log | Who |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `site_settings_save` | `save.php` | **site**, week_start (0 Sunday to 6 Saturday), currency, allow_offer (yes or no), allow_pickup (yes or no), allow_swap (yes or no), allow_give (yes or no), approval_pickup (always or on_warning or never), approval_swap (always or on_warning or never), approval_give (always or on_warning or never), cutoff_minutes (0 to 10080), shift_lead_approves_same_day (yes or no), claim_mode (first or manager_chooses), offer_expires (at_start or at_cutoff), availability_needs_approval (yes or no), reminder_minutes_before (0 to 2880), overtime_weekly_hours, overtime_multiplier | restore prior | | | `settings.update` | admin |
+| `site_settings_save` | `save.php` | **site**, week_start (0 Sunday to 6 Saturday), currency, allow_offer (yes or no), allow_pickup (yes or no), allow_swap (yes or no), allow_give (yes or no), approval_pickup (always or on_warning or never), approval_swap (always or on_warning or never), approval_give (always or on_warning or never), cutoff_minutes (0 to 10080), shift_lead_approves_same_day (yes or no), claim_mode (first or manager_chooses), offer_expires (at_start or at_cutoff), availability_needs_approval (yes or no), reminder_minutes_before (0 to 2880), time_off_day_hours (what a day off counts when a request gives no hours from 0.25 to 24), overtime_weekly_hours, overtime_multiplier | restore prior | | | `settings.update` | admin |
 | `day_part_save` | `day-part.php` | **site**, **name**, **starts_at** (HH:MM), **ends_at** (HH:MM), service_name (the word Reservations uses for this service), sort_order, day_part (to change an existing one) | restore prior | | | `day_part.save` | admin |
 | `day_part_archive` | `day-part-archive.php` | **day_part** | restore | ✔ | | `day_part.archive` | admin |
 

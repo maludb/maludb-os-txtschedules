@@ -22,7 +22,7 @@ compliance.
 | break_required | a shift longer than N hours has less than M minutes of break planned |
 | minor_hours_day / minor_hours_week | a minor over the day or week limit |
 | minor_latest_end | a minor working past the latest time |
-| cert_required | the position needs a certification they lack or that has expired |
+| cert_required | the position needs one of **this restaurant's** certification kinds (its own list, not a fixed two) that the person lacks or that has expired — a kind that tracks no expiry never expires; an unverified card counts, a manager sees it to verify |
 
 Paid hours are the shift's length minus its planned break. `check_assignment` answers every rule for a person and a
 shift before anything is done; say the rule's sentence exactly, and for a soft one, say a manager may still approve.
