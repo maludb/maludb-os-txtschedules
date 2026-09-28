@@ -1,0 +1,184 @@
+/* app-overrides.css — the single sanctioned design-system override file.
+   ALWAYS the last stylesheet on every page, loaded after theme.min.css.
+   Plugin-level corrections to the theme live here and nowhere else.
+
+   VISIBLE SCROLLBARS
+   theme.min.css ships 5px scrollbars with a near-invisible thumb
+   (#e5e7eb on white; #19253f on #121a2d in dark mode) and hides some
+   entirely. Scrollable panels were unusable. These rules force clearly
+   visible, grabbable scrollbars everywhere, in both themes.
+   Never remove these; never use scrollbar-width:none or
+   ::-webkit-scrollbar{display:none}; never overflow:hidden on a
+   content panel. */
+
+* {
+    scrollbar-width: auto;
+    scrollbar-color: #8a94a6 #eef0f3;
+}
+
+::-webkit-scrollbar {
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 0;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #eef0f3 !important;
+    border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #8a94a6 !important;
+    border-radius: 6px;
+    border: 2px solid #eef0f3;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #5b6b79 !important;
+}
+
+/* Dark mode (theme state lives on <html> as .app-skin-dark) */
+html.app-skin-dark * {
+    scrollbar-color: #54648a #121a2d;
+}
+
+html.app-skin-dark ::-webkit-scrollbar-track {
+    background-color: #121a2d !important;
+}
+
+html.app-skin-dark ::-webkit-scrollbar-thumb {
+    background-color: #54648a !important;
+    border-color: #121a2d;
+}
+
+html.app-skin-dark ::-webkit-scrollbar-thumb:hover {
+    background-color: #7286b2 !important;
+}
+
+/* ==========================================================================
+   Assistant command bar (chat-actions) — plugin-level layout addition.
+   Fixed bottom bar on every screen; body reserves space so it never covers content.
+   ========================================================================== */
+.app-has-assistant-bar { padding-bottom: 84px; }
+
+#assistant-bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 1030;
+    padding: 10px 16px;
+    background: var(--bs-body-bg, #fff);
+    border-top: 1px solid rgba(0,0,0,.08);
+    box-shadow: 0 -2px 10px rgba(0,0,0,.04);
+}
+/* On desktop the sidebar occupies the left; align the bar to the content area. */
+@media (min-width: 992px) {
+    #assistant-bar { left: 280px; }                      /* the theme's sidebar is 280 px (100 px mini): the bar starts where it ends */
+    html.minimenu #assistant-bar { left: 100px; }
+}
+#assistant-bar .assistant-form { max-width: 900px; margin: 0 auto; }
+#assistant-bar .input-group {
+    border: 1px solid rgba(0,0,0,.12);
+    border-radius: 10px;
+    overflow: hidden;
+}
+#assistant-reply {
+    max-width: 900px;
+    margin: 0 auto 8px;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+#assistant-reply:empty { display: none; }
+
+html.app-skin-dark #assistant-bar {
+    background: #1b2431;
+    border-top-color: rgba(255,255,255,.08);
+}
+html.app-skin-dark #assistant-bar .input-group { border-color: rgba(255,255,255,.15); }
+
+/* The sidebar's list must scroll on a short screen. The theme leaves that to a jQuery
+   scrollbar plugin (PerfectScrollbar); the React shell loads no jQuery, so without this the
+   lower modules are unreachable. Harmless where the plugin runs — it sets its own overflow. */
+.nxl-navigation .navbar-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* The sidebar's logo is contained by its header, whatever size the file is. The theme sizes
+   neither image — it shipped with a logo already cut to fit — so a business's own artwork
+   rendered at its natural size and was cropped by the header's overflow. The header's content
+   box is 220 x 50 (280 x 80 less its padding); the logo scales down into it, never up, and
+   keeps its proportions. */
+.nxl-navigation .m-header .b-brand {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    height: 100%;
+}
+.nxl-navigation .m-header .logo {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 50px;
+    object-fit: contain;
+}
+/* The theme inverts the logo on dark surfaces — right for the black mark it shipped with,
+   wrong for a business's own colours (orange came out blue). The artwork is shown as drawn. */
+html.app-skin-dark .nxl-navigation .m-header .logo-lg,
+html.app-navigation-dark .nxl-navigation .m-header .logo-lg,
+html.app-header-dark .nxl-navigation .m-header .logo-lg,
+.nxl-navigation .m-header .logo-lg {
+    filter: none;
+}
+
+/* HR (2026-09-23): the fixed command bar (z-index 1030) sat over the bottom of the slide-in mobile
+   menu (the theme's sidebar is 1026), so the last items could not be tapped at 375px. When the
+   menu is open it rises above the bar (the theme keeps its own overlay inside the nav, under
+   .navbar-wrapper), and its list keeps room to scroll past the bar. */
+@media (max-width: 991.98px) {
+    .nxl-navigation.mob-navigation-active { z-index: 1040; }
+    .nxl-navigation .navbar-content { padding-bottom: 100px; }
+}
+
+/* ==========================================================================
+   txtSchedules (2026-09-28) — the phone comes first.
+   The bottom tab bar carries the five staff screens on a phone; the sidebar takes over from 992 px (d-lg-none hides
+   the bar). The command bar sits above the tab bar on a phone so both stay thumb-reachable; the page reserves room
+   for both. Touch targets are at least 44 px.
+   ========================================================================== */
+.app-tabbar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 1031;
+    height: 56px;
+    display: flex;
+    background: var(--bs-body-bg, #fff);
+    border-top: 1px solid rgba(0,0,0,.1);
+    box-shadow: 0 -2px 10px rgba(0,0,0,.05);
+}
+.app-tabbar .app-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--bs-secondary-color, #6c757d);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.app-tabbar .app-tab i { font-size: 18px; }
+.app-tabbar .app-tab.active { color: var(--bs-primary, #3454d1); }
+html.app-skin-dark .app-tabbar { background: #1b2431; border-top-color: rgba(255,255,255,.1); }
+@media (max-width: 991.98px) {
+    #assistant-bar { bottom: 56px; padding: 8px 12px; }
+    .app-has-tabbar { padding-bottom: 140px; }
+    /* The slide-in menu ("More") rises above both bars and keeps room to scroll past them. */
+    .nxl-navigation.mob-navigation-active { z-index: 1050; }
+    .nxl-navigation .navbar-content { padding-bottom: 160px; }
+}
+/* The header names the restaurant; on a phone it shares the row with the hamburger and the avatar. */
+.site-name { min-width: 0; max-width: 46vw; }
+@media (min-width: 992px) { .site-name { max-width: 30rem; } }

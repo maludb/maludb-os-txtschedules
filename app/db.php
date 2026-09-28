@@ -8,7 +8,7 @@ function db(): PDO
     if ($pdo instanceof PDO) {
         return $pdo;
     }
-    $dsn = sprintf('pgsql:host=%s;port=%s;dbname=%s', env('DB_HOST', '127.0.0.1'), env('DB_PORT', '5432'), env('DB_NAME', 'hr'));
+    $dsn = sprintf('pgsql:host=%s;port=%s;dbname=%s', env('DB_HOST', '127.0.0.1'), env('DB_PORT', '5432'), env('DB_NAME', 'txtschedules'));
     $pdo = new PDO($dsn, env('DB_USER', 'txtschedules_rw'), (string) env('DB_PASSWORD', ''), [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

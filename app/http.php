@@ -210,6 +210,11 @@ function render_screen(string $title, string $pageHtml, array $layout = []): voi
     if (is_htmx_request() && !is_htmx_boosted()) {
         header('Vary: HX-Request');
         header('HX-Title: ' . rawurlencode($title . ' · ' . app_name()));
+        // What #page-content now shows — the shell re-stamps data-screen/-entity/-record-id and the menu highlight from these,
+        // so the command bar's context and the active tab follow HTMX navigation (a partial cannot set attributes of its parent).
+        header('X-Screen: ' . ($layout['screen'] ?? ''));
+        header('X-Entity: ' . ($layout['entity'] ?? ''));
+        header('X-Record-Id: ' . ($layout['recordId'] ?? ''));
         echo $pageHtml;
         return;
     }
@@ -220,7 +225,7 @@ function render_screen(string $title, string $pageHtml, array $layout = []): voi
 function render_module_stub(string $title, string $screen, string $what): void
 {
     log_screen_view(db(), $screen);
-    render_screen($title, view('shared/stub.php', ['title' => $title, 'what' => $what]), ['activeNav' => $screen, 'screen' => $screen]);
+    render_screen($title, view('shared/stub.php', ['title' => $title, 'what' => $what, 'screen' => $screen]), ['activeNav' => $screen, 'screen' => $screen]);
 }
 
 function require_post(): void
