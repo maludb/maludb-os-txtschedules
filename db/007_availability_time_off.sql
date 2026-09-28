@@ -55,7 +55,7 @@ CREATE TABLE time_off_requests (
     type_id         bigint NOT NULL REFERENCES time_off_types(id),
     starts_at       timestamptz NOT NULL,
     ends_at         timestamptz NOT NULL,
-    hours           numeric(6,2) NOT NULL CHECK (hours > 0),                 -- what it draws from the balance
+    hours           numeric(6,2) NOT NULL CHECK (hours > 0),                 -- what it draws from the balance; left out, the trigger counts it (D13)
     note            text,                                                    -- the person's; a category is the type
     status          text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'declined', 'cancelled')),
     decided_by      bigint REFERENCES members(id) ON DELETE SET NULL,
@@ -65,6 +65,32 @@ CREATE TABLE time_off_requests (
     created_at      timestamptz NOT NULL DEFAULT now(),
     CHECK (ends_at > starts_at)
 );
+-- D13: a request that gives no hours counts, for each calendar day it touches in the restaurant's time zone, the hours
+-- of the request on that day capped at the restaurant's time_off_day_hours (site_settings; 8 by default) — a whole day
+-- is one day's hours, a part day is what it covers. The hours are stored: changing the setting later changes new
+-- requests only, never one already asked or decided.
+CREATE FUNCTION ts_time_off_hours(p_scope bigint, p_starts timestamptz, p_ends timestamptz) RETURNS numeric
+    LANGUAGE sql STABLE AS $$
+    SELECT COALESCE(sum(LEAST(ss.time_off_day_hours,
+             EXTRACT(EPOCH FROM (LEAST(p_ends AT TIME ZONE st.timezone, d.d + interval '1 day')
+                                 - GREATEST(p_starts AT TIME ZONE st.timezone, d.d))) / 3600.0)), 0)::numeric(6,2)
+      FROM sites st
+      JOIN site_settings ss ON ss.scope_id = st.scope_id
+      CROSS JOIN LATERAL generate_series((p_starts AT TIME ZONE st.timezone)::date::timestamp,
+                                         ((p_ends AT TIME ZONE st.timezone) - interval '1 microsecond')::date::timestamp,
+                                         interval '1 day') AS d(d)
+     WHERE st.scope_id = p_scope
+$$;
+CREATE FUNCTION ts_time_off_request_hours() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.hours IS NULL THEN
+        NEW.hours := ts_time_off_hours(NEW.scope_id, NEW.starts_at, NEW.ends_at);
+    END IF;
+    RETURN NEW;
+END$$;
+CREATE TRIGGER time_off_requests_hours BEFORE INSERT ON time_off_requests
+    FOR EACH ROW EXECUTE FUNCTION ts_time_off_request_hours();
+GRANT EXECUTE ON FUNCTION ts_time_off_hours(bigint, timestamptz, timestamptz) TO txtschedules_rw, txtschedules_records_ro;
 CREATE INDEX time_off_requests_member_idx ON time_off_requests (member_id, starts_at);
 CREATE INDEX time_off_requests_scope_idx  ON time_off_requests (scope_id, status, starts_at);
 

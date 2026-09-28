@@ -64,13 +64,19 @@ $$;
 REVOKE ALL ON FUNCTION ts_effective_rate(bigint, bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION ts_effective_rate(bigint, bigint) TO txtschedules_rw;
 
+-- Certification kinds are each restaurant's own (D15): its name, whether an expiry is tracked, and how many days
+-- before it a manager is warned. Two are seeded with the site (ts_site_materialise). Which positions need one is
+-- position_certifications; the cert_required rule (db/009) reads both.
 CREATE TABLE certification_kinds (
-    id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    key         text NOT NULL UNIQUE CHECK (key ~ '^[a-z][a-z0-9_]{0,39}$'),
-    name        text NOT NULL,
-    archived_at timestamptz
+    id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    scope_id     bigint NOT NULL REFERENCES sites(scope_id) ON DELETE CASCADE,
+    key          text NOT NULL CHECK (key ~ '^[a-z][a-z0-9_]{0,39}$'),
+    name         text NOT NULL CHECK (btrim(name) <> ''),
+    track_expiry boolean NOT NULL DEFAULT true,
+    warn_days    integer NOT NULL DEFAULT 30 CHECK (warn_days BETWEEN 0 AND 365),
+    archived_at  timestamptz,
+    UNIQUE (scope_id, key)
 );
-INSERT INTO certification_kinds (key, name) VALUES ('food_handler', 'Food handler'), ('alcohol_service', 'Alcohol service');
 
 CREATE TABLE certifications (
     id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -79,18 +85,29 @@ CREATE TABLE certifications (
     issued_on   date,
     expires_on  date,
     reference   text,
-    recorded_by bigint REFERENCES members(id) ON DELETE SET NULL,
+    recorded_by bigint REFERENCES members(id) ON DELETE SET NULL,   -- who entered it: the person, or a manager
+    verified_by bigint REFERENCES members(id) ON DELETE SET NULL,   -- a manager who checked the card (D15); NULL = to verify
+    verified_at timestamptz,
     removed_at  timestamptz,
     created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX certifications_member_idx ON certifications (member_id) WHERE removed_at IS NULL;
 
--- A position that needs a certification (the cert_required rule, db/010).
+-- A position that needs a certification (the cert_required rule, db/009): the kind and the position are the same restaurant's.
 CREATE TABLE position_certifications (
     position_id bigint NOT NULL REFERENCES positions(id) ON DELETE CASCADE,
     kind_id     bigint NOT NULL REFERENCES certification_kinds(id),
     PRIMARY KEY (position_id, kind_id)
 );
+CREATE FUNCTION ts_position_cert_same_site() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF (SELECT scope_id FROM positions WHERE id = NEW.position_id) IS DISTINCT FROM (SELECT scope_id FROM certification_kinds WHERE id = NEW.kind_id) THEN
+        RAISE EXCEPTION 'A position needs a certification of its own restaurant.' USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+END$$;
+CREATE TRIGGER position_certifications_same_site BEFORE INSERT OR UPDATE ON position_certifications
+    FOR EACH ROW EXECUTE FUNCTION ts_position_cert_same_site();
 
 GRANT SELECT, INSERT, UPDATE ON positions, staff_profiles, certifications TO txtschedules_rw;
 GRANT SELECT, INSERT, UPDATE, DELETE ON staff_positions, position_certifications TO txtschedules_rw;

@@ -32,8 +32,10 @@ BEGIN
         DELETE FROM member_site_roles WHERE scope_id = p_scope;         -- closed: nobody reaches it; its history stays
     END IF;
     IF v_new THEN
-        INSERT INTO site_settings (scope_id, week_start, currency)
-        SELECT p_scope, a.default_week_start, a.default_currency FROM app_settings a WHERE a.id = 1;
+        INSERT INTO site_settings (scope_id, week_start, currency, time_off_day_hours)
+        SELECT p_scope, a.default_week_start, a.default_currency, a.default_time_off_day_hours FROM app_settings a WHERE a.id = 1;
+        INSERT INTO certification_kinds (scope_id, key, name) VALUES
+            (p_scope, 'food_handler', 'Food handler'), (p_scope, 'alcohol_service', 'Alcohol service');
         INSERT INTO day_parts (scope_id, key, name, starts_at, ends_at, sort_order, service_name) VALUES
             (p_scope, 'lunch', 'Lunch', '11:00', '15:00', 1, 'Lunch'),          -- service_name: Reservations' own word (ZozoCal's default services)
             (p_scope, 'dinner', 'Dinner', '17:00', '22:00', 2, 'Dinner');
@@ -66,7 +68,7 @@ SELECT s.scope_id AS site_id, s.location_id, s.name, s.address, s.timezone,
        ss.week_start, ss.currency, ss.allow_offer, ss.allow_pickup, ss.allow_swap, ss.allow_give,
        ss.approval_pickup, ss.approval_swap, ss.approval_give, ss.cutoff_minutes, ss.shift_lead_approves_same_day,
        ss.claim_mode, ss.offer_expires, ss.availability_needs_approval, ss.reminder_minutes_before,
-       ss.overtime_weekly_hours, ss.overtime_multiplier, ss.rule_preset,
+       ss.overtime_weekly_hours, ss.overtime_multiplier, ss.rule_preset, ss.time_off_day_hours,
        r.role_key AS my_role, r.roles AS my_roles
   FROM sites s
   JOIN site_settings ss ON ss.scope_id = s.scope_id
@@ -122,15 +124,49 @@ SELECT sp.member_id, sp.position_id, p.scope_id AS site_id, p.name AS position_n
   JOIN positions p ON p.id = sp.position_id
  WHERE p.scope_id IN (SELECT ts_held_scope_ids());
 
+-- This restaurant's certification kinds and the positions that need each (D15): what any staff member sees, to add their own.
+CREATE OR REPLACE VIEW mcp_certification_kinds WITH (security_barrier = true) AS
+SELECT k.id AS kind_id, k.scope_id AS site_id, k.key, k.name, k.track_expiry, k.warn_days, k.archived_at,
+       COALESCE((SELECT array_agg(pc.position_id ORDER BY pc.position_id) FROM position_certifications pc WHERE pc.kind_id = k.id), '{}') AS required_position_ids
+  FROM certification_kinds k
+ WHERE k.scope_id IN (SELECT ts_held_scope_ids());
+
+-- A person's certifications: their own, and — for a manager (schedule.build) — those of people at the kind's restaurant.
 CREATE OR REPLACE VIEW mcp_certifications WITH (security_barrier = true) AS
-SELECT c.id AS certification_id, c.member_id, k.key AS kind, k.name AS kind_name, c.issued_on, c.expires_on,
-       (c.expires_on IS NOT NULL AND c.expires_on < current_date) AS expired
+SELECT c.id AS certification_id, c.member_id, k.scope_id AS site_id, k.id AS kind_id, k.key AS kind, k.name AS kind_name,
+       c.issued_on, c.expires_on, c.reference,
+       (k.track_expiry AND c.expires_on IS NOT NULL AND c.expires_on < current_date) AS expired,
+       (k.track_expiry AND c.expires_on IS NOT NULL AND c.expires_on >= current_date AND c.expires_on <= current_date + k.warn_days) AS due_soon,
+       (c.verified_at IS NOT NULL) AS verified, c.verified_by, c.verified_at
   FROM certifications c
   JOIN certification_kinds k ON k.id = c.kind_id
  WHERE c.removed_at IS NULL
-   AND (c.member_id = app_current_member_id()
-        OR EXISTS (SELECT 1 FROM member_site_roles r WHERE r.member_id = c.member_id
-                     AND r.scope_id IN (SELECT ts_scopes_with_right('schedule.build'))));
+   AND (c.member_id = app_current_member_id() OR k.scope_id IN (SELECT ts_scopes_with_right('schedule.build')));
+
+-- What a manager works from (D15): every kind of this restaurant that is expired, due within its warning days, missing for
+-- someone on a position that needs it, or entered by the person and not yet verified. A person sees their own rows.
+CREATE OR REPLACE VIEW mcp_certifications_due WITH (security_barrier = true) AS
+WITH held AS (
+    SELECT c.id AS certification_id, c.member_id, k.id AS kind_id, k.scope_id, k.name AS kind_name, c.expires_on,
+           CASE WHEN k.track_expiry AND c.expires_on IS NOT NULL AND c.expires_on < current_date THEN 'expired'
+                WHEN k.track_expiry AND c.expires_on IS NOT NULL AND c.expires_on <= current_date + k.warn_days THEN 'due'
+                WHEN c.verified_at IS NULL THEN 'to_verify' END AS state
+      FROM certifications c JOIN certification_kinds k ON k.id = c.kind_id AND k.archived_at IS NULL
+     WHERE c.removed_at IS NULL
+), missing AS (
+    SELECT NULL::bigint AS certification_id, sp.member_id, k.id AS kind_id, k.scope_id, k.name AS kind_name, NULL::date AS expires_on, 'missing' AS state
+      FROM staff_positions sp
+      JOIN staff_profiles pr ON pr.member_id = sp.member_id AND pr.active
+      JOIN position_certifications pc ON pc.position_id = sp.position_id
+      JOIN certification_kinds k ON k.id = pc.kind_id AND k.archived_at IS NULL
+     WHERE NOT EXISTS (SELECT 1 FROM certifications c WHERE c.member_id = sp.member_id AND c.kind_id = k.id AND c.removed_at IS NULL)
+     GROUP BY sp.member_id, k.id, k.scope_id, k.name
+)
+SELECT u.certification_id, u.member_id, m.display_name, u.scope_id AS site_id, u.kind_id, u.kind_name, u.expires_on, u.state,
+       CASE WHEN u.expires_on IS NOT NULL THEN u.expires_on - current_date END AS days_left
+  FROM (SELECT * FROM held WHERE state IS NOT NULL UNION ALL SELECT * FROM missing) u
+  JOIN members m ON m.id = u.member_id
+ WHERE u.member_id = app_current_member_id() OR u.scope_id IN (SELECT ts_scopes_with_right('schedule.build'));
 
 CREATE OR REPLACE VIEW mcp_availability WITH (security_barrier = true) AS
 SELECT a.id AS availability_id, a.member_id, a.scope_id AS site_id, a.weekday, a.starts_at, a.ends_at, a.kind,
@@ -326,7 +362,7 @@ SELECT k.scope_id AS site_id, k.week_start, k.area,
   LEFT JOIN labor_budgets b ON b.scope_id = k.scope_id AND b.week_start = k.week_start AND b.area = k.area
  GROUP BY k.scope_id, k.week_start, k.area, b.budget_hours, b.budget_amount;
 
-GRANT SELECT ON mcp_sites, mcp_members, mcp_member_site_roles, mcp_positions, mcp_staff, mcp_staff_positions, mcp_certifications,
+GRANT SELECT ON mcp_sites, mcp_members, mcp_member_site_roles, mcp_positions, mcp_staff, mcp_staff_positions, mcp_certification_kinds, mcp_certifications, mcp_certifications_due,
     mcp_availability, mcp_time_off_types, mcp_time_off_balances, mcp_time_off_requests, mcp_blackout_dates, mcp_schedule_weeks,
     mcp_shifts, mcp_templates, mcp_template_shifts, mcp_exchanges, mcp_exchange_claims, mcp_site_rules, mcp_rule_overrides,
     mcp_labor_budgets, mcp_labor_weekly, mcp_day_parts, mcp_forecast_covers, mcp_staffing_ratios, mcp_announcements

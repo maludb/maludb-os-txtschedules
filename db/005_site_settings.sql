@@ -6,6 +6,7 @@ CREATE TABLE app_settings (
     id                          smallint PRIMARY KEY DEFAULT 1 CHECK (id = 1),
     default_week_start          smallint NOT NULL DEFAULT 1 CHECK (default_week_start BETWEEN 0 AND 6),   -- 0 Sunday … 6 Saturday
     default_currency            text NOT NULL DEFAULT 'USD' CHECK (default_currency ~ '^[A-Z]{3}$'),
+    default_time_off_day_hours  numeric(4,2) NOT NULL DEFAULT 8 CHECK (default_time_off_day_hours > 0 AND default_time_off_day_hours <= 24),
     updated_by                  bigint REFERENCES members(id) ON DELETE SET NULL,
     created_at                  timestamptz NOT NULL DEFAULT now(),
     updated_at                  timestamptz NOT NULL DEFAULT now()
@@ -34,6 +35,8 @@ CREATE TABLE site_settings (
     -- availability and reminders
     availability_needs_approval boolean NOT NULL DEFAULT true,
     reminder_minutes_before     integer NOT NULL DEFAULT 120 CHECK (reminder_minutes_before BETWEEN 0 AND 2880),
+    -- time off: what one day off counts when a request gives no hours (D13 — the owner: per restaurant, not a constant)
+    time_off_day_hours          numeric(4,2) NOT NULL DEFAULT 8 CHECK (time_off_day_hours > 0 AND time_off_day_hours <= 24),
     -- labor
     overtime_weekly_hours       numeric(5,2) NOT NULL DEFAULT 40 CHECK (overtime_weekly_hours > 0),
     overtime_multiplier         numeric(4,2) NOT NULL DEFAULT 1.5 CHECK (overtime_multiplier >= 1),

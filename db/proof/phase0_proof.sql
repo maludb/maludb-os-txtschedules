@@ -253,7 +253,7 @@ SELECT pg_temp.refused($q$SELECT ts_exchange_claim((SELECT id FROM exchanges WHE
     'a second claim after the win is told it is gone');
 RESET ROLE;
 SET ROLE txtschedules_rw;
-INSERT INTO position_certifications (position_id, kind_id) SELECT position_id, (SELECT id FROM certification_kinds WHERE key = 'food_handler') FROM shifts, sh WHERE id = sh.open1;
+INSERT INTO position_certifications (position_id, kind_id) SELECT position_id, (SELECT id FROM certification_kinds WHERE scope_id = 102 AND key = 'food_handler') FROM shifts, sh WHERE id = sh.open1;
 SELECT pg_temp.check(ts_exchange_create('open', (SELECT open1 FROM sh), 1) > 0, 'a manager opens the unassigned shift (Server now needs a food-handler card)');
 SELECT pg_temp.check(ts_exchange_claim((SELECT id FROM exchanges WHERE kind = 'open'), 29) = 'pending_approval',
     'Kid claims it; certification is a soft warning, so it waits for a manager (on_warning)');
@@ -324,6 +324,120 @@ SELECT set_config('app.member_id', '1', true);
 SELECT pg_temp.check((SELECT count(*) FROM mcp_activity_log) >= 0, 'the activity role reads mcp_activity_log');
 RESET ROLE;
 SELECT pg_temp.refused($q$SET ROLE txtschedules_records_ro; SELECT * FROM staff_positions$q$, 'permission denied', 'the records role cannot read wages from the base table');
+RESET ROLE;
+
+-- ---------------------------------------------------------------- 7. time off: the hours a day are the restaurant's setting (D13)
+SET ROLE txtschedules_rw;
+SELECT pg_temp.check((SELECT time_off_day_hours FROM site_settings WHERE scope_id = 102) = 8, 'a new restaurant counts 8 hours a day by default');
+INSERT INTO time_off_requests (member_id, scope_id, type_id, starts_at, ends_at, hours)
+SELECT 26, 102, id, (current_date + 50 + time '00:00') AT TIME ZONE 'America/Chicago', (current_date + 52 + time '00:00') AT TIME ZONE 'America/Chicago', NULL
+  FROM time_off_types WHERE scope_id = 102 AND key = 'vacation';
+SELECT pg_temp.check((SELECT hours FROM time_off_requests ORDER BY id DESC LIMIT 1) = 16, 'two whole days with no hours given: 2 x 8 = 16 hours');
+INSERT INTO time_off_requests (member_id, scope_id, type_id, starts_at, ends_at, hours)
+SELECT 26, 102, id, (current_date + 60 + time '09:00') AT TIME ZONE 'America/Chicago', (current_date + 60 + time '13:00') AT TIME ZONE 'America/Chicago', NULL
+  FROM time_off_types WHERE scope_id = 102 AND key = 'vacation';
+SELECT pg_temp.check((SELECT hours FROM time_off_requests ORDER BY id DESC LIMIT 1) = 4, 'a part day counts what it covers: 09:00-13:00 = 4 hours');
+UPDATE site_settings SET time_off_day_hours = 6 WHERE scope_id = 102;
+INSERT INTO time_off_requests (member_id, scope_id, type_id, starts_at, ends_at, hours)
+SELECT 26, 102, id, (current_date + 70 + time '00:00') AT TIME ZONE 'America/Chicago', (current_date + 71 + time '00:00') AT TIME ZONE 'America/Chicago', NULL
+  FROM time_off_types WHERE scope_id = 102 AND key = 'vacation';
+SELECT pg_temp.check((SELECT hours FROM time_off_requests ORDER BY id DESC LIMIT 1) = 6, 'the setting changed to 6: a new whole day counts 6 hours');
+SELECT pg_temp.check((SELECT hours FROM time_off_requests WHERE starts_at = (current_date + 50 + time '00:00') AT TIME ZONE 'America/Chicago') = 16, 'and the request asked before is unchanged (16)');
+INSERT INTO time_off_requests (member_id, scope_id, type_id, starts_at, ends_at, hours)
+SELECT 26, 102, id, (current_date + 71 + time '08:00') AT TIME ZONE 'America/Chicago', (current_date + 71 + time '20:00') AT TIME ZONE 'America/Chicago', NULL
+  FROM time_off_types WHERE scope_id = 102 AND key = 'vacation';
+SELECT pg_temp.check((SELECT hours FROM time_off_requests ORDER BY id DESC LIMIT 1) = 6, 'twelve hours on one day are capped at the restaurant''s day (6)');
+SELECT pg_temp.check(ts_time_off_hours(101, (current_date + 70 + time '00:00') AT TIME ZONE 'America/New_York', (current_date + 71 + time '00:00') AT TIME ZONE 'America/New_York') = 8,
+    'the other restaurant still counts 8: the setting is per restaurant');
+SELECT pg_temp.refused($q$UPDATE site_settings SET time_off_day_hours = 0 WHERE scope_id = 102$q$, 'time_off_day_hours', 'a day of 0 hours is refused');
+SELECT pg_temp.refused($q$UPDATE site_settings SET time_off_day_hours = 25 WHERE scope_id = 102$q$, 'time_off_day_hours', 'a day of 25 hours is refused');
+RESET ROLE;
+
+-- ---------------------------------------------------------------- 8. certifications: the restaurant's kinds, required by position (D15)
+SET ROLE txtschedules_rw;
+SELECT pg_temp.check((SELECT count(*) FROM certification_kinds WHERE scope_id = 102) = 2 AND (SELECT count(*) FROM certification_kinds WHERE scope_id = 101) = 2,
+    'each restaurant is seeded with its own two kinds (food handler, alcohol service)');
+INSERT INTO certification_kinds (scope_id, key, name, track_expiry, warn_days) VALUES (102, 'first_aid', 'First aid', false, 0);
+SELECT pg_temp.check((SELECT count(*) FROM certification_kinds WHERE scope_id = 102) = 3, 'a restaurant adds a kind of its own (First aid, no expiry tracked)');
+SELECT pg_temp.refused($q$INSERT INTO certification_kinds (scope_id, key, name) VALUES (102, 'first_aid', 'Again')$q$, 'duplicate', 'a kind key is unique within its restaurant');
+SELECT pg_temp.refused($q$INSERT INTO position_certifications (position_id, kind_id)
+    SELECT (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Host'), id FROM certification_kinds WHERE scope_id = 101 AND key = 'food_handler'$q$,
+    'of its own restaurant', 'a position cannot need another restaurant''s certification');
+-- the shift date used below: five days out at Airport
+CREATE TEMP TABLE cd AS SELECT (current_date + 5) AS d;
+GRANT SELECT ON cd TO PUBLIC;
+-- Sam (28) is a Server at Airport, which needs a food-handler card (section 5) and holds none.
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM ts_assignment_warnings(28, 102, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Server'),
+        ((SELECT d FROM cd) + time '17:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM cd) + time '21:00') AT TIME ZONE 'America/Chicago', 0)
+        WHERE rule_key = 'cert_required' AND message LIKE '%Food handler missing%'), 'no card: cert_required says which one is missing');
+INSERT INTO certifications (member_id, kind_id, expires_on, recorded_by)
+SELECT 28, id, current_date - 1, 28 FROM certification_kinds WHERE scope_id = 102 AND key = 'food_handler';
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM ts_assignment_warnings(28, 102, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Server'),
+        ((SELECT d FROM cd) + time '17:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM cd) + time '21:00') AT TIME ZONE 'America/Chicago', 0)
+        WHERE rule_key = 'cert_required' AND message LIKE '%Food handler expired%'), 'a card that expired yesterday: cert_required says it expired');
+INSERT INTO certifications (member_id, kind_id, expires_on, recorded_by)
+SELECT 28, id, current_date + 400, 28 FROM certification_kinds WHERE scope_id = 102 AND key = 'food_handler';
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM ts_assignment_warnings(28, 102, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Server'),
+        ((SELECT d FROM cd) + time '17:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM cd) + time '21:00') AT TIME ZONE 'America/Chicago', 0)
+        WHERE rule_key = 'cert_required'), 'a current card as well: the rule is quiet');
+-- a kind that tracks no expiry ignores a past date; Host needs First aid
+INSERT INTO position_certifications (position_id, kind_id)
+SELECT (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Host'), id FROM certification_kinds WHERE scope_id = 102 AND key = 'first_aid';
+INSERT INTO staff_positions (member_id, position_id, is_primary, wage_override) SELECT 28, id, false, NULL FROM positions WHERE scope_id = 102 AND name = 'Host';
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM ts_assignment_warnings(28, 102, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Host'),
+        ((SELECT d FROM cd) + time '10:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM cd) + time '14:00') AT TIME ZONE 'America/Chicago', 0)
+        WHERE rule_key = 'cert_required' AND message LIKE '%First aid missing%'), 'a position needing First aid (a kind this restaurant added): missing is reported');
+INSERT INTO certifications (member_id, kind_id, expires_on, recorded_by)
+SELECT 28, id, current_date - 100, 1 FROM certification_kinds WHERE scope_id = 102 AND key = 'first_aid';
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM ts_assignment_warnings(28, 102, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Host'),
+        ((SELECT d FROM cd) + time '10:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM cd) + time '14:00') AT TIME ZONE 'America/Chicago', 0)
+        WHERE rule_key = 'cert_required'), 'First aid tracks no expiry: an old date does not count against it');
+-- hard or soft is the restaurant's choice (the rules engine)
+UPDATE site_rules SET severity = 'hard' WHERE scope_id = 102 AND rule_key = 'cert_required';
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM ts_assignment_warnings(29, 102, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Server'),
+        ((SELECT d FROM cd) + time '17:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM cd) + time '21:00') AT TIME ZONE 'America/Chicago', 0)
+        WHERE rule_key = 'cert_required' AND severity = 'hard'), 'set to hard: a missing card is a refusal, not a warning');
+UPDATE site_rules SET severity = 'soft' WHERE scope_id = 102 AND rule_key = 'cert_required';
+UPDATE certification_kinds SET archived_at = now() WHERE scope_id = 102 AND key = 'food_handler';
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM ts_assignment_warnings(29, 102, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Server'),
+        ((SELECT d FROM cd) + time '17:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM cd) + time '21:00') AT TIME ZONE 'America/Chicago', 0)
+        WHERE rule_key = 'cert_required'), 'an archived kind is no longer required');
+UPDATE certification_kinds SET archived_at = NULL WHERE scope_id = 102 AND key = 'food_handler';
+-- Priya (26): a card expiring in 10 days (warn_days 30), entered by herself.
+INSERT INTO certifications (member_id, kind_id, expires_on, recorded_by)
+SELECT 26, id, current_date + 10, 26 FROM certification_kinds WHERE scope_id = 102 AND key = 'food_handler';
+RESET ROLE;
+
+-- who sees what
+SET ROLE txtschedules_records_ro;
+SELECT set_config('app.member_id', '28', true);
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_certifications WHERE member_id = 26), 'Sam does not see Priya''s certifications');
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM mcp_certifications WHERE member_id = 28), 'Sam sees his own');
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_certification_kinds WHERE site_id = 101) AND EXISTS (SELECT 1 FROM mcp_certification_kinds WHERE site_id = 102),
+    'Sam sees the kinds of his own restaurant only, to add his own card');
+SELECT pg_temp.check((SELECT required_position_ids FROM mcp_certification_kinds WHERE key = 'first_aid') <> '{}', 'each kind says which positions need it');
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_certifications_due WHERE member_id <> 28), 'Sam''s due list holds only himself');
+SELECT set_config('app.member_id', '27', true);
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_certifications WHERE member_id IN (26, 28)), 'Marco (a manager at Downtown, staff at Airport) sees no Airport certifications');
+SELECT set_config('app.member_id', '1', true);
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM mcp_certifications WHERE member_id = 26) AND EXISTS (SELECT 1 FROM mcp_certifications WHERE member_id = 28), 'the owner (schedule.build at Airport) sees both');
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM mcp_certifications_due WHERE member_id = 28 AND state = 'expired'), 'due: Sam''s card that expired yesterday');
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM mcp_certifications_due WHERE member_id = 26 AND state = 'due' AND days_left = 10), 'due: Priya''s card expires in 10 days (inside the 30 warned)');
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM mcp_certifications_due WHERE member_id = 29 AND state = 'missing' AND kind_name = 'Food handler'), 'due: the minor on Server holds no food-handler card');
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM mcp_certifications_due WHERE member_id = 28 AND state = 'to_verify'), 'to verify: Sam''s current card, entered by himself');
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM mcp_certifications_due WHERE state = 'to_verify' AND member_id = 28 AND kind_name = 'First aid'), 'a card that tracks no expiry is still to verify until a manager checks it');
+RESET ROLE;
+SET ROLE txtschedules_rw;
+UPDATE certifications SET verified_by = 1, verified_at = now() WHERE member_id = 28 AND expires_on IS DISTINCT FROM current_date - 1;
+RESET ROLE;
+SET ROLE txtschedules_records_ro;
+SELECT set_config('app.member_id', '1', true);
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_certifications_due WHERE member_id = 28 AND state = 'to_verify'), 'a manager verifies Sam''s cards: none is left to verify (the expired one stays expired)');
+SELECT pg_temp.check((SELECT verified FROM mcp_certifications WHERE member_id = 28 AND expires_on = current_date + 400), 'and reads as verified');
+SELECT set_config('app.member_id', '26', true);
+SELECT pg_temp.check((SELECT count(DISTINCT member_id) FROM mcp_certifications_due) = 1, 'Priya''s due list holds only herself');
+RESET ROLE;
+SELECT pg_temp.refused($q$SET ROLE txtschedules_records_ro; UPDATE certifications SET verified_at = now()$q$, 'permission denied', 'the records role cannot verify or change a card');
 RESET ROLE;
 
 \o

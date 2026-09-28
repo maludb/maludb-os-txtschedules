@@ -160,10 +160,19 @@ BEGIN
             rule_key := r.k; severity := r.sev; message := 'A minor may not work past ' || COALESCE(v_p->>'time', '22:00') || '.'; RETURN NEXT;
         ELSIF r.k = 'cert_required' AND EXISTS (
                 SELECT 1 FROM position_certifications pc
+                  JOIN certification_kinds k ON k.id = pc.kind_id AND k.archived_at IS NULL
                  WHERE pc.position_id = p_position
                    AND NOT EXISTS (SELECT 1 FROM certifications c WHERE c.member_id = p_member AND c.kind_id = pc.kind_id
-                                     AND c.removed_at IS NULL AND (c.expires_on IS NULL OR c.expires_on >= v_day))) THEN
-            rule_key := r.k; severity := r.sev; message := 'Missing or expired certification for this position.'; RETURN NEXT;
+                                     AND c.removed_at IS NULL AND (NOT k.track_expiry OR c.expires_on IS NULL OR c.expires_on >= v_day))) THEN
+            -- this restaurant's kinds and required positions (D15); an unverified card counts, a manager sees it to verify
+            rule_key := r.k; severity := r.sev;
+            message := (SELECT 'Certification: ' || string_agg(k.name || CASE WHEN EXISTS (SELECT 1 FROM certifications c WHERE c.member_id = p_member
+                            AND c.kind_id = k.id AND c.removed_at IS NULL) THEN ' expired' ELSE ' missing' END, ', ' ORDER BY k.name)
+                          FROM position_certifications pc JOIN certification_kinds k ON k.id = pc.kind_id AND k.archived_at IS NULL
+                         WHERE pc.position_id = p_position
+                           AND NOT EXISTS (SELECT 1 FROM certifications c WHERE c.member_id = p_member AND c.kind_id = pc.kind_id
+                                             AND c.removed_at IS NULL AND (NOT k.track_expiry OR c.expires_on IS NULL OR c.expires_on >= v_day)));
+            RETURN NEXT;
         END IF;
     END LOOP;
 END$$;
