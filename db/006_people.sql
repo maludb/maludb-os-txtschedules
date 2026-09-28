@@ -1,5 +1,6 @@
 -- 006: the people who work shifts — positions per site, each person's profile (the MAIN restaurant, D4),
--- the positions they hold with their wage (pay is protected: only labor.view reads it, only pay.edit writes it),
+-- the positions they hold with their wage (pay is protected: only labor.view reads it, only pay.edit writes it;
+-- a restaurant-wide DEFAULT rate per position, and a rate on the person that OVERRIDES it — the owner, 2026-09-28),
 -- and certifications with their expiry. The person themselves is the kernel's (members); these are
 -- txtSchedules' own facts about them, keyed by member_id.
 BEGIN;
@@ -10,6 +11,7 @@ CREATE TABLE positions (
     name        text NOT NULL CHECK (length(name) BETWEEN 1 AND 60),
     color       text NOT NULL DEFAULT '#6c757d' CHECK (color ~ '^#[0-9a-fA-F]{6}$'),
     area        text NOT NULL DEFAULT 'front' CHECK (area IN ('front', 'kitchen', 'bar', 'management', 'other')),
+    default_wage_rate numeric(8,2) CHECK (default_wage_rate IS NULL OR default_wage_rate >= 0),   -- per hour: what anyone at this position earns unless their own rate says otherwise
     sort_order  integer NOT NULL DEFAULT 0,
     archived_at timestamptz,
     created_at  timestamptz NOT NULL DEFAULT now(),
@@ -35,19 +37,32 @@ CREATE TABLE staff_profiles (
 CREATE INDEX staff_profiles_main_idx ON staff_profiles (main_scope_id);
 CREATE TRIGGER staff_profiles_touch BEFORE UPDATE ON staff_profiles FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
--- The positions a person works, with the wage for each. The wage is read only through mcp_staff_positions,
--- which blanks it without labor.view at the position's site.
+-- The positions a person works, with the person's OWN rate for each when they have one (wage_override, per hour
+-- in the site's currency; NULL = the position's default applies). The EFFECTIVE rate is the override when set, else
+-- positions.default_wage_rate (ts_effective_rate; the mcp views inline the same COALESCE). Wages are read only
+-- through mcp_positions / mcp_staff_positions / mcp_shifts, which blank them without labor.view at the position's site.
 CREATE TABLE staff_positions (
     member_id    bigint NOT NULL REFERENCES members(id) ON DELETE CASCADE,
     position_id  bigint NOT NULL REFERENCES positions(id) ON DELETE CASCADE,
     is_primary   boolean NOT NULL DEFAULT false,
-    wage_rate    numeric(8,2) CHECK (wage_rate IS NULL OR wage_rate >= 0),      -- per hour, in the site's currency
+    wage_override numeric(8,2) CHECK (wage_override IS NULL OR wage_override >= 0),
     created_at   timestamptz NOT NULL DEFAULT now(),
     updated_at   timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (member_id, position_id)
 );
 CREATE UNIQUE INDEX staff_positions_one_primary ON staff_positions (member_id) WHERE is_primary;
 CREATE TRIGGER staff_positions_touch BEFORE UPDATE ON staff_positions FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- The rate a person earns at a position: their own when set, else the position's default; NULL when neither. For the
+-- writer role (handlers, reports); the records role reads the same number only through the views, gated.
+CREATE OR REPLACE FUNCTION ts_effective_rate(p_member bigint, p_position bigint) RETURNS numeric
+    LANGUAGE sql STABLE AS $$
+    SELECT COALESCE(sp.wage_override, p.default_wage_rate)
+      FROM positions p LEFT JOIN staff_positions sp ON sp.position_id = p.id AND sp.member_id = p_member
+     WHERE p.id = p_position
+$$;
+REVOKE ALL ON FUNCTION ts_effective_rate(bigint, bigint) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION ts_effective_rate(bigint, bigint) TO txtschedules_rw;
 
 CREATE TABLE certification_kinds (
     id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

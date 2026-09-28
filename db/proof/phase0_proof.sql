@@ -39,10 +39,11 @@ INSERT INTO member_site_roles (member_id, scope_id, role_key, roles, capability)
  (29, 102, 'staff', '{staff}', 'write');
 SELECT ts_ensure_staff_profile(26, 102), ts_ensure_staff_profile(27, 101), ts_ensure_staff_profile(28, 102), ts_ensure_staff_profile(29, 102);
 UPDATE staff_profiles SET is_minor = true, minor_until = current_date + 365 WHERE member_id = 29;
-INSERT INTO positions (scope_id, name) VALUES (102, 'Server'), (101, 'Server'), (102, 'Host');
-INSERT INTO staff_positions (member_id, position_id, is_primary, wage_rate)
-SELECT 26, id, true, 15.00 FROM positions WHERE scope_id = 102 AND name = 'Server'
-UNION ALL SELECT 28, id, true, 16.50 FROM positions WHERE scope_id = 102 AND name = 'Server'
+INSERT INTO positions (scope_id, name, default_wage_rate) VALUES (102, 'Server', 14.00), (101, 'Server', NULL), (102, 'Host', NULL);
+-- wages: the position's default (Airport Server 14.00) unless the person has a rate of their own (wage_override)
+INSERT INTO staff_positions (member_id, position_id, is_primary, wage_override)
+SELECT 26, id, true, 15.00 FROM positions WHERE scope_id = 102 AND name = 'Server'          -- own rate wins over the default
+UNION ALL SELECT 28, id, true, NULL FROM positions WHERE scope_id = 102 AND name = 'Server'  -- no own rate: the default
 UNION ALL SELECT 29, id, true, 12.00 FROM positions WHERE scope_id = 102 AND name = 'Server'
 UNION ALL SELECT 27, id, true, 22.00 FROM positions WHERE scope_id = 101 AND name = 'Server'
 UNION ALL SELECT 27, id, false, 18.00 FROM positions WHERE scope_id = 102 AND name = 'Server';
@@ -104,6 +105,52 @@ SELECT set_config('app.member_id', '1', true);           -- the owner, admin at 
 SELECT pg_temp.check((SELECT count(*) FROM mcp_shifts WHERE cost IS NOT NULL) = 3, 'the owner sees every assigned shift''s cost at both sites (3)');
 SELECT set_config('app.member_id', '999', true);         -- nobody the mirror knows
 SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_sites) AND NOT EXISTS (SELECT 1 FROM mcp_shifts), 'an unknown member sees nothing');
+RESET ROLE;
+
+-- ---------------------------------------------------------------- 2b. wages: a default per position, an override per person
+-- Airport Server default 14.00; Priya's own 15.00; Sam has none (Priya's shift: 17:00-23:00 less 30 min = 5.5 h; Sam's: 5 h).
+SET ROLE txtschedules_records_ro;
+SELECT set_config('app.member_id', '1', true);           -- the owner: labor.view at both
+SELECT pg_temp.check((SELECT wage_rate = 14.00 AND wage_override IS NULL AND wage_source = 'default' FROM mcp_staff_positions WHERE member_id = 28),
+                     'no rate of his own: Sam earns the position''s default (14.00, source default)');
+SELECT pg_temp.check((SELECT wage_rate = 15.00 AND wage_override = 15.00 AND wage_source = 'override' FROM mcp_staff_positions WHERE member_id = 26),
+                     'Priya''s own rate wins over the default (15.00, source override)');
+SELECT pg_temp.check((SELECT default_wage_rate FROM mcp_positions WHERE site_id = 102 AND name = 'Server') = 14.00, 'the position''s default is visible with labor.view');
+SELECT pg_temp.check((SELECT cost FROM mcp_shifts WHERE assignee_member_id = 28) = 70.00, 'Sam''s shift costs 5 h x the default 14.00 = 70.00');
+SELECT pg_temp.check((SELECT cost FROM mcp_shifts WHERE assignee_member_id = 26) = 82.50, 'Priya''s shift costs 5.5 h x her own 15.00 = 82.50');
+SELECT pg_temp.check((SELECT scheduled_hours = 14.50 AND scheduled_cost = 152.50 FROM mcp_labor_weekly WHERE site_id = 102 AND area = 'all'),
+                     'the week''s labor at Airport: 14.5 h (an open 4 h included), cost 152.50 at the effective rates');
+SELECT set_config('app.member_id', '28', true);          -- Sam, staff: sees his own wage — the effective one — and no one else's
+SELECT pg_temp.check((SELECT wage_rate FROM mcp_staff_positions WHERE member_id = 28) = 14.00, 'Sam sees his own effective wage (the default)');
+SELECT pg_temp.check((SELECT wage_rate FROM mcp_staff_positions WHERE member_id = 26) IS NULL
+                     AND (SELECT wage_source FROM mcp_staff_positions WHERE member_id = 26) IS NULL
+                     AND (SELECT wage_override FROM mcp_staff_positions WHERE member_id = 26) IS NULL, 'Sam sees no part of Priya''s pay (rate, override, source)');
+SELECT pg_temp.check((SELECT default_wage_rate FROM mcp_positions WHERE site_id = 102 AND name = 'Server') IS NULL
+                     AND NOT EXISTS (SELECT 1 FROM mcp_shifts WHERE cost IS NOT NULL) AND NOT EXISTS (SELECT 1 FROM mcp_labor_weekly),
+                     'without labor.view: no default, no cost, no labor view');
+SELECT pg_temp.refused($q$SELECT ts_effective_rate(26, 1)$q$, 'permission denied', 'the records role cannot call the rate function');
+RESET ROLE;
+SET ROLE txtschedules_rw;
+UPDATE positions SET default_wage_rate = 20.00 WHERE scope_id = 102 AND name = 'Server';          -- the owner raises the default
+INSERT INTO labor_budgets (scope_id, week_start, area, budget_hours, budget_amount) SELECT 102, d, 'all', 40, 600 FROM fx;
+SELECT pg_temp.check(ts_effective_rate(28, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Server')) = 20.00, 'raising the default raises the effective rate of Sam, who has no rate of his own');
+SELECT pg_temp.check(ts_effective_rate(26, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Server')) = 15.00, 'and not Priya''s, who has one');
+SELECT pg_temp.check(ts_effective_rate(1, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Server')) = 20.00, 'a person with no row at the position is priced at its default');
+SELECT pg_temp.check(ts_effective_rate(26, (SELECT id FROM positions WHERE scope_id = 102 AND name = 'Host')) IS NULL, 'no default and no rate of one''s own: no rate');
+RESET ROLE;
+SET ROLE txtschedules_records_ro;
+SELECT set_config('app.member_id', '1', true);
+SELECT pg_temp.check((SELECT cost FROM mcp_shifts WHERE assignee_member_id = 28) = 100.00, 'after the change Sam''s shift costs 5 h x 20.00 = 100.00');
+SELECT pg_temp.check((SELECT cost FROM mcp_shifts WHERE assignee_member_id = 26) = 82.50, 'Priya''s is unchanged');
+SELECT pg_temp.check((SELECT scheduled_cost = 182.50 AND budget_hours = 40 AND budget_amount = 600 FROM mcp_labor_weekly WHERE site_id = 102 AND area = 'all'),
+                     'the labor view: cost 182.50 against the budget of 40 h and 600');
+SELECT set_config('app.member_id', '27', true);          -- Marco: manager at Downtown (labor.view), staff at Airport
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM mcp_labor_weekly WHERE site_id = 102) AND EXISTS (SELECT 1 FROM mcp_labor_weekly WHERE site_id = 101),
+                     'Marco sees Downtown''s labor and none of Airport''s');
+RESET ROLE;
+SET ROLE txtschedules_rw;
+INSERT INTO notification_prefs (member_id) VALUES (26);
+SELECT pg_temp.check((SELECT by_email AND by_sms FROM notification_prefs WHERE member_id = 26), 'notification preferences start with email AND text on (reminders go by both)');
 RESET ROLE;
 
 -- ---------------------------------------------------------------- 3. integrity: overlap, published is kept

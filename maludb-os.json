@@ -2,7 +2,7 @@
   "schema": "maludb-os.application/1",
   "catalog_key": "txtschedules",
   "name": "txtSchedules",
-  "description": "Restaurant staff scheduling — each restaurant's week built and published by its managers; staff see their shifts on their phones and offer, pick up, swap and give shifts within the restaurant's trade settings; time off with balances; labor against a budget and a covers forecast.",
+  "description": "Restaurant staff scheduling \u2014 each restaurant's week built and published by its managers; staff see their shifts on their phones and offer, pick up, swap and give shifts within the restaurant's trade settings; time off with balances; labor against a budget and a covers forecast.",
   "business_area": "Operations",
   "category": "calendar",
   "icon": "feather-calendar",
@@ -264,5 +264,12 @@
       "why": "Expected covers per day and service for the staffing forecast (D9, FR-F2)"
     }
   ],
-  "shares": []
+  "shares": [
+    {
+      "tool": "time_off_taken",
+      "description": "Approved time off per person for a period at one restaurant \u2014 for HR's records and pay. Facts about people, so only an application that changes the directory (HR) may read it, keyed by the kernel's member id.",
+      "scoped": true,
+      "people": true
+    }
+  ]
 }

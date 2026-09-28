@@ -28,12 +28,14 @@ CREATE TABLE announcement_reads (
     PRIMARY KEY (announcement_id, member_id)
 );
 
--- What each person is told, and how. SMS is only ever a request to the kernel (K6), which checks the person's
--- verified phone and their opt-out itself.
+-- What each person is told, and how — email AND text both on by default (the owner, 2026-09-28: shift reminders go
+-- by both). SMS is only ever a request to the kernel (K6), which checks the person's verified phone, their opt-out
+-- and the 30-a-day limit itself; when it refuses (rate_limited, no_verified_phone, no_sender, opted_out) the email
+-- still goes, and a person with no text on file is simply emailed.
 CREATE TABLE notification_prefs (
     member_id         bigint PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
     by_email          boolean NOT NULL DEFAULT true,
-    by_sms            boolean NOT NULL DEFAULT false,
+    by_sms            boolean NOT NULL DEFAULT true,
     kinds             text[] NOT NULL DEFAULT '{schedule_published,shift_changed,exchange,request_decided,announcement,reminder}',
     reminder_minutes  integer CHECK (reminder_minutes IS NULL OR reminder_minutes BETWEEN 0 AND 2880),   -- NULL = the site's default
     updated_at        timestamptz NOT NULL DEFAULT now()

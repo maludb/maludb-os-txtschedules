@@ -32,15 +32,20 @@ screens, the agents, the decisions, the state), then — once Phase 1 exists —
   (`ts_held_scope_ids()`, `ts_scopes_with_right()`) tested once per statement; `app.member_id` is set before any
   query; an unknown member id is refused, never created. A shift's and an exchange's history is the activity log —
   no second history table.
-- **Pay**: a wage, a cost or a budget is read only with `labor.view` at the site (or one's own wage) and changed only
-  with `pay.edit`; never in an activity row, an MCP answer to anyone else, a notification or a log line.
+- **Pay**: a wage (a position's default, a person's own rate, the effective rate), a cost or a budget is read only with
+  `labor.view` at the site (or one's own effective wage) and changed only with `pay.edit`; never in an activity row, an
+  MCP answer to anyone else, a notification or a log line (`wage.update` says THAT a rate changed).
 - **The owner's decisions (2026-09-28) are rules**: D1 the name txtSchedules (`txtschedules`); D2 trades are
   per-restaurant settings (`site_settings`); D3 web and mobile web app (installable; no native app), access by the
   kernel's grant to a site's residents; D4 staff pick up shifts only at their MAIN restaurant; D5 time off (types,
   balances, the ledger) lives here and replaces HR's leave for the staff it schedules; D6 SMS only through the kernel
   (`POST /api/v1/notify/sms.php`), every refusal falls back to email; D7 no staff chat — announcements only; D8 fair
   workweek deferred; D9 the forecast is a manual covers entry with staffing ratios, Reservations' covers read through
-  K7 next.
+  K7 next; **D10 wages: a default hourly rate per position for the restaurant and a rate on each employee that
+  overrides it — effective rate = the employee's own when set, else the position's default; cost, budgets and the
+  views use the effective rate; D11 person-level facts cross only to HR (a `people` share, `directory.writes`
+  consumers) — `time_off_taken`; D12 shift reminders go by both text and email (preferences default both on; K6's
+  refusals never stop the email), and a coverage request never goes outside the main restaurant.**
 - Integrity lives in the database: one person never holds overlapping shifts (the exclusion constraint); a published
   shift is cancelled, never deleted; a balance moves only through `ts_time_off_post()`; an exchange changes hands only
   through the `ts_exchange_*()` functions (the row lock makes one claim win); the rules engine is

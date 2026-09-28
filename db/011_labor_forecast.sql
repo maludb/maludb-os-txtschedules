@@ -1,8 +1,9 @@
 -- 011: the labor budget (FR-L1–L3) and the forecast (D9, FR-F1): a manager enters the covers expected per day
 -- and day-part (or copies last week's), and staffing ratios per position turn them into a recommended headcount
 -- beside the scheduled one. Reservations' booked covers fill the expectation later, through the kernel's
--- application read (K7: reservations.covers_by_service) — source 'reservations'. Cost is hours × the person's
--- wage for the shift's position; it is read only where the caller holds labor.view (db/013).
+-- application read (K7: reservations.covers_by_service) — source 'reservations'. Cost is paid hours × the person's
+-- EFFECTIVE rate for the shift's position (their own rate, else the position's default); it is read only where the
+-- caller holds labor.view (db/013: mcp_shifts.cost, mcp_labor_weekly).
 BEGIN;
 
 CREATE TABLE labor_budgets (

@@ -40,7 +40,8 @@ installable; push later), **fair workweek** (D8). Legal compliance is never clai
 - **A manager** — builds and publishes the week, approves time off, availability and trades, sees labor cost,
   posts announcements.
 - **The txtSchedules admin** of a restaurant (the GM; a super-admin at every restaurant) — the restaurant's settings:
-  positions, rules, trade settings, time-off types and balances, blackout dates, budgets, day-parts, ratios, pay.
+  positions, rules, trade settings, time-off types and balances, blackout dates, budgets, day-parts, ratios, and
+  **pay**: each position's **default hourly rate** and an employee's **own rate**, which overrides it (§3, D10).
 - **An agent** — the expert (answers), the scheduling assistant (drafts a week and proposes coverage; never
   publishes), any agent granted per site: reads through the two MCP servers under a run token, acts through the
   kernel's Actions MCP, pauses in the kernel's approvals where an action says so.
@@ -66,7 +67,10 @@ installable; push later), **fair workweek** (D8). Legal compliance is never clai
   - a site's data is seen by whoever holds a role **there**; drafts, templates, overrides, other people's profiles,
     availability and requests need `schedule.build` / `requests.approve` **there**;
   - a person's own shifts, profile, availability, requests, balances and claims are always theirs;
-  - **pay** — wage rates, shift cost, budgets — needs `labor.view` at the position's site, or is one's own wage;
+  - **pay** — wage rates, shift cost, budgets — needs `labor.view` at the position's site, or is one's own wage.
+    The **effective rate** of a person at a position is **their own rate when they have one, else the position's
+    default** (D10); cost = paid hours × the effective rate, for an assigned shift only; a person sees their own
+    effective rate and nothing of anyone else's, and staff without `labor.view` see neither a default nor a cost;
   - nobody sees another person's email or phone (NF-3); a notification carries only the shift's facts and a link.
 - **The marketplace** (D4): an open offer shows, and can be taken, only by staff whose **main restaurant** it is; the
   main restaurant is set by a manager (the first site a person is granted at, by default).
@@ -82,13 +86,13 @@ installable; push later), **fair workweek** (D8). Legal compliance is never clai
 | The mirror | `members`, `departments`, `department_members`, **`sites`**, **`member_site_roles`**, `sso_nonces`, `member_sessions`, `directory_sync_state` | the kernel's ids; a site is a kernel scope (`scope_id`) at a kernel location (`location_id`, shared with Reservations) |
 | Roles | `ts_rights`, `ts_roles`, `ts_role_rights`, `mcp_app_roles` | `ts_has_right(right, site)` |
 | Restaurants | `site_settings` (week, currency, **trade settings**, reminders, overtime), `day_parts`, `app_settings` | seeded by `ts_site_materialise()` |
-| People | `positions`, `staff_profiles` (**main restaurant**, max hours, minor), `staff_positions` (**wage**), `certification_kinds`, `certifications`, `position_certifications` | |
+| People | `positions` (**`default_wage_rate`**), `staff_profiles` (**main restaurant**, max hours, minor), `staff_positions` (**`wage_override`**), `certification_kinds`, `certifications`, `position_certifications` | effective rate = `COALESCE(wage_override, default_wage_rate)` — `ts_effective_rate()` for the writer, inlined in the views |
 | Availability, time off | `availability_rules`, `time_off_types`, `time_off_balances`, `time_off_requests`, `time_off_ledger`, `blackout_dates` | balances move only through `ts_time_off_post()`; decisions `ts_time_off_decide/cancel()` |
 | Schedule | `schedule_weeks`, `shifts`, `schedule_templates`, `template_shifts` | no overlap for one person (exclusion constraint); a published shift is cancelled, never deleted; changes after publishing stamped |
 | Rules | `rule_kinds` (12), `rule_presets` (generic), `site_rules`, `rule_overrides` | `ts_assignment_warnings()` — the one engine |
 | Marketplace | `exchanges` (offer, open, give, swap, coverage), `exchange_claims`, `exchange_invitees` | `ts_exchange_create/claim/choose/accept/decide/cancel/expire()`; one winner, locked |
-| Labor, forecast | `labor_budgets`, `forecast_covers`, `staffing_ratios` | `ts_staffing_needs()` |
-| Talking | `announcements`, `announcement_reads`, `notification_prefs`, `notification_outbox`, `calendar_feeds` | SMS only through the kernel (K6) |
+| Labor, forecast | `labor_budgets`, `forecast_covers`, `staffing_ratios` | `ts_staffing_needs()`; `mcp_labor_weekly` = scheduled hours and cost per site, week and area against the budget, at the effective rates |
+| Talking | `announcements`, `announcement_reads`, `notification_prefs` (**email and text both on by default**), `notification_outbox`, `calendar_feeds` | SMS only through the kernel (K6); a reminder is queued once per shift, person **and channel** |
 | Tokens | `mcp_access_tokens` | the application's own MCP/API bearer |
 
 **Activity memory**: `activity_log` through one `log_activity()`, `entity.verb` events, **each row carrying the site**
@@ -97,7 +101,7 @@ history table**: an exchange's and a shift's history is the activity log (FR-S8)
 `week.publish` (shifts published, warnings overridden), `shift.create|update|cancel|assign`, `exchange.create|claim|
 accept|approve|decline|cancel|expire`, `timeoff.request|approve|decline|cancel`, `balance.adjust` (hours, never pay),
 `availability.submit|approve|decline`, `rule.override`, `rule.update`, `settings.update` (the fields that changed),
-`wage.update` (**that** a rate changed — never the rate), `announcement.post`, `forecast.update`, `budget.update`,
+`wage.update` (**that** a default or an employee's rate changed — never the rate), `announcement.post`, `forecast.update`, `budget.update`,
 `member.sign_on`, `directory.sync`. A wage or an amount of pay is never in an episode.
 
 ## 5. The question inventory — what txtSchedules exists to answer
@@ -174,15 +178,22 @@ A site switcher in the shell for a person who holds several (the launcher's choi
 - **The residents grant** (D3): the kernel's grant to everyone residing at a site, as Staff.
 - **K6 — SMS** (built, db/161): `POST /api/v1/notify/sms.php`; txtSchedules' outbox sends a text there when the
   person chose texts, and falls back to email on every refusal (`no_sender`, `no_verified_phone`, `opted_out`,
-  `rate_limited`, `not_held`). No Twilio key in `config/.env`, ever.
+  `rate_limited`, `not_held`). No Twilio key in `config/.env`, ever. **Shift reminders go by both (D12):** each person's
+  preferences start with email and text both on; a reminder before a shift is queued once for each channel; the text
+  counts toward K6's 30 a member a day per application, and when K6 refuses, the email — which is independent —
+  still goes. Everything else txtSchedules says (a published week, a change, an exchange, a decision, an
+  announcement) follows the same two channels and the person's own choices.
 - **K7 — application reads** (built, db/161): txtSchedules **reads** Reservations' `covers_by_service` for the
   forecast (FR-F2, D9) over a super-admin-approved connection, naming the site's `location_id`; `no_connection`
   degrades to the manual forecast.
-- **K7 gap — HR and time off (D5)**: HR must learn what time off txtSchedules approved, **per person**. K7 as built
-  forbids it: a shared tool "answers about the site, never about a person: no member identity crosses". So
-  `time_off_taken` is designed (approved time off per member for a period) but **not declared** in `maludb-os.json`
-  until the kernel decides how person-level facts may cross (e.g. a share flagged `members`, readable only by an
-  application with `directory.writes` — HR). Owed: a kernel decision.
+- **HR and time off (D5, D11)**: HR must learn what time off txtSchedules approved, **per person**. The owner agreed
+  (2026-09-28) that person-level facts may cross **only to HR**: the kernel lets a share be flagged
+  `"people": true`, callable only by a consumer application with `directory.writes` (HR), over a super-admin-approved
+  connection; the answer is keyed by the **kernel's member id** and holds facts only about people at the named site.
+  txtSchedules **declares** `time_off_taken` in `maludb-os.json` `shares[]` as `{scoped: true, people: true}` (arguments
+  `from`, `to`, `scope_id`; answer: per member id the approved time off in the period — type, dates or hours, days
+  counted; never pay, never a reason). **The tool itself is Phase 4**; the kernel's part (the `people` flag and its
+  check) is being built beside this document.
 
 ## 9. Decisions taken (the owner's, 2026-09-28 — rules, not questions)
 
@@ -197,6 +208,9 @@ A site switcher in the shell for a person who holds several (the launcher's choi
 | D7 | No staff chat | announcements only |
 | D8 | Fair workweek deferred | no rule kind; FR-C6 deferred |
 | D9 | Forecast: manual covers + ratios; Reservations' covers next | db/011; K7 read |
+| D10 | **Wages: a default rate per position for the restaurant, and a rate on each employee that overrides it** | `positions.default_wage_rate`, `staff_positions.wage_override`, the views |
+| D11 | **Person-level facts cross only to HR** (the `people` share, `directory.writes` consumers) | `maludb-os.json` `shares[]` |
+| D12 | **Shift reminders by both text and email**; a coverage request never goes outside the main restaurant | `notification_prefs`; `ts_exchange_check_taker()` |
 
 Design choices of this document (the owner may overturn any): rights are only ever per site; the first site a person
 is granted at is their main restaurant; a coverage request needs no approval (a manager or shift lead made it);
@@ -230,20 +244,38 @@ thirteen migrations, seven slices, ~45 actions, ~24 tools.
   reminders, expiring offers).
 - `maludb-os.json`: `catalog_key txtschedules`, `business_area Operations`, `scopes {kind: location}`, `sso`,
   `directory {reads: true, writes: false}`, `assistant {command_bar: true, agent: expert}`, `agents [expert,
-  scheduler]`, `approvals` (§7), `reads [reservations.covers_by_service]`, `shares []` (§8's gap), endpoints (records,
+  scheduler]`, `approvals` (§7), `reads [reservations.covers_by_service]`, `shares [time_off_taken (people)]` (§8), endpoints (records,
   activity, web, health, calendar feed), services.
 
-## 12. The owner's answers
+## 12. The owner's answers (2026-09-28)
 
-The owner's nine decisions of 2026-09-28 are §9. Open for the owner (Phase 0 → 1):
-1. **HR and time off (§8)** — how person-level facts may cross between applications (a kernel decision).
-2. **Coverage and the main-restaurant rule** — may a manager's coverage request go to staff whose main restaurant is
-   elsewhere (D4 is about *picking up*; the schema applies it to coverage too)?
-3. **Wages** — one rate per person per position (as designed), or also a site-wide default per position?
-4. **Reminders by text** — a reminder before each shift is up to 30 texts a person a day under K6's limit; confirm
-   reminders by text are wanted, or email only.
+The owner's nine decisions are §9 (D1–D9). The four questions Phase 0 left open were answered the same day:
+
+1. **HR and time off — agreed (D11).** Person-level facts may cross between applications **only to HR**: a share
+   flagged `people`, callable only by an application with `directory.writes`, over an approved connection, keyed by the
+   kernel's member id, about people at the named site. `time_off_taken` is declared (§8); built in Phase 4.
+2. **Coverage — no (D12).** A manager's or shift lead's coverage request does **not** go to staff whose main
+   restaurant is elsewhere; the schema's rule stands (`ts_exchange_check_taker()` applies D4 to coverage too).
+3. **Wages — (D10).** Each position has a restaurant-wide **default** hourly rate; each employee may have a rate of
+   their own per position that **overrides** it; the effective rate is the override when set, else the default. Pay
+   stays protected: `labor.view` to see, `pay.edit` to change. Labor cost, budgets and the views use the effective
+   rate. Changing a default changes the effective rate of everyone without a rate of their own — never of anyone who
+   has one.
+4. **Reminders — both (D12).** By text and by email; each person's notification preferences start with both on; the
+   text is K6's (30 a member a day counts) and its refusals never stop the email.
 
 ## 13. State
+
+**Phase 0 answers applied 2026-09-28 (db edited in place — nothing was deployed — and re-proven).** The database
+`subello_txtschedules` was dropped and recreated as postgres and db/001–013 applied clean again (no warnings). The proof
+(`db/proof/phase0_proof.sql`) now has **76 checks**, all passing — the 57 of Phase 0 plus 19 for the answers: a default
+used when the person has no rate of their own; an own rate winning over the default; Sam's shift priced at the default
+(70.00) and Priya's at her own (82.50); the week's labor 14.5 h and 152.50 against a budget; raising the default raising
+the effective rate of everyone without a rate of their own and no one else's (Sam's shift 100.00, Priya's unchanged); a
+person with no row at a position priced at its default; no default and no own rate → no rate; a staff member seeing only
+their own effective rate and nothing of another's (rate, override or source), no default, no cost and no labor view; the
+records role unable to call the rate function; a manager seeing labor at the restaurant he manages and none at the one
+where he is staff; notification preferences starting with both channels on. The claim race still **4 of 4**.
 
 **Phase 0 — built and proven, 2026-09-28.**
 

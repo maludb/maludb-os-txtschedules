@@ -11,7 +11,7 @@ description: How txtSchedules (restaurant staff scheduling) is organised and whi
 - A **shift**: position, start, end, planned unpaid break, and a person — or none (**open**). Published shifts are
   cancelled, never deleted; a change after publishing is marked and people are told.
 - A person has a **main restaurant**; they may be scheduled elsewhere, but they **pick up** shifts only there.
-- **Positions** belong to a restaurant; a person works some of them, each with a wage only managers with pay rights see.
+- **Positions** belong to a restaurant; a person works some of them, each with a rate only managers with pay rights see: the position has a restaurant-wide default hourly rate, and a person may have a rate of their own that overrides it (the effective rate is the person's own when set, else the default).
 
 ## Which tool
 | Question | Tool |

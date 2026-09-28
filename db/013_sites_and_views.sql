@@ -92,7 +92,8 @@ SELECT r.member_id, r.scope_id AS site_id, r.role_key, r.roles, r.capability
  WHERE r.scope_id IN (SELECT ts_held_scope_ids());
 
 CREATE OR REPLACE VIEW mcp_positions WITH (security_barrier = true) AS
-SELECT p.id AS position_id, p.scope_id AS site_id, p.name, p.color, p.area, p.sort_order, p.archived_at
+SELECT p.id AS position_id, p.scope_id AS site_id, p.name, p.color, p.area, p.sort_order, p.archived_at,
+       CASE WHEN p.scope_id IN (SELECT ts_scopes_with_right('labor.view')) THEN p.default_wage_rate END AS default_wage_rate
   FROM positions p
  WHERE p.scope_id IN (SELECT ts_held_scope_ids());
 
@@ -107,10 +108,16 @@ SELECT sp.member_id, m.display_name, sp.main_scope_id AS main_site_id, sp.max_ho
                  AND r.scope_id IN (SELECT ts_scopes_with_right('schedule.build')));
 
 -- The wage: one's own, or with labor.view at the position's site. Anyone else sees the position without it.
+-- wage_rate is the EFFECTIVE rate (the person's own when set, else the position's default); wage_override is the
+-- person's own rate; wage_source says which applied.
 CREATE OR REPLACE VIEW mcp_staff_positions WITH (security_barrier = true) AS
 SELECT sp.member_id, sp.position_id, p.scope_id AS site_id, p.name AS position_name, sp.is_primary,
        CASE WHEN sp.member_id = app_current_member_id() OR p.scope_id IN (SELECT ts_scopes_with_right('labor.view'))
-            THEN sp.wage_rate END AS wage_rate
+            THEN COALESCE(sp.wage_override, p.default_wage_rate) END AS wage_rate,
+       CASE WHEN sp.member_id = app_current_member_id() OR p.scope_id IN (SELECT ts_scopes_with_right('labor.view'))
+            THEN sp.wage_override END AS wage_override,
+       CASE WHEN sp.member_id = app_current_member_id() OR p.scope_id IN (SELECT ts_scopes_with_right('labor.view'))
+            THEN CASE WHEN sp.wage_override IS NOT NULL THEN 'override' WHEN p.default_wage_rate IS NOT NULL THEN 'default' END END AS wage_source
   FROM staff_positions sp
   JOIN positions p ON p.id = sp.position_id
  WHERE p.scope_id IN (SELECT ts_held_scope_ids());
@@ -169,15 +176,17 @@ SELECT w.id AS week_id, w.scope_id AS site_id, w.week_start, w.status, w.publish
    AND (w.status = 'published' OR w.scope_id IN (SELECT ts_scopes_with_right('schedule.build')));
 
 -- A shift: at a site the caller holds, published — or a draft, with schedule.build there — or their own.
--- Hours are paid hours (break off); cost only with labor.view (overtime not applied per shift: the week's report does).
+-- Hours are paid hours (break off); cost = paid hours x the EFFECTIVE rate (the person's own, else the position's
+-- default), only with labor.view and only for an assigned shift — an open one has no person to price (overtime not
+-- applied per shift: the week's report does).
 CREATE OR REPLACE VIEW mcp_shifts WITH (security_barrier = true) AS
 SELECT s.id AS shift_id, s.scope_id AS site_id, s.week_id, s.position_id, p.name AS position_name, p.color AS position_color,
        s.starts_at, s.ends_at, s.break_minutes,
        round(EXTRACT(EPOCH FROM (s.ends_at - s.starts_at)) / 3600 - s.break_minutes / 60.0, 2) AS paid_hours,
        s.assignee_member_id, m.display_name AS assignee_name, (s.assignee_member_id IS NULL) AS is_open,
        s.status, s.note, s.published_at, s.changed_after_publish_at, s.cancelled_at, s.cancel_reason,
-       CASE WHEN s.scope_id IN (SELECT ts_scopes_with_right('labor.view'))
-            THEN round((EXTRACT(EPOCH FROM (s.ends_at - s.starts_at)) / 3600 - s.break_minutes / 60.0) * sp.wage_rate, 2) END AS cost
+       CASE WHEN s.assignee_member_id IS NOT NULL AND s.scope_id IN (SELECT ts_scopes_with_right('labor.view'))
+            THEN round((EXTRACT(EPOCH FROM (s.ends_at - s.starts_at)) / 3600 - s.break_minutes / 60.0) * COALESCE(sp.wage_override, p.default_wage_rate), 2) END AS cost
   FROM shifts s
   JOIN positions p ON p.id = s.position_id
   LEFT JOIN members m ON m.id = s.assignee_member_id
@@ -289,10 +298,38 @@ SELECT l.id AS activity_id, l.occurred_at, l.actor_member_id, am.display_name AS
  WHERE l.actor_member_id = app_current_member_id()
     OR l.scope_id IN (SELECT ts_scopes_with_right('schedule.build'));
 
+-- Scheduled labor per site, week and area (and 'all'), against the budget — labor.view at the site only. Hours are
+-- paid hours of scheduled shifts, open ones included; cost is the assigned ones at the EFFECTIVE rate (overtime not
+-- applied). A budget with no shifts still shows; the week's start is the schedule week's.
+CREATE OR REPLACE VIEW mcp_labor_weekly WITH (security_barrier = true) AS
+WITH s AS (
+    SELECT sh.scope_id, w.week_start, p.area, sh.assignee_member_id,
+           EXTRACT(EPOCH FROM (sh.ends_at - sh.starts_at)) / 3600 - sh.break_minutes / 60.0 AS hours,
+           (EXTRACT(EPOCH FROM (sh.ends_at - sh.starts_at)) / 3600 - sh.break_minutes / 60.0)
+               * COALESCE(sp.wage_override, p.default_wage_rate) AS cost
+      FROM shifts sh
+      JOIN schedule_weeks w ON w.id = sh.week_id
+      JOIN positions p ON p.id = sh.position_id
+      LEFT JOIN staff_positions sp ON sp.member_id = sh.assignee_member_id AND sp.position_id = sh.position_id
+     WHERE sh.status = 'scheduled' AND sh.scope_id IN (SELECT ts_scopes_with_right('labor.view'))
+), keys AS (
+    SELECT scope_id, week_start, area FROM s
+    UNION SELECT scope_id, week_start, 'all' FROM s
+    UNION SELECT scope_id, week_start, area FROM labor_budgets WHERE scope_id IN (SELECT ts_scopes_with_right('labor.view'))
+)
+SELECT k.scope_id AS site_id, k.week_start, k.area,
+       round(COALESCE(sum(s.hours), 0)::numeric, 2) AS scheduled_hours,
+       round(COALESCE(sum(s.cost) FILTER (WHERE s.assignee_member_id IS NOT NULL), 0)::numeric, 2) AS scheduled_cost,
+       b.budget_hours, b.budget_amount
+  FROM keys k
+  LEFT JOIN s ON s.scope_id = k.scope_id AND s.week_start = k.week_start AND (k.area = 'all' OR s.area = k.area)
+  LEFT JOIN labor_budgets b ON b.scope_id = k.scope_id AND b.week_start = k.week_start AND b.area = k.area
+ GROUP BY k.scope_id, k.week_start, k.area, b.budget_hours, b.budget_amount;
+
 GRANT SELECT ON mcp_sites, mcp_members, mcp_member_site_roles, mcp_positions, mcp_staff, mcp_staff_positions, mcp_certifications,
     mcp_availability, mcp_time_off_types, mcp_time_off_balances, mcp_time_off_requests, mcp_blackout_dates, mcp_schedule_weeks,
     mcp_shifts, mcp_templates, mcp_template_shifts, mcp_exchanges, mcp_exchange_claims, mcp_site_rules, mcp_rule_overrides,
-    mcp_labor_budgets, mcp_day_parts, mcp_forecast_covers, mcp_staffing_ratios, mcp_announcements
+    mcp_labor_budgets, mcp_labor_weekly, mcp_day_parts, mcp_forecast_covers, mcp_staffing_ratios, mcp_announcements
 TO txtschedules_records_ro, txtschedules_rw;
 GRANT SELECT ON mcp_activity_log TO txtschedules_activity_ro, txtschedules_rw;
 -- The views read base tables as their owner; the security_barrier WHERE clauses decide the rows.
