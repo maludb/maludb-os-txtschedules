@@ -71,7 +71,13 @@ screens, the agents, the decisions, the state), then — once Phase 1 exists —
   `app/activity.php`, `app/partial_update.php`, `mcp/db.py`, `mcp/server_common.py`, `mcp/activity_ingest.py`,
   `bin/build_action_registry.php`, `bin/mint_mcp_token.php`, `app/directory.php`, `bin/directory_sync.php`,
   `html/sso.php`, `html/sso/logout.php` — adapted for sites (`mirror_apply_scope`, `mirror_apply_holding`).
-- **State (2026-09-28): Phase 0 complete; Phase 1 written and revised for the owner's answers (D13–D17)** — the
-  design, the schema db/001–014 proven (**129/129** and the race 4/4), the kit, `maludb-os.json`, the agents' job
-  descriptions, the skills, `deploy/` templates, the tool surface (31 records + 6 activity tools), the manifest (42
-  screens, 69 actions), the registry and eight slice specs. Next: the owner's approval of Phase 1, then Phase 2. The record: `docs/txtschedules-design.md` §13.
+- **State (2026-09-28): Phase 0 complete; Phase 1 written, revised for D13–D17 and APPROVED by the owner; Phase 2 built and
+  proven** (sign-on, the mirror, the sites, the switcher, the phone-first shell, the directory sync, health, the ingest bridge with
+  the site, the action-token/run-token gate; **212 proof checks** in `tests/phase2/`, run by `tests/phase2/run.sh` on a scratch
+  database, against `php -S` and a real Apache with the rendered deploy vhost). `maludb-os.json` lists only what exists (the
+  two MCP servers come back in Phase 4, the notifications worker in slice 6). Next: the owner's `apply` (drop
+  `subello_txtschedules` first so the installer creates it), then Phase 3 slice 1 (shifts and the marketplace). The record:
+  `docs/txtschedules-design.md` §13.
+- **The proofs never touch the installed application**: `tests/setup_dev.sh` makes `txtschedules_dev` and puts its environment
+  in `$TS_DEV_ENV` (real environment variables, read ahead of `config/.env`); **never put a `config/.env` here before the
+  installer's `apply`** — it would keep the scratch keys and skip the fresh role passwords.

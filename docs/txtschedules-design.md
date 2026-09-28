@@ -294,6 +294,42 @@ The owner's nine decisions are §9 (D1–D9). The four questions Phase 0 left op
 
 ## 13. State
 
+**Phase 2 — sign-on, the mirror, the shell: built and proven, 2026-09-28** (`docs/build-specs/sso-shell.md`; proofs in
+`tests/phase2/`, run by `tests/phase2/run.sh`, on a scratch database — never the installed one). What exists: the
+kit wired to the shell; `/sso` and `/sso/logout`; the mirror (members, sites = restaurants, `member_site_roles` from the claims
+and the feed, the first restaurant a person holds their MAIN restaurant); `bin/directory_sync.php` (`--full`, `--from-file`, a
+restaurant seeded per site); the guard on every page (the mirror row, the session list and the session's site re-checked
+each request); the restaurant switcher; rights per site (`has_right`, `require_right`); the shell, phone first — a bottom
+tab bar (Home, Schedule, Market, Requests, More) on a phone and the sidebar from 992 px, the command bar above the tab bar,
+one menu table (`app/features/shell/nav.php`) that the sidebar, the tab bar and the placeholder screens all read; the home
+screen's four empty states; `/activity`; `/settings/tokens/`; the command bar through the kernel's chat endpoint; the web app
+manifest and placeholder icons (no service worker, no push); `/api/v1/health` (ingest lag, sync state, version from
+`maludb-os.json`); the activity ingest bridge tagged `txtschedules` — **now shipping `scope_id`** (the copied bridge dropped
+the site). **212 checks, all passing, against both `php -S` and a real Apache serving the rendered deploy vhost**: sign-on 51
+(replay, audience, expiry, key, tampered claims, status, capability, the first sign-on creating the member and the main
+restaurant, the site chosen / the only one / none held refused, the switcher, revocation ending sessions and the launcher on
+the next request, sign-out notices, own sign-out); gates 48 (21 screens × 4 roles = 84 answers of 200 or 403, per site — Marco is
+a manager at Downtown and staff at Airport —, the menu following the rights, CSRF, the tokens screen, the activity
+trail's visibility, the command bar, action tokens and run tokens including an agent the kernel does not vouch for, health);
+sync 28; ingest 12 (a fake MaluDB API: a 401 does not move the checkpoint); kernel compatibility 6 (the kernel's own
+`mint_sso_token()`, `sign_sso_claims()`, `mint_sso_logout_notice()`, `mint_action_token()` and `mint_kernel_token()`
+run from `/var/www/app/auth.php` under a key shim — what the kernel mints, txtSchedules accepts); the vhost 21 (URL rules;
+nothing outside `html/` served); the browser 46 (headless Chromium at 375 × 740 and 1280 × 800: no sideways scroll, the tab
+bar on a phone and the sidebar on a desktop, the bars thumb-reachable and at least 44 px, HTMX navigation pushing URL, title,
+highlight and `data-screen`, no console errors, the dashboard whole with JavaScript off, the manifest installable, no
+service worker). Also found and fixed on the way: the kit's shared `app-overrides.css` put the command bar under the last 20
+px of the sidebar (260 px left against a 280 px sidebar).
+**What this phase declares.** `maludb-os.json` (0.2.0) lists only what exists: the directory-sync and ingest timers, the Web UI
+and Health endpoints. The two MCP servers (Phase 4) and the notifications worker (slice 6) come back into `services`, `endpoints`,
+`env.required` and the vhost's `ProxyPass` lines when they are built — otherwise `bin/app_install.php apply` would stop at "an
+endpoint is not answering" before it registered the application. Their unit templates stay in `deploy/`.
+**Not proved here, and why**: the launcher's return trip (`?app=txtschedules`, kernel bc23820) and a token from the kernel's
+own `sso_launch_url()` on the real application row need the installed application — the owner's `apply`; the kernel side of the
+plan (catalog, the application row, scopes, grants) is the installer's. Small differences from the spec: the session key is
+`scope_id` (not `site_id`); switching to a restaurant not held answers 403 (the spec's proof list) where a `?site=` read of
+one not held would be `Not found.` (404); the placeholder screens' menu is the spec's plus Certifications and My certifications.
+Nothing of slice 1 onward is built.
+
 **The Phase 1 decisions applied, 2026-09-28.** Time off's hours a day is `site_settings.time_off_day_hours` (D13) and
 certifications are the restaurant's own with a screen, a due list and a verifying manager (D15) — db/005–007, 009 and 013
 edited in place (nothing deployed), `subello_txtschedules` dropped and recreated, all fourteen migrations re-applied

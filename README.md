@@ -24,7 +24,8 @@ mcp/action_registry.json       built from the manifest by bin/build_action_regis
 os/                            each shipped agent's job description (expert.md, scheduler.md)
 skills/                        txtschedules-basics, scheduling-rules, shift-marketplace (skills); build-next-week,
                                cover-a-gap, approve-requests (runbooks, kind: runbook)
-html/ app/ config/ storage/    the application (Phase 2 onward)
+html/ app/ config/ storage/    the application: Phase 2 (sign-on, the mirror, the shell) is built; slices 1–7 are Phase 3
+tests/                         tests/setup_dev.sh + tests/phase2/ — the proofs, on a scratch database (tests/phase2/run.sh)
 mcp/ bin/ deploy/              the read servers, the CLI jobs (directory sync, dev hand-off), the vhost and units (templates)
 ```
 
