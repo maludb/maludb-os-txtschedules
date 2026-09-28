@@ -1,0 +1,15 @@
+# Secrets and environment
+/config/.env
+/.env
+
+# Local Claude Code settings
+/.claude/
+
+# Python venv + caches
+/mcp/venv/
+__pycache__/
+*.pyc
+
+# Scratch
+*.log
+/storage/attachments/
