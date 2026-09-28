@@ -46,9 +46,13 @@ CREATE TABLE staffing_ratios (
 CREATE OR REPLACE FUNCTION ts_staffing_needs(p_scope bigint, p_from date, p_to date)
     RETURNS TABLE (on_date date, day_part_id bigint, day_part text, position_id bigint, position_name text,
                    expected_covers integer, recommended integer, scheduled integer, open_shifts integer)
-    LANGUAGE plpgsql STABLE AS $$
+    LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_tz text;
 BEGIN
+    -- the caller's right is checked here: the function reads base tables as its owner (the records role reaches it)
+    IF NOT ts_has_right('schedule.build', p_scope) THEN
+        RETURN;
+    END IF;
     SELECT timezone INTO v_tz FROM sites WHERE scope_id = p_scope;
     RETURN QUERY
     SELECT d::date, dp.id, dp.name, p.id, p.name, fc.expected_covers,
@@ -71,6 +75,7 @@ BEGIN
 END$$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON labor_budgets, forecast_covers, staffing_ratios TO txtschedules_rw;
-GRANT EXECUTE ON FUNCTION ts_staffing_needs(bigint, date, date) TO txtschedules_rw;
+REVOKE ALL ON FUNCTION ts_staffing_needs(bigint, date, date) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION ts_staffing_needs(bigint, date, date) TO txtschedules_rw, txtschedules_records_ro;
 
 COMMIT;

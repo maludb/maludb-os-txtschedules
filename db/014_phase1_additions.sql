@@ -1,5 +1,6 @@
 -- 014: what the Phase 1 tool surface (docs/txtschedules-mcp-tool-surface.md) needed the schema to hold — found in the
--- documents' review, as Projects' Phase 1 did. Additive: two objects. (db/013 also lost a leak found in the same
+-- documents' review, as Projects' Phase 1 did. Additive: four functions and a view (db/011's ts_staffing_needs also became
+-- a gated SECURITY DEFINER function for the records role). (db/013 also lost a leak found in the same
 -- review: a staff member could read a DRAFT shift assigned to them; a draft is the managers' until published.)
 BEGIN;
 
@@ -62,7 +63,46 @@ BEGIN
 END$$;
 REVOKE ALL ON FUNCTION ts_coverage_candidates(bigint) FROM PUBLIC;
 
+-- What do the rules say about giving this person this shift (question 6, check_assignment) — for a shift that exists or
+-- one being planned (site, position, times). Asked by the person themself, or by whoever holds schedule.build or
+-- coverage.fill at the site; anyone else gets nothing. The engine is ts_assignment_warnings() (db/009).
+CREATE OR REPLACE FUNCTION ts_check_assignment(p_member bigint, p_scope bigint, p_position bigint, p_starts timestamptz,
+                                               p_ends timestamptz, p_break integer DEFAULT 0, p_ignore_shift bigint DEFAULT NULL)
+    RETURNS TABLE (rule_key text, severity text, message text)
+    LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+    IF NOT (p_member = app_current_member_id() OR ts_has_right('schedule.build', p_scope) OR ts_has_right('coverage.fill', p_scope)) THEN
+        RETURN;
+    END IF;
+    RETURN QUERY SELECT w.rule_key, w.severity, w.message
+                   FROM ts_assignment_warnings(p_member, p_scope, p_position, p_starts, p_ends, p_break, p_ignore_shift) w;
+END$$;
+REVOKE ALL ON FUNCTION ts_check_assignment(bigint, bigint, bigint, timestamptz, timestamptz, integer, bigint) FROM PUBLIC;
+
+-- Every warning a week has (question 7, week_warnings): each assigned scheduled shift against the rules, for
+-- schedule.build at the week's site. Overrides already recorded are in mcp_rule_overrides.
+CREATE OR REPLACE FUNCTION ts_week_warnings(p_week bigint)
+    RETURNS TABLE (shift_id bigint, member_id bigint, display_name text, rule_key text, severity text, message text)
+    LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_scope bigint;
+BEGIN
+    SELECT scope_id INTO v_scope FROM schedule_weeks WHERE id = p_week;
+    IF v_scope IS NULL OR NOT ts_has_right('schedule.build', v_scope) THEN
+        RETURN;
+    END IF;
+    RETURN QUERY
+    SELECT s.id, s.assignee_member_id, m.display_name, w.rule_key, w.severity, w.message
+      FROM shifts s
+      JOIN members m ON m.id = s.assignee_member_id
+      CROSS JOIN LATERAL ts_shift_warnings(s.id, s.assignee_member_id) w
+     WHERE s.week_id = p_week AND s.status = 'scheduled' AND s.assignee_member_id IS NOT NULL
+     ORDER BY s.starts_at, m.display_name;
+END$$;
+REVOKE ALL ON FUNCTION ts_week_warnings(bigint) FROM PUBLIC;
+
 GRANT SELECT ON mcp_hours_weekly TO txtschedules_records_ro, txtschedules_rw;
-GRANT EXECUTE ON FUNCTION ts_coverage_candidates(bigint) TO txtschedules_records_ro, txtschedules_rw;
+GRANT EXECUTE ON FUNCTION ts_coverage_candidates(bigint), ts_week_warnings(bigint),
+    ts_check_assignment(bigint, bigint, bigint, timestamptz, timestamptz, integer, bigint)
+    TO txtschedules_records_ro, txtschedules_rw;
 
 COMMIT;

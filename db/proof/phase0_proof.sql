@@ -180,6 +180,42 @@ SELECT set_config('app.member_id', '27', true);
 SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM ts_coverage_candidates((SELECT open1 FROM sh))), 'nor does a manager of another restaurant (Marco is only staff at Airport)');
 RESET ROLE;
 
+-- the rules and the forecast, for the records role — each checks the caller's right inside
+CREATE TEMP TABLE pos AS SELECT position_id AS srv, (SELECT id FROM schedule_weeks WHERE scope_id = 102 AND week_start = (SELECT d + 14 FROM fx)) AS dwk FROM shifts WHERE id = (SELECT priya FROM sh);
+GRANT SELECT ON pos TO PUBLIC;
+SET ROLE txtschedules_rw;
+INSERT INTO shifts (scope_id, week_id, position_id, starts_at, ends_at, break_minutes, assignee_member_id)
+SELECT 102, w.id, (SELECT srv FROM pos), (fx.d + 15 + time '10:00') AT TIME ZONE 'America/Chicago', (fx.d + 15 + time '19:00') AT TIME ZONE 'America/Chicago', 0, 28
+  FROM fx, schedule_weeks w WHERE w.scope_id = 102 AND w.week_start = fx.d + 14;      -- nine hours, no break, in the draft week
+RESET ROLE;
+SET ROLE txtschedules_records_ro;
+SELECT set_config('app.member_id', '1', true);
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM ts_check_assignment(29, 102, (SELECT srv FROM pos),
+        ((SELECT d FROM fx) + 4 + time '18:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM fx) + 4 + time '23:30') AT TIME ZONE 'America/Chicago', 0)
+        WHERE rule_key = 'minor_latest_end' AND severity = 'hard'), 'the owner asks check_assignment: the minor past 22:00 is a hard rule');
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM ts_week_warnings((SELECT dwk FROM pos))
+                              WHERE rule_key = 'break_required' AND member_id = 28), 'week_warnings lists Sam''s nine hours without a break in the draft week');
+SELECT set_config('app.member_id', '26', true);
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM ts_week_warnings((SELECT dwk FROM pos))), 'staff get no week warnings');
+SELECT pg_temp.check(EXISTS (SELECT 1 FROM ts_check_assignment(26, 102, (SELECT srv FROM pos),
+        ((SELECT d FROM fx) + 6 + time '10:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM fx) + 6 + time '18:00') AT TIME ZONE 'America/Chicago', 0)
+        WHERE rule_key = 'break_required'), 'a person may check their own assignment');
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM ts_check_assignment(28, 102, (SELECT srv FROM pos),
+        ((SELECT d FROM fx) + 6 + time '10:00') AT TIME ZONE 'America/Chicago', ((SELECT d FROM fx) + 6 + time '18:00') AT TIME ZONE 'America/Chicago', 0)), 'but not another person''s');
+SELECT set_config('app.member_id', '1', true);
+SELECT set_config('app.member_id', '26', true);
+SELECT pg_temp.check(NOT EXISTS (SELECT 1 FROM ts_staffing_needs(102, (SELECT d FROM fx), (SELECT d FROM fx))), 'staff get no staffing needs');
+RESET ROLE;
+SET ROLE txtschedules_rw;
+INSERT INTO staffing_ratios (scope_id, position_id, covers_per_staff, min_staff) SELECT 102, id, 25, 1 FROM positions WHERE scope_id = 102 AND name = 'Server';
+INSERT INTO forecast_covers (scope_id, on_date, day_part_id, expected_covers) SELECT 102, (SELECT d FROM fx), id, 80 FROM day_parts WHERE scope_id = 102 AND key = (SELECT min(key) FROM day_parts WHERE scope_id = 102);
+RESET ROLE;
+SET ROLE txtschedules_records_ro;
+SELECT set_config('app.member_id', '1', true);
+SELECT pg_temp.check((SELECT recommended FROM ts_staffing_needs(102, (SELECT d FROM fx), (SELECT d FROM fx)) WHERE expected_covers = 80 AND position_name = 'Server') = 4,
+                     '80 covers at one server per 25: four recommended');
+RESET ROLE;
+
 -- ---------------------------------------------------------------- 3. integrity: overlap, published is kept
 SET ROLE txtschedules_rw;
 SELECT pg_temp.refused($q$INSERT INTO shifts (scope_id, week_id, position_id, starts_at, ends_at, assignee_member_id)
