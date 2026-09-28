@@ -87,7 +87,7 @@ $held = $pdo->prepare('SELECT r.scope_id FROM member_site_roles r JOIN sites s O
 $held->execute(['m' => $memberId]);
 $heldIds = array_map('intval', $held->fetchAll(PDO::FETCH_COLUMN));
 if ($heldIds === []) {
-    $refuse('no-site', $memberId);
+    $refuse('no_site', $memberId);
 }
 $scopeId = in_array((int) ($claims['scope'] ?? 0), $heldIds, true) ? (int) $claims['scope'] : $heldIds[0];
 
