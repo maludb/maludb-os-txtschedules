@@ -7,7 +7,7 @@ kind: runbook
 # Build next week (a draft)
 
 1. `site_settings`, `site_rules`, and `staffing_needs` for the week — recommended vs scheduled per day-part and position.
-2. The draft: `week_from_template` (the restaurant's usual template) or `week_create` and copy last week. If a draft
+2. The draft: `template_apply` (the restaurant's usual template) or `week_create` and copy last week. If a draft
    already exists, edit it; never replace it.
 3. For each open shift, candidates who hold the position, are available and not on time off, fewest hours first;
    `check_assignment` each; `shift_assign` the first with no warning. A soft warning only when nobody else fits.

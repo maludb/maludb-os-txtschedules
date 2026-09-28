@@ -1,0 +1,2537 @@
+{
+    "generated_from": "docs/business-os-action-manifest.md",
+    "generated_at": "2026-09-28T21:52:14+00:00",
+    "screens": {
+        "dashboard": {
+            "screen": "dashboard",
+            "url": "/",
+            "section": "Home and settings",
+            "when": "their home: the next shift with who else is on, the week, what waits for them, announcements",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "settings": {
+            "screen": "settings",
+            "url": "/settings/",
+            "section": "Home and settings",
+            "when": "how they are told (email and text and which events) and their calendar link",
+            "params": [
+                "tab"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "tokens": {
+            "screen": "tokens",
+            "url": "/settings/tokens/",
+            "section": "Home and settings",
+            "when": "their own access tokens for the two MCP servers",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "activity": {
+            "screen": "activity",
+            "url": "/activity",
+            "section": "Home and settings",
+            "when": "recent activity at a restaurant or one shift's or trade's history",
+            "params": [
+                "site",
+                "entity_type",
+                "entity_id",
+                "period"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "my-schedule": {
+            "screen": "my-schedule",
+            "url": "/my-schedule",
+            "section": "Shifts and the marketplace",
+            "when": "their own shifts, by week or as a list, with who else is on",
+            "params": [
+                "week",
+                "view"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "team-schedule": {
+            "screen": "team-schedule",
+            "url": "/team-schedule",
+            "section": "Shifts and the marketplace",
+            "when": "the published week for a restaurant by day and position",
+            "params": [
+                "site",
+                "week",
+                "day",
+                "position"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "shift-view": {
+            "screen": "shift-view",
+            "url": "/shifts/{id}",
+            "section": "Shifts and the marketplace",
+            "when": "one shift: when and where, who is on with them, its trade if any, its history, offer or swap or give it",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "marketplace": {
+            "screen": "marketplace",
+            "url": "/marketplace",
+            "section": "Shifts and the marketplace",
+            "when": "the shifts that are up — offered and open and given to them — and whether they may take each, with why not",
+            "params": [
+                "site",
+                "kind"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "exchange-view": {
+            "screen": "exchange-view",
+            "url": "/exchanges/{id}",
+            "section": "Shifts and the marketplace",
+            "when": "one trade: the shift, the claims, the warnings, and to decide it",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "approvals": {
+            "screen": "approvals",
+            "url": "/approvals",
+            "section": "Shifts and the marketplace",
+            "when": "what waits for a manager: trades, time off, availability, with each trade's warnings",
+            "params": [
+                "site",
+                "kind"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "coverage": {
+            "screen": "coverage",
+            "url": "/coverage",
+            "section": "Shifts and the marketplace",
+            "when": "to cover a gap: who could take the shift, fewest hours first, and ask one or several",
+            "params": [
+                "shift"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "my-requests": {
+            "screen": "my-requests",
+            "url": "/requests",
+            "section": "Shifts and the marketplace",
+            "when": "their own requests and trades and what became of them",
+            "params": [
+                "state"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "builder": {
+            "screen": "builder",
+            "url": "/builder",
+            "section": "The week builder",
+            "when": "a restaurant's week as a grid: staff or positions down and days across, hours per person, labor against the budget, the warnings, the staffing needs",
+            "params": [
+                "site",
+                "week",
+                "view",
+                "position"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "day-view": {
+            "screen": "day-view",
+            "url": "/builder/day",
+            "section": "The week builder",
+            "when": "one day by the hour for the floor",
+            "params": [
+                "site",
+                "date"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "shift-add": {
+            "screen": "shift-add",
+            "url": "/shifts/new",
+            "section": "The week builder",
+            "when": "to add a shift",
+            "params": [
+                "site",
+                "position",
+                "date",
+                "assignee"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "shift-edit": {
+            "screen": "shift-edit",
+            "url": "/shifts/{id}/edit",
+            "section": "The week builder",
+            "when": "to change a shift's times or position or person",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "templates-list": {
+            "screen": "templates-list",
+            "url": "/templates/",
+            "section": "The week builder",
+            "when": "the saved week templates",
+            "params": [
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "template-view": {
+            "screen": "template-view",
+            "url": "/templates/{id}",
+            "section": "The week builder",
+            "when": "one template: its shifts by weekday, and start a week from it",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "availability": {
+            "screen": "availability",
+            "url": "/availability",
+            "section": "Availability and time off",
+            "when": "a person's weekly availability and what waits for approval",
+            "params": [
+                "member",
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "time-off": {
+            "screen": "time-off",
+            "url": "/time-off",
+            "section": "Availability and time off",
+            "when": "time off requested and approved and who is off",
+            "params": [
+                "member",
+                "site",
+                "status",
+                "from",
+                "to"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "time-off-add": {
+            "screen": "time-off-add",
+            "url": "/time-off/new",
+            "section": "Availability and time off",
+            "when": "to request time off",
+            "params": [
+                "type",
+                "from",
+                "to"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "time-off-view": {
+            "screen": "time-off-view",
+            "url": "/time-off/{id}",
+            "section": "Availability and time off",
+            "when": "one request and its decision",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "balances": {
+            "screen": "balances",
+            "url": "/time-off/balances",
+            "section": "Availability and time off",
+            "when": "balances per time-off type and the ledger behind them",
+            "params": [
+                "member",
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "staff-list": {
+            "screen": "staff-list",
+            "url": "/staff/",
+            "section": "People and positions",
+            "when": "the staff as cards with position and main restaurant",
+            "params": [
+                "site",
+                "q",
+                "position"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "staff-view": {
+            "screen": "staff-view",
+            "url": "/staff/{id}",
+            "section": "People and positions",
+            "when": "one person: positions and certifications and hours and time off; pay for whoever may see it",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "staff-edit": {
+            "screen": "staff-edit",
+            "url": "/staff/{id}/edit",
+            "section": "People and positions",
+            "when": "to change a person's main restaurant or limits or positions",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "positions-list": {
+            "screen": "positions-list",
+            "url": "/positions/",
+            "section": "People and positions",
+            "when": "a restaurant's positions with their default rate for whoever may see it",
+            "params": [
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "position-add": {
+            "screen": "position-add",
+            "url": "/positions/new",
+            "section": "People and positions",
+            "when": "to add a position",
+            "params": [
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "position-edit": {
+            "screen": "position-edit",
+            "url": "/positions/{id}/edit",
+            "section": "People and positions",
+            "when": "to change a position",
+            "params": [],
+            "built": false,
+            "stub": false
+        },
+        "forecast": {
+            "screen": "forecast",
+            "url": "/forecast",
+            "section": "Labor and forecast",
+            "when": "the covers expected per day-part and the staffing ratios, with the headcount they call for",
+            "params": [
+                "site",
+                "week"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "budget": {
+            "screen": "budget",
+            "url": "/budget",
+            "section": "Labor and forecast",
+            "when": "the weekly labor budget against what is scheduled",
+            "params": [
+                "site",
+                "week"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "announcements-list": {
+            "screen": "announcements-list",
+            "url": "/announcements/",
+            "section": "Announcements",
+            "when": "the live announcements for a restaurant",
+            "params": [
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "announcement-add": {
+            "screen": "announcement-add",
+            "url": "/announcements/new",
+            "section": "Announcements",
+            "when": "to post an announcement",
+            "params": [
+                "site",
+                "audience"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "site-settings": {
+            "screen": "site-settings",
+            "url": "/site/",
+            "section": "Restaurant settings, rules and reports",
+            "when": "a restaurant's week and trade settings and reminders and overtime",
+            "params": [
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "day-parts": {
+            "screen": "day-parts",
+            "url": "/site/day-parts",
+            "section": "Restaurant settings, rules and reports",
+            "when": "the restaurant's day-parts (lunch and dinner)",
+            "params": [
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "time-off-types": {
+            "screen": "time-off-types",
+            "url": "/site/time-off",
+            "section": "Restaurant settings, rules and reports",
+            "when": "the time-off types and the blackout dates",
+            "params": [
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "rules": {
+            "screen": "rules",
+            "url": "/rules/",
+            "section": "Restaurant settings, rules and reports",
+            "when": "the rules the restaurant runs and each one's severity",
+            "params": [
+                "site"
+            ],
+            "built": false,
+            "stub": false
+        },
+        "reports": {
+            "screen": "reports",
+            "url": "/reports/",
+            "section": "Restaurant settings, rules and reports",
+            "when": "hours and labor against budget and open shifts unfilled and trades and overtime and overrides — each as a table and a CSV",
+            "params": [
+                "report",
+                "site",
+                "from",
+                "to",
+                "format"
+            ],
+            "built": false,
+            "stub": false
+        }
+    },
+    "actions": {
+        "prefs_save": {
+            "action": "prefs_save",
+            "section": "Home and settings",
+            "endpoint": "/settings/prefs.php",
+            "params": [
+                {
+                    "name": "by_email",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "by_sms",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "kinds",
+                    "required": false,
+                    "repeated": true,
+                    "hint": "the events to be told about"
+                },
+                {
+                    "name": "reminder_minutes",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "0 to 2880 or empty for the restaurant's"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "prefs.save",
+            "who": "own",
+            "built": false
+        },
+        "calendar_feed_rotate": {
+            "action": "calendar_feed_rotate",
+            "section": "Home and settings",
+            "endpoint": "/settings/calendar-feed.php",
+            "params": [],
+            "undo": "— (the old link is dead)",
+            "confirm": true,
+            "approval": null,
+            "log_event": "calendar_feed.rotate",
+            "who": "own",
+            "built": false
+        },
+        "token_mint": {
+            "action": "token_mint",
+            "section": "Home and settings",
+            "endpoint": "/settings/tokens/mint.php",
+            "params": [
+                {
+                    "name": "label",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "scope",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "mcp"
+                }
+            ],
+            "undo": "revoke it",
+            "confirm": false,
+            "approval": null,
+            "log_event": "token.mint",
+            "who": "own",
+            "built": false
+        },
+        "token_revoke": {
+            "action": "token_revoke",
+            "section": "Home and settings",
+            "endpoint": "/settings/tokens/revoke.php",
+            "params": [
+                {
+                    "name": "token",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": true,
+            "approval": null,
+            "log_event": "token.revoke",
+            "who": "own",
+            "built": false
+        },
+        "shift_offer": {
+            "action": "shift_offer",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/offer.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "exchange_cancel",
+            "confirm": false,
+            "approval": null,
+            "log_event": "exchange.offer",
+            "who": "staff (the holder)",
+            "built": false
+        },
+        "shift_give": {
+            "action": "shift_give",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/give.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "colleague",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "exchange_cancel",
+            "confirm": false,
+            "approval": null,
+            "log_event": "exchange.give",
+            "who": "staff (the holder)",
+            "built": false
+        },
+        "shift_swap": {
+            "action": "shift_swap",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/swap.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "colleague",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "swap_shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "exchange_cancel",
+            "confirm": false,
+            "approval": null,
+            "log_event": "exchange.swap",
+            "who": "staff (the holder)",
+            "built": false
+        },
+        "shift_open": {
+            "action": "shift_open",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/open.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "an unassigned shift"
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "exchange_cancel",
+            "confirm": false,
+            "approval": null,
+            "log_event": "exchange.open",
+            "who": "lead",
+            "built": false
+        },
+        "coverage_request": {
+            "action": "coverage_request",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/coverage.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "members",
+                    "required": true,
+                    "repeated": true,
+                    "hint": "the staff to ask"
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "exchange_cancel",
+            "confirm": true,
+            "approval": "external_send",
+            "log_event": "exchange.coverage",
+            "who": "lead",
+            "built": false
+        },
+        "shift_pickup": {
+            "action": "shift_pickup",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/claim.php",
+            "params": [
+                {
+                    "name": "exchange",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "claim_withdraw",
+            "confirm": false,
+            "approval": null,
+            "log_event": "exchange.claim",
+            "who": "staff (main restaurant)",
+            "built": false
+        },
+        "claim_withdraw": {
+            "action": "claim_withdraw",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/withdraw.php",
+            "params": [
+                {
+                    "name": "exchange",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "claim again",
+            "confirm": false,
+            "approval": null,
+            "log_event": "exchange.withdraw",
+            "who": "own (the claimant)",
+            "built": false
+        },
+        "exchange_choose": {
+            "action": "exchange_choose",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/choose.php",
+            "params": [
+                {
+                    "name": "exchange",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "member",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "the claimant to give it to"
+                }
+            ],
+            "undo": null,
+            "confirm": true,
+            "approval": "other",
+            "log_event": "exchange.choose",
+            "who": "approve",
+            "built": false
+        },
+        "exchange_accept": {
+            "action": "exchange_accept",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/accept.php",
+            "params": [
+                {
+                    "name": "exchange",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": false,
+            "approval": null,
+            "log_event": "exchange.accept",
+            "who": "own (the named colleague)",
+            "built": false
+        },
+        "exchange_refuse": {
+            "action": "exchange_refuse",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/refuse.php",
+            "params": [
+                {
+                    "name": "exchange",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": false,
+            "approval": null,
+            "log_event": "exchange.refuse",
+            "who": "own (the named colleague)",
+            "built": false
+        },
+        "exchange_approve": {
+            "action": "exchange_approve",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/approve.php",
+            "params": [
+                {
+                    "name": "exchange",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "— (the shift moves back only by a new trade)",
+            "confirm": false,
+            "approval": "other",
+            "log_event": "exchange.approve",
+            "who": "approve",
+            "built": false
+        },
+        "exchange_decline": {
+            "action": "exchange_decline",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/decline.php",
+            "params": [
+                {
+                    "name": "exchange",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": false,
+            "approval": null,
+            "log_event": "exchange.decline",
+            "who": "approve",
+            "built": false
+        },
+        "exchange_cancel": {
+            "action": "exchange_cancel",
+            "section": "Shifts and the marketplace",
+            "endpoint": "/exchanges/cancel.php",
+            "params": [
+                {
+                    "name": "exchange",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": true,
+            "approval": null,
+            "log_event": "exchange.cancel",
+            "who": "own (who made it)",
+            "built": false
+        },
+        "week_create": {
+            "action": "week_create",
+            "section": "The week builder",
+            "endpoint": "/weeks/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "week_start",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "any date in the week"
+                }
+            ],
+            "undo": "— (an empty draft week costs nothing)",
+            "confirm": false,
+            "approval": null,
+            "log_event": "week.create",
+            "who": "build",
+            "built": false
+        },
+        "week_copy": {
+            "action": "week_copy",
+            "section": "The week builder",
+            "endpoint": "/weeks/copy.php",
+            "params": [
+                {
+                    "name": "week",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "the draft week to fill"
+                },
+                {
+                    "name": "from_week",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "week_clear",
+            "confirm": false,
+            "approval": null,
+            "log_event": "week.copy",
+            "who": "build",
+            "built": false
+        },
+        "week_autofill": {
+            "action": "week_autofill",
+            "section": "The week builder",
+            "endpoint": "/weeks/autofill.php",
+            "params": [
+                {
+                    "name": "week",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "a draft week"
+                },
+                {
+                    "name": "template",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "empty uses the last published week"
+                }
+            ],
+            "undo": "week_clear",
+            "confirm": false,
+            "approval": null,
+            "log_event": "week.autofill",
+            "who": "build",
+            "built": false
+        },
+        "week_clear": {
+            "action": "week_clear",
+            "section": "The week builder",
+            "endpoint": "/weeks/clear.php",
+            "params": [
+                {
+                    "name": "week",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "a draft week"
+                }
+            ],
+            "undo": null,
+            "confirm": true,
+            "approval": null,
+            "log_event": "week.clear",
+            "who": "build",
+            "built": false
+        },
+        "week_publish": {
+            "action": "week_publish",
+            "section": "The week builder",
+            "endpoint": "/weeks/publish.php",
+            "params": [
+                {
+                    "name": "week",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "override_reason",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "required when the week has warnings"
+                }
+            ],
+            "undo": "— (a published shift is changed or cancelled)",
+            "confirm": true,
+            "approval": "external_send",
+            "log_event": "week.publish",
+            "who": "build",
+            "built": false
+        },
+        "shift_create": {
+            "action": "shift_create",
+            "section": "The week builder",
+            "endpoint": "/shifts/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "position",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "starts_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "site local as 2026-10-09 17:00"
+                },
+                {
+                    "name": "ends_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "site local as 2026-10-09 23:00"
+                },
+                {
+                    "name": "break_minutes",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "assignee",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "empty leaves it open"
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "override_reason",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "shift_delete",
+            "confirm": false,
+            "approval": null,
+            "log_event": "shift.create",
+            "who": "build",
+            "built": false
+        },
+        "shift_update": {
+            "action": "shift_update",
+            "section": "The week builder",
+            "endpoint": "/shifts/save.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "required": false,
+                    "name": "site",
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "required": false,
+                    "name": "position",
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "required": false,
+                    "name": "starts_at",
+                    "repeated": false,
+                    "hint": "site local as 2026-10-09 17:00"
+                },
+                {
+                    "required": false,
+                    "name": "ends_at",
+                    "repeated": false,
+                    "hint": "site local as 2026-10-09 23:00"
+                },
+                {
+                    "required": false,
+                    "name": "break_minutes",
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "required": false,
+                    "name": "assignee",
+                    "repeated": false,
+                    "hint": "empty leaves it open"
+                },
+                {
+                    "required": false,
+                    "name": "note",
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "required": false,
+                    "name": "override_reason",
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "shift.update",
+            "who": "build",
+            "built": false,
+            "partial": true
+        },
+        "shift_assign": {
+            "action": "shift_assign",
+            "section": "The week builder",
+            "endpoint": "/shifts/assign.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "assignee",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "empty leaves it open"
+                },
+                {
+                    "name": "override_reason",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "shift.assign",
+            "who": "build or lead",
+            "built": false
+        },
+        "shift_delete": {
+            "action": "shift_delete",
+            "section": "The week builder",
+            "endpoint": "/shifts/delete.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": true,
+            "approval": null,
+            "log_event": "shift.delete",
+            "who": "build",
+            "built": false
+        },
+        "shift_add": {
+            "action": "shift_add",
+            "section": "The week builder",
+            "endpoint": "/shifts/add.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "position",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "starts_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "site local as 2026-10-09 17:00"
+                },
+                {
+                    "name": "ends_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "site local as 2026-10-09 23:00"
+                },
+                {
+                    "name": "break_minutes",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "assignee",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "override_reason",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "shift_cancel",
+            "confirm": true,
+            "approval": "other",
+            "log_event": "shift.add",
+            "who": "build",
+            "built": false
+        },
+        "shift_change": {
+            "action": "shift_change",
+            "section": "The week builder",
+            "endpoint": "/shifts/change.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "position",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "starts_at",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "ends_at",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "break_minutes",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "assignee",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "override_reason",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": true,
+            "approval": "other",
+            "log_event": "shift.change",
+            "who": "build",
+            "built": false
+        },
+        "shift_cancel": {
+            "action": "shift_cancel",
+            "section": "The week builder",
+            "endpoint": "/shifts/cancel.php",
+            "params": [
+                {
+                    "name": "shift",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "reason",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": true,
+            "approval": "other",
+            "log_event": "shift.cancel",
+            "who": "build",
+            "built": false
+        },
+        "template_save": {
+            "action": "template_save",
+            "section": "The week builder",
+            "endpoint": "/templates/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "name",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "week",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "the week to copy the template from"
+                },
+                {
+                    "name": "template",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "to rename an existing one"
+                }
+            ],
+            "undo": "template_archive",
+            "confirm": false,
+            "approval": null,
+            "log_event": "template.save",
+            "who": "build",
+            "built": false
+        },
+        "template_apply": {
+            "action": "template_apply",
+            "section": "The week builder",
+            "endpoint": "/templates/apply.php",
+            "params": [
+                {
+                    "name": "template",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "week",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "a draft week"
+                }
+            ],
+            "undo": "week_clear",
+            "confirm": false,
+            "approval": null,
+            "log_event": "template.apply",
+            "who": "build",
+            "built": false
+        },
+        "template_archive": {
+            "action": "template_archive",
+            "section": "The week builder",
+            "endpoint": "/templates/archive.php",
+            "params": [
+                {
+                    "name": "template",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore",
+            "confirm": false,
+            "approval": null,
+            "log_event": "template.archive",
+            "who": "build",
+            "built": false
+        },
+        "availability_submit": {
+            "action": "availability_submit",
+            "section": "Availability and time off",
+            "endpoint": "/availability/save.php",
+            "params": [
+                {
+                    "name": "weekday",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "0 Sunday to 6 Saturday"
+                },
+                {
+                    "name": "starts_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "HH:MM"
+                },
+                {
+                    "name": "ends_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "HH:MM"
+                },
+                {
+                    "name": "kind",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "available or unavailable or preferred"
+                },
+                {
+                    "name": "site",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "empty means every restaurant they work at"
+                },
+                {
+                    "name": "effective_from",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "effective_to",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "member",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "availability_remove",
+            "confirm": false,
+            "approval": null,
+            "log_event": "availability.submit",
+            "who": "own (a manager for anyone)",
+            "built": false
+        },
+        "availability_remove": {
+            "action": "availability_remove",
+            "section": "Availability and time off",
+            "endpoint": "/availability/remove.php",
+            "params": [
+                {
+                    "name": "availability",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "resubmit it",
+            "confirm": true,
+            "approval": null,
+            "log_event": "availability.remove",
+            "who": "own or build",
+            "built": false
+        },
+        "availability_approve": {
+            "action": "availability_approve",
+            "section": "Availability and time off",
+            "endpoint": "/availability/approve.php",
+            "params": [
+                {
+                    "name": "availability",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": false,
+            "approval": null,
+            "log_event": "availability.approve",
+            "who": "approve",
+            "built": false
+        },
+        "availability_decline": {
+            "action": "availability_decline",
+            "section": "Availability and time off",
+            "endpoint": "/availability/decline.php",
+            "params": [
+                {
+                    "name": "availability",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": false,
+            "approval": null,
+            "log_event": "availability.decline",
+            "who": "approve",
+            "built": false
+        },
+        "time_off_request": {
+            "action": "time_off_request",
+            "section": "Availability and time off",
+            "endpoint": "/time-off/request.php",
+            "params": [
+                {
+                    "name": "time_off_type",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "starts_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "site local as 2026-10-09 09:00"
+                },
+                {
+                    "name": "ends_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "site local as 2026-10-11 17:00"
+                },
+                {
+                    "name": "hours",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "empty counts the working days"
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "member",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "site",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "time_off_cancel",
+            "confirm": false,
+            "approval": null,
+            "log_event": "timeoff.request",
+            "who": "own (a manager for anyone)",
+            "built": false
+        },
+        "time_off_approve": {
+            "action": "time_off_approve",
+            "section": "Availability and time off",
+            "endpoint": "/time-off/approve.php",
+            "params": [
+                {
+                    "name": "request",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "time_off_cancel",
+            "confirm": false,
+            "approval": "other",
+            "log_event": "timeoff.approve",
+            "who": "approve",
+            "built": false
+        },
+        "time_off_decline": {
+            "action": "time_off_decline",
+            "section": "Availability and time off",
+            "endpoint": "/time-off/decline.php",
+            "params": [
+                {
+                    "name": "request",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "note",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": false,
+            "approval": null,
+            "log_event": "timeoff.decline",
+            "who": "approve",
+            "built": false
+        },
+        "time_off_cancel": {
+            "action": "time_off_cancel",
+            "section": "Availability and time off",
+            "endpoint": "/time-off/cancel.php",
+            "params": [
+                {
+                    "name": "request",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": true,
+            "approval": null,
+            "log_event": "timeoff.cancel",
+            "who": "own or approve",
+            "built": false
+        },
+        "balance_adjust": {
+            "action": "balance_adjust",
+            "section": "Availability and time off",
+            "endpoint": "/time-off/balance.php",
+            "params": [
+                {
+                    "name": "member",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "time_off_type",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "delta_hours",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "positive grants and negative removes"
+                },
+                {
+                    "name": "reason",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "the opposite adjustment",
+            "confirm": true,
+            "approval": "other",
+            "log_event": "balance.adjust",
+            "who": "pay",
+            "built": false
+        },
+        "time_off_type_save": {
+            "action": "time_off_type_save",
+            "section": "Availability and time off",
+            "endpoint": "/time-off/types/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "name",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "paid",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "tracks_balance",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "allow_negative",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "sort_order",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "time_off_type",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "to change an existing one"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "timeoff_type.save",
+            "who": "admin",
+            "built": false
+        },
+        "time_off_type_archive": {
+            "action": "time_off_type_archive",
+            "section": "Availability and time off",
+            "endpoint": "/time-off/types/archive.php",
+            "params": [
+                {
+                    "name": "time_off_type",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore",
+            "confirm": false,
+            "approval": null,
+            "log_event": "timeoff_type.archive",
+            "who": "admin",
+            "built": false
+        },
+        "blackout_save": {
+            "action": "blackout_save",
+            "section": "Availability and time off",
+            "endpoint": "/time-off/blackout/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "on_date",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "reason",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "blackout_remove",
+            "confirm": false,
+            "approval": null,
+            "log_event": "blackout.save",
+            "who": "admin",
+            "built": false
+        },
+        "blackout_remove": {
+            "action": "blackout_remove",
+            "section": "Availability and time off",
+            "endpoint": "/time-off/blackout/remove.php",
+            "params": [
+                {
+                    "name": "blackout",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "add it again",
+            "confirm": true,
+            "approval": null,
+            "log_event": "blackout.remove",
+            "who": "admin",
+            "built": false
+        },
+        "staff_save": {
+            "action": "staff_save",
+            "section": "People and positions",
+            "endpoint": "/staff/save.php",
+            "params": [
+                {
+                    "name": "member",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "main_site",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "the restaurant they may pick up shifts at"
+                },
+                {
+                    "name": "max_hours_week",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "is_minor",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "minor_until",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "a date"
+                },
+                {
+                    "name": "active",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "notes",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "positions",
+                    "required": false,
+                    "repeated": true,
+                    "hint": "position names and the first is primary"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "staff.save",
+            "who": "build",
+            "built": false
+        },
+        "wage_update": {
+            "action": "wage_update",
+            "section": "People and positions",
+            "endpoint": "/staff/wage.php",
+            "params": [
+                {
+                    "name": "member",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "position",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "rate",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "the person's own hourly rate and empty removes it so the position's default applies"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": true,
+            "approval": "other",
+            "log_event": "wage.update",
+            "who": "pay",
+            "built": false
+        },
+        "certification_add": {
+            "action": "certification_add",
+            "section": "People and positions",
+            "endpoint": "/staff/certifications/add.php",
+            "params": [
+                {
+                    "name": "member",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "kind",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "food_handler or alcohol_service"
+                },
+                {
+                    "name": "issued_on",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "expires_on",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "reference",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "certification_remove",
+            "confirm": false,
+            "approval": null,
+            "log_event": "certification.add",
+            "who": "build",
+            "built": false
+        },
+        "certification_remove": {
+            "action": "certification_remove",
+            "section": "People and positions",
+            "endpoint": "/staff/certifications/remove.php",
+            "params": [
+                {
+                    "name": "certification",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": true,
+            "approval": null,
+            "log_event": "certification.remove",
+            "who": "build",
+            "built": false
+        },
+        "position_save": {
+            "action": "position_save",
+            "section": "People and positions",
+            "endpoint": "/positions/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "name",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "area",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "front or kitchen or bar or management or other"
+                },
+                {
+                    "name": "color",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "sort_order",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "certifications",
+                    "required": false,
+                    "repeated": true,
+                    "hint": "the kinds the position needs"
+                },
+                {
+                    "name": "position",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "to change an existing one"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "position.save",
+            "who": "admin",
+            "built": false
+        },
+        "position_rate_update": {
+            "action": "position_rate_update",
+            "section": "People and positions",
+            "endpoint": "/positions/rate.php",
+            "params": [
+                {
+                    "name": "position",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "rate",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "the hourly default for everyone at the position without a rate of their own and empty clears it"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": true,
+            "approval": "other",
+            "log_event": "wage.update",
+            "who": "pay",
+            "built": false
+        },
+        "position_archive": {
+            "action": "position_archive",
+            "section": "People and positions",
+            "endpoint": "/positions/archive.php",
+            "params": [
+                {
+                    "name": "position",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore",
+            "confirm": true,
+            "approval": null,
+            "log_event": "position.archive",
+            "who": "admin",
+            "built": false
+        },
+        "budget_save": {
+            "action": "budget_save",
+            "section": "Labor and forecast",
+            "endpoint": "/labor/budget.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "week_start",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "area",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "all or front or kitchen or bar or management or other"
+                },
+                {
+                    "name": "budget_hours",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "budget_amount",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "budget.update",
+            "who": "admin",
+            "built": false
+        },
+        "forecast_save": {
+            "action": "forecast_save",
+            "section": "Labor and forecast",
+            "endpoint": "/labor/forecast.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "on_date",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "day_part",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "expected_covers",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "forecast.update",
+            "who": "build",
+            "built": false
+        },
+        "forecast_copy": {
+            "action": "forecast_copy",
+            "section": "Labor and forecast",
+            "endpoint": "/labor/forecast-copy.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "from_week",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "to_week",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "forecast.copy",
+            "who": "build",
+            "built": false
+        },
+        "ratio_save": {
+            "action": "ratio_save",
+            "section": "Labor and forecast",
+            "endpoint": "/labor/ratio.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "position",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "covers_per_staff",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "one person per this many covers"
+                },
+                {
+                    "name": "min_staff",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "ratio.update",
+            "who": "admin",
+            "built": false
+        },
+        "announcement_post": {
+            "action": "announcement_post",
+            "section": "Announcements",
+            "endpoint": "/announcements/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "title",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "body",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "audience",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "site or position or people"
+                },
+                {
+                    "name": "position",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "members",
+                    "required": false,
+                    "repeated": true,
+                    "hint": ""
+                },
+                {
+                    "name": "pinned_until",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "a date"
+                }
+            ],
+            "undo": "announcement_remove",
+            "confirm": true,
+            "approval": "external_send",
+            "log_event": "announcement.post",
+            "who": "announce",
+            "built": false
+        },
+        "announcement_remove": {
+            "action": "announcement_remove",
+            "section": "Announcements",
+            "endpoint": "/announcements/remove.php",
+            "params": [
+                {
+                    "name": "announcement",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": true,
+            "approval": null,
+            "log_event": "announcement.remove",
+            "who": "announce or admin",
+            "built": false
+        },
+        "announcement_read": {
+            "action": "announcement_read",
+            "section": "Announcements",
+            "endpoint": "/announcements/read.php",
+            "params": [
+                {
+                    "name": "announcement",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": null,
+            "confirm": false,
+            "approval": null,
+            "log_event": "announcement.read",
+            "who": "own",
+            "built": false
+        },
+        "site_settings_save": {
+            "action": "site_settings_save",
+            "section": "Restaurant settings, rules and reports",
+            "endpoint": "/site/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "week_start",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "0 Sunday to 6 Saturday"
+                },
+                {
+                    "name": "currency",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "allow_offer",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "allow_pickup",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "allow_swap",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "allow_give",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "approval_pickup",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "always or on_warning or never"
+                },
+                {
+                    "name": "approval_swap",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "always or on_warning or never"
+                },
+                {
+                    "name": "approval_give",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "always or on_warning or never"
+                },
+                {
+                    "name": "cutoff_minutes",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "0 to 10080"
+                },
+                {
+                    "name": "shift_lead_approves_same_day",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "claim_mode",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "first or manager_chooses"
+                },
+                {
+                    "name": "offer_expires",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "at_start or at_cutoff"
+                },
+                {
+                    "name": "availability_needs_approval",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no"
+                },
+                {
+                    "name": "reminder_minutes_before",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "0 to 2880"
+                },
+                {
+                    "name": "overtime_weekly_hours",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "overtime_multiplier",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "settings.update",
+            "who": "admin",
+            "built": false
+        },
+        "day_part_save": {
+            "action": "day_part_save",
+            "section": "Restaurant settings, rules and reports",
+            "endpoint": "/site/day-part.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "name",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "starts_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "HH:MM"
+                },
+                {
+                    "name": "ends_at",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "HH:MM"
+                },
+                {
+                    "name": "sort_order",
+                    "required": false,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "day_part",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "to change an existing one"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "day_part.save",
+            "who": "admin",
+            "built": false
+        },
+        "day_part_archive": {
+            "action": "day_part_archive",
+            "section": "Restaurant settings, rules and reports",
+            "endpoint": "/site/day-part-archive.php",
+            "params": [
+                {
+                    "name": "day_part",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                }
+            ],
+            "undo": "restore",
+            "confirm": true,
+            "approval": null,
+            "log_event": "day_part.archive",
+            "who": "admin",
+            "built": false
+        },
+        "rule_save": {
+            "action": "rule_save",
+            "section": "Restaurant settings, rules and reports",
+            "endpoint": "/rules/save.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "rule",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "severity",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "hard or soft or off"
+                },
+                {
+                    "name": "params",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "the rule's values such as hours or minutes"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "rule.update",
+            "who": "admin",
+            "built": false
+        },
+        "rule_preset_apply": {
+            "action": "rule_preset_apply",
+            "section": "Restaurant settings, rules and reports",
+            "endpoint": "/rules/preset.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "preset",
+                    "required": true,
+                    "repeated": false,
+                    "hint": "generic"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": true,
+            "approval": null,
+            "log_event": "rule.preset",
+            "who": "admin",
+            "built": false
+        }
+    }
+}

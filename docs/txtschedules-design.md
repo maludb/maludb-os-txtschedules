@@ -98,8 +98,8 @@ installable; push later), **fair workweek** (D8). Legal compliance is never clai
 **Activity memory**: `activity_log` through one `log_activity()`, `entity.verb` events, **each row carrying the site**
 (`scope_id`), shipped to the tenant's one MaluDB as `activity` episodes tagged `txtschedules`. There is **no second
 history table**: an exchange's and a shift's history is the activity log (FR-S8). Events (the manifest names them):
-`week.publish` (shifts published, warnings overridden), `shift.create|update|cancel|assign`, `exchange.create|claim|
-accept|approve|decline|cancel|expire`, `timeoff.request|approve|decline|cancel`, `balance.adjust` (hours, never pay),
+`week.publish` (shifts published, warnings overridden), `shift.create|update|assign|delete` (a draft), `shift.add|change|cancel` (a published week),
+`exchange.offer|give|swap|open|coverage|claim|withdraw|accept|refuse|choose|approve|decline|cancel|expire`, `timeoff.request|approve|decline|cancel`, `balance.adjust` (hours, never pay),
 `availability.submit|approve|decline`, `rule.override`, `rule.update`, `settings.update` (the fields that changed),
 `wage.update` (**that** a default or an employee's rate changed — never the rate), `announcement.post`, `forecast.update`, `budget.update`,
 `member.sign_on`, `directory.sync`. A wage or an amount of pay is never in an episode.
@@ -160,9 +160,13 @@ A site switcher in the shell for a person who holds several (the launcher's choi
 - **Act**: the kernel's Actions MCP from the registry built from the action manifest; every handler honours the run
   token, checks the right **at the action's site**, logs with `source = 'agent'`.
 - **Approval categories** (requirements OS-12) — an agent's call pauses for a person in the kernel's approvals:
-  **publish a week** (`week_publish` — it notifies staff: `external_send`), **change or cancel a published shift**
-  (`shift_update`, `shift_cancel` on a published shift: `other`), **approve an exchange** (`exchange_decide`:
-  `other`), **change pay or a balance** (`wage_update`, `balance_adjust`: `other`). A person doing the same is not paused.
+  **publish a week** (`week_publish` — it notifies staff: `external_send`), **text or announce to staff**
+  (`coverage_request`, `announcement_post`: `external_send`), **add, change or cancel a shift of a published week**
+  (`shift_add`, `shift_change`, `shift_cancel`: `other` — a draft's `shift_create`/`shift_update`/`shift_assign` never
+  pause, so the scheduler can draft), **approve or choose an exchange** (`exchange_approve`, `exchange_choose`: `other`),
+  **approve time off** (`time_off_approve`: `other`), **change pay or a balance** (`wage_update`, `position_rate_update`,
+  `balance_adjust`: `other`). A person doing the same is not paused. The approval policy matches the action's **log
+  event**, so each of these has an event of its own (Phase 1 manifest).
 - **Shipped agents**: the **expert** (the command bar through the kernel's chat endpoint; answers; a few low-risk
   actions: request time off *for the asker*, offer or claim *the asker's* shift, post nothing); the **scheduler**
   (the scheduling assistant) — drafts a week from the template, availability, the forecast and the hours balance into

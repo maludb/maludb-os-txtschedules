@@ -136,17 +136,23 @@
           "who_is_on",
           "my_shifts",
           "week_schedule",
+          "get_shift",
           "marketplace",
           "coverage_candidates",
           "check_assignment",
           "week_warnings",
           "overrides",
           "hours_this_week",
+          "find_sites",
+          "find_staff",
+          "find_positions",
+          "find_templates",
           "staff_profile",
           "expiring_certifications",
           "availability",
           "time_off",
           "time_off_balances",
+          "my_requests",
           "pending_requests",
           "labor_vs_budget",
           "staffing_needs",
@@ -154,8 +160,6 @@
           "site_rules",
           "announcements",
           "exchange_report",
-          "find_sites",
-          "find_members",
           "records_search"
         ],
         "Activity MCP": [
@@ -167,14 +171,20 @@
           "activity_search"
         ],
         "Actions MCP": [
-          "timeoff_request",
-          "timeoff_cancel",
+          "time_off_request",
+          "time_off_cancel",
           "availability_submit",
-          "exchange_offer",
-          "exchange_claim",
+          "availability_remove",
+          "shift_offer",
+          "shift_give",
+          "shift_swap",
+          "shift_pickup",
+          "claim_withdraw",
           "exchange_accept",
+          "exchange_refuse",
           "exchange_cancel",
-          "announcement_read"
+          "announcement_read",
+          "prefs_save"
         ]
       },
       "skills": [
@@ -191,11 +201,15 @@
         "Records MCP": [
           "who_is_on",
           "week_schedule",
+          "get_shift",
           "coverage_candidates",
           "check_assignment",
           "week_warnings",
           "hours_this_week",
           "staff_profile",
+          "find_staff",
+          "find_positions",
+          "find_templates",
           "expiring_certifications",
           "availability",
           "time_off",
@@ -204,7 +218,6 @@
           "site_settings",
           "site_rules",
           "find_sites",
-          "find_members",
           "records_search"
         ],
         "Activity MCP": [
@@ -214,12 +227,15 @@
         ],
         "Actions MCP": [
           "week_create",
-          "week_from_template",
+          "week_copy",
+          "week_autofill",
+          "template_apply",
           "shift_create",
           "shift_update",
           "shift_assign",
-          "shift_delete_draft",
-          "coverage_offer",
+          "shift_delete",
+          "shift_open",
+          "coverage_request",
           "week_publish"
         ]
       },
@@ -237,7 +253,19 @@
       "category": "external_send"
     },
     {
-      "action": "shift_update",
+      "action": "coverage_request",
+      "category": "external_send"
+    },
+    {
+      "action": "announcement_post",
+      "category": "external_send"
+    },
+    {
+      "action": "shift_add",
+      "category": "other"
+    },
+    {
+      "action": "shift_change",
       "category": "other"
     },
     {
@@ -245,7 +273,19 @@
       "category": "other"
     },
     {
-      "action": "exchange_decide",
+      "action": "exchange_approve",
+      "category": "other"
+    },
+    {
+      "action": "exchange_choose",
+      "category": "other"
+    },
+    {
+      "action": "time_off_approve",
+      "category": "other"
+    },
+    {
+      "action": "balance_adjust",
       "category": "other"
     },
     {
@@ -253,7 +293,7 @@
       "category": "other"
     },
     {
-      "action": "balance_adjust",
+      "action": "position_rate_update",
       "category": "other"
     }
   ],
