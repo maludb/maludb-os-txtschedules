@@ -1,0 +1,268 @@
+{
+  "schema": "maludb-os.application/1",
+  "catalog_key": "txtschedules",
+  "name": "txtSchedules",
+  "description": "Restaurant staff scheduling — each restaurant's week built and published by its managers; staff see their shifts on their phones and offer, pick up, swap and give shifts within the restaurant's trade settings; time off with balances; labor against a budget and a covers forecast.",
+  "business_area": "Operations",
+  "category": "calendar",
+  "icon": "feather-calendar",
+  "version": "0.1.0",
+  "criticality": "high",
+  "vhost": {
+    "label": "txtschedules",
+    "document_root": "html",
+    "internal_port_env": "APP_INTERNAL_PORT"
+  },
+  "database": {
+    "suffix": "txtschedules",
+    "migrations": "db",
+    "roles": {
+      "rw": "txtschedules_rw",
+      "records_ro": "txtschedules_records_ro",
+      "activity_ro": "txtschedules_activity_ro"
+    }
+  },
+  "env": {
+    "required": [
+      "APP_NAME",
+      "APP_URL",
+      "DB_HOST",
+      "DB_PORT",
+      "DB_NAME",
+      "DB_USER",
+      "DB_PASSWORD",
+      "MCP_RECORDS_DB_USER",
+      "MCP_RECORDS_DB_PASSWORD",
+      "MCP_ACTIVITY_DB_USER",
+      "MCP_ACTIVITY_DB_PASSWORD",
+      "MCP_RECORDS_PORT",
+      "MCP_ACTIVITY_PORT",
+      "APP_INTERNAL_PORT",
+      "ACTION_TOKEN_KEY",
+      "ACTIONS_RELAY_KEY",
+      "OS_APPLICATION_TOKEN",
+      "OS_INTERNAL_URL",
+      "OS_LAUNCHER_URL",
+      "APP_KEY",
+      "MALUDB_API_URL",
+      "MALUDB_API_TOKEN"
+    ],
+    "optional": [
+      "MALUMAIL_API_KEY",
+      "MAIL_FROM",
+      "MAIL_FROM_NAME",
+      "API_CORS_ORIGINS"
+    ]
+  },
+  "services": [
+    "deploy/txtschedules-records-mcp.service",
+    "deploy/txtschedules-activity-mcp.service",
+    "deploy/txtschedules-activity-ingest.service",
+    "deploy/txtschedules-activity-ingest.timer",
+    "deploy/txtschedules-directory-sync.service",
+    "deploy/txtschedules-directory-sync.timer",
+    "deploy/txtschedules-notifications.service",
+    "deploy/txtschedules-notifications.timer"
+  ],
+  "endpoints": [
+    {
+      "name": "Records MCP",
+      "kind": "mcp",
+      "path": "/mcp/records",
+      "port_env": "MCP_RECORDS_PORT",
+      "auth_kind": "bearer",
+      "agent_reachable": true,
+      "mcp_surface_version": "1.0"
+    },
+    {
+      "name": "Activity MCP",
+      "kind": "mcp",
+      "path": "/mcp/activity",
+      "port_env": "MCP_ACTIVITY_PORT",
+      "auth_kind": "bearer",
+      "agent_reachable": true,
+      "mcp_surface_version": "1.0"
+    },
+    {
+      "name": "Web UI",
+      "kind": "ui",
+      "path": "/",
+      "auth_kind": "none",
+      "agent_reachable": false
+    },
+    {
+      "name": "Health",
+      "kind": "http_api",
+      "path": "/api/v1/health",
+      "auth_kind": "none",
+      "agent_reachable": false
+    }
+  ],
+  "actions": {
+    "manifest": "docs/txtschedules-action-manifest.md",
+    "registry": "mcp/action_registry.json",
+    "base_url_env": "APP_INTERNAL_PORT"
+  },
+  "skills": [
+    "skills/txtschedules-basics",
+    "skills/scheduling-rules",
+    "skills/shift-marketplace",
+    "skills/build-next-week",
+    "skills/cover-a-gap",
+    "skills/approve-requests"
+  ],
+  "sso": {
+    "path": "/sso",
+    "logout_path": "/sso/logout"
+  },
+  "directory": {
+    "reads": true,
+    "writes": false
+  },
+  "scopes": {
+    "kind": "location"
+  },
+  "assistant": {
+    "command_bar": true,
+    "agent": "expert"
+  },
+  "agents": [
+    {
+      "key": "expert",
+      "job_description": "os/expert.md",
+      "access_capability": "write",
+      "tool_grants": {
+        "Records MCP": [
+          "who_is_on",
+          "my_shifts",
+          "week_schedule",
+          "marketplace",
+          "coverage_candidates",
+          "check_assignment",
+          "week_warnings",
+          "overrides",
+          "hours_this_week",
+          "staff_profile",
+          "expiring_certifications",
+          "availability",
+          "time_off",
+          "time_off_balances",
+          "pending_requests",
+          "labor_vs_budget",
+          "staffing_needs",
+          "site_settings",
+          "site_rules",
+          "announcements",
+          "exchange_report",
+          "find_sites",
+          "find_members",
+          "records_search"
+        ],
+        "Activity MCP": [
+          "shift_history",
+          "exchange_history",
+          "who_did",
+          "site_activity",
+          "draft_history",
+          "activity_search"
+        ],
+        "Actions MCP": [
+          "timeoff_request",
+          "timeoff_cancel",
+          "availability_submit",
+          "exchange_offer",
+          "exchange_claim",
+          "exchange_accept",
+          "exchange_cancel",
+          "announcement_read"
+        ]
+      },
+      "skills": [
+        "skills/txtschedules-basics",
+        "skills/scheduling-rules",
+        "skills/shift-marketplace"
+      ]
+    },
+    {
+      "key": "scheduler",
+      "job_description": "os/scheduler.md",
+      "access_capability": "write",
+      "tool_grants": {
+        "Records MCP": [
+          "who_is_on",
+          "week_schedule",
+          "coverage_candidates",
+          "check_assignment",
+          "week_warnings",
+          "hours_this_week",
+          "staff_profile",
+          "expiring_certifications",
+          "availability",
+          "time_off",
+          "pending_requests",
+          "staffing_needs",
+          "site_settings",
+          "site_rules",
+          "find_sites",
+          "find_members",
+          "records_search"
+        ],
+        "Activity MCP": [
+          "shift_history",
+          "draft_history",
+          "site_activity"
+        ],
+        "Actions MCP": [
+          "week_create",
+          "week_from_template",
+          "shift_create",
+          "shift_update",
+          "shift_assign",
+          "shift_delete_draft",
+          "coverage_offer",
+          "week_publish"
+        ]
+      },
+      "skills": [
+        "skills/txtschedules-basics",
+        "skills/scheduling-rules",
+        "skills/build-next-week",
+        "skills/cover-a-gap"
+      ]
+    }
+  ],
+  "approvals": [
+    {
+      "action": "week_publish",
+      "category": "external_send"
+    },
+    {
+      "action": "shift_update",
+      "category": "other"
+    },
+    {
+      "action": "shift_cancel",
+      "category": "other"
+    },
+    {
+      "action": "exchange_decide",
+      "category": "other"
+    },
+    {
+      "action": "wage_update",
+      "category": "other"
+    },
+    {
+      "action": "balance_adjust",
+      "category": "other"
+    }
+  ],
+  "reads": [
+    {
+      "app": "reservations",
+      "tool": "covers_by_service",
+      "why": "Expected covers per day and service for the staffing forecast (D9, FR-F2)"
+    }
+  ],
+  "shares": []
+}

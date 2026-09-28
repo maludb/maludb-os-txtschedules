@@ -1,0 +1,10 @@
+[Unit]
+Description=txtSchedules notifications: the outbox (email, SMS through the kernel), shift reminders, expiring offers (one pass)
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory={{APP_DIR}}
+ExecStart=/usr/bin/php {{APP_DIR}}/bin/notifications.php

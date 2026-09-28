@@ -271,4 +271,17 @@ The owner's nine decisions of 2026-09-28 are §9. Open for the owner (Phase 0 �
   the shift is gone; exactly one winning claim; the shift is the winner's.
 - **The kit** copied from Projects and adapted for sites (commit 0d9f74b); lint clean; sign-on and the mirror are
   proven in Phase 2, as in Projects.
-- **Installer**: see the commit that adds `maludb-os.json` and `deploy/`.
+- **Registration**: `maludb-os.json` (scope kind location, 4 endpoints, 8 services, 6 skills — 3 skills and 3
+  runbooks —, the expert and the scheduler with their tool grants, 6 approval entries, `reads` Reservations'
+  `covers_by_service`, `shares []` for §8's gap), `os/expert.md`, `os/scheduler.md`, `deploy/` templates (the vhost
+  with the /sso rewrites, the calendar feed and the loopback port; the two MCP servers; three timers — directory
+  sync, activity ingest, notifications), all placeholders the installer renders (`{{APP_FQDN}}`, `{{APP_DIR}}`,
+  `{{APP_INTERNAL_PORT}}`, `{{MCP_RECORDS_PORT}}`, `{{MCP_ACTIVITY_PORT}}`).
+- **Installer** (`php /var/www/bin/app_install.php plan /srv/apps/txtschedules --scheme https`, read-only):
+  **29 steps to do, 7 notes, no stop** — code done; database done (it exists: Phase 0 created it as postgres, so the
+  installer will not re-run the migrations — the owner may drop it before the Phase 5 `apply` to have the installer
+  create it owned by `txtschedules_rw`); ports picked 8101/8102/8103; the endpoints wait for their servers (Phase 2
+  and 4); the registry waits for Phase 1's manifest; 6 approval categories covered; the expert and the scheduler
+  proposed (38 and 28 tools). The K7 `reads` step runs once the application is registered (not visible in a plan
+  made before). The units name `mcp/records_server.py`, `mcp/activity_server.py` (Phase 4) and
+  `bin/notifications.php` (slice 6), which do not exist yet — the installer is for Phase 5.
