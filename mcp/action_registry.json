@@ -1,6 +1,6 @@
 {
     "generated_from": "docs/business-os-action-manifest.md",
-    "generated_at": "2026-09-28T21:52:14+00:00",
+    "generated_at": "2026-09-28T21:56:24+00:00",
     "screens": {
         "dashboard": {
             "screen": "dashboard",
@@ -2152,6 +2152,37 @@
             "who": "build",
             "built": false
         },
+        "forecast_fill": {
+            "action": "forecast_fill",
+            "section": "Labor and forecast",
+            "endpoint": "/labor/forecast-fill.php",
+            "params": [
+                {
+                    "name": "site",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "week_start",
+                    "required": true,
+                    "repeated": false,
+                    "hint": ""
+                },
+                {
+                    "name": "replace_manual",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes or no and no is the default"
+                }
+            ],
+            "undo": "restore prior",
+            "confirm": false,
+            "approval": null,
+            "log_event": "forecast.fill",
+            "who": "build",
+            "built": false
+        },
         "ratio_save": {
             "action": "ratio_save",
             "section": "Labor and forecast",
@@ -2431,6 +2462,12 @@
                     "required": true,
                     "repeated": false,
                     "hint": "HH:MM"
+                },
+                {
+                    "name": "service_name",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "the word Reservations uses for this service"
                 },
                 {
                     "name": "sort_order",

@@ -54,6 +54,7 @@ CREATE TABLE day_parts (
     ends_at     time NOT NULL,                  -- may be before starts_at (runs past midnight)
     sort_order  integer NOT NULL DEFAULT 0,
     archived_at timestamptz,
+    service_name text,                          -- the name Reservations gives this service (Lunch, Dinner, Brunch): how its covers land in the forecast (K7)
     UNIQUE (scope_id, key)
 );
 

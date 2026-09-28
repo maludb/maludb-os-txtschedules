@@ -235,6 +235,7 @@ Actions (base `/labor/`):
 | `budget_save` | `budget.php` | **site**, **week_start**, area (all or front or kitchen or bar or management or other), budget_hours, budget_amount | restore prior | | | `budget.update` | admin |
 | `forecast_save` | `forecast.php` | **site**, **on_date**, **day_part**, **expected_covers** | restore prior | | | `forecast.update` | build |
 | `forecast_copy` | `forecast-copy.php` | **site**, **from_week**, **to_week** | restore prior | | | `forecast.copy` | build |
+| `forecast_fill` | `forecast-fill.php` | **site**, **week_start**, replace_manual (yes or no and no is the default) | restore prior | | | `forecast.fill` | build |
 | `ratio_save` | `ratio.php` | **site**, **position**, covers_per_staff (one person per this many covers), min_staff | restore prior | | | `ratio.update` | admin |
 
 ## Announcements
@@ -271,7 +272,7 @@ Actions (base `/site/`):
 | Action | File | Params | Undo | Confirm | Agent approval | Log | Who |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `site_settings_save` | `save.php` | **site**, week_start (0 Sunday to 6 Saturday), currency, allow_offer (yes or no), allow_pickup (yes or no), allow_swap (yes or no), allow_give (yes or no), approval_pickup (always or on_warning or never), approval_swap (always or on_warning or never), approval_give (always or on_warning or never), cutoff_minutes (0 to 10080), shift_lead_approves_same_day (yes or no), claim_mode (first or manager_chooses), offer_expires (at_start or at_cutoff), availability_needs_approval (yes or no), reminder_minutes_before (0 to 2880), overtime_weekly_hours, overtime_multiplier | restore prior | | | `settings.update` | admin |
-| `day_part_save` | `day-part.php` | **site**, **name**, **starts_at** (HH:MM), **ends_at** (HH:MM), sort_order, day_part (to change an existing one) | restore prior | | | `day_part.save` | admin |
+| `day_part_save` | `day-part.php` | **site**, **name**, **starts_at** (HH:MM), **ends_at** (HH:MM), service_name (the word Reservations uses for this service), sort_order, day_part (to change an existing one) | restore prior | | | `day_part.save` | admin |
 | `day_part_archive` | `day-part-archive.php` | **day_part** | restore | ✔ | | `day_part.archive` | admin |
 
 Actions (base `/rules/`):

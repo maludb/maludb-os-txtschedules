@@ -226,15 +226,15 @@ behind it); shifts are at most 16 hours; the minor flag carries an end date, nev
 | Phase | Deliverable | Gate |
 |---|---|---|
 | 0 | this document; the schema db/001–013, proven; the kit; `maludb-os.json`, `os/`, `skills/`, `deploy/`; the installer's plan | owner's go |
-| 1 | `docs/txtschedules-mcp-tool-surface.md` (§5's tools), `docs/txtschedules-action-manifest.md` (every screen and action: who, undo, confirm, approval category, log payload), one spec per slice with **the shift and the marketplace** as the exemplar | **approved together, before any PHP** |
+| 1 | **written 2026-09-28:** `docs/txtschedules-mcp-tool-surface.md` (29 records tools + 6 activity tools + the `time_off_taken` share), `docs/txtschedules-action-manifest.md` (38 screens, 65 actions, 12 pausing for agents), `mcp/action_registry.json`, and eight specs in `docs/build-specs/` (`sso-shell` and seven slices) with **shifts-marketplace as the exemplar** | **approved together, before any PHP** |
 | 2 | `/sso`, `/sso/logout`, the mirror and its timer, the ingest bridge, the nxl shell (phone-first, site switcher, command bar), `/api/v1/health`, the vhost; installed beside the kernel | hand-off replay refused; a scope not held refused; 375 and 1280 |
 | 3 | slices: **(1) shifts and the marketplace** (the exemplar: my schedule, team schedule, the shift, offer/pick up/give/swap, approvals of trades, coverage) → **(2) the week builder** (weeks, drafts, templates, publish, warnings and overrides) → **(3) availability and time off** (balances, blackout, approvals) → **(4) people and positions** (profiles, main restaurant, wages, certifications) → **(5) labor and forecast** (budget, covers, ratios, needs; the K7 read) → **(6) announcements and notifications** (outbox, email, K6 SMS, reminders, calendar feed) → **(7) settings, rules and reports** | each slice: screens + handlers + logging + manifest entries + tools, proven at 375 and 1280 |
 | 4 | the two MCP servers with the run-facts gate; `app_roles`; the registry on the kernel; skills imported; the expert and the scheduler proposed | the command bar answers "who is on Friday"; an agent's publish pauses |
 | 5 | the kernel installer's `apply` (the owner's), DNS and proxy, sites and grants; the end-to-end proof | a staff member launches on a phone into their restaurant and trades a shift |
 
-The installer's `plan` runs at the end of **every** phase (the lesson of 2026-09-28's ZozoCal install). Size, by
-Projects' measure (seven slices, 48 actions, 23 tools in a day and a half on the exemplar and workers): similar —
-fourteen migrations, seven slices, ~45 actions, ~24 tools.
+The installer's `plan` runs at the end of **every** phase (the lesson of 2026-09-28's ZozoCal install). Size as specified in Phase 1: fourteen migrations, **eight specs (sso-shell + seven slices), 38 screens, 65 actions
+(12 pause for an agent), 29 records tools, 6 activity tools**; Projects (seven slices, 48 actions, 23 tools) took a day
+and a half on the exemplar and workers — this is a little larger, and its slices are smaller.
 
 ## 11. Ports, names and files
 
@@ -269,6 +269,8 @@ The owner's nine decisions are §9 (D1–D9). The four questions Phase 0 left op
    text is K6's (30 a member a day counts) and its refusals never stop the email.
 
 ## 13. State
+
+**Phase 1 — the checkpoint set, written 2026-09-28.** `docs/txtschedules-mcp-tool-surface.md` (29 records tools including `app_roles`, 6 activity tools, the `time_off_taken` share for Phase 4, the four gated functions), `docs/txtschedules-action-manifest.md` (38 screens, 65 actions), `mcp/action_registry.json` (built, `--check` OK, no unresolved endpoint, no phantom parameter), and `docs/build-specs/`: `sso-shell` (Phase 2), `shifts-marketplace` (**the exemplar**), `week-builder`, `availability-time-off`, `people-positions`, `labor-forecast`, `announcements-notifications`, `settings-rules-reports` — each with its screens, files, query functions, handlers, manifest entries, events and a proof list. Also: db/014 and one column (`day_parts.service_name`) from the review. **Awaiting the owner's checkpoint before any PHP.**
 
 **Phase 1 schema additions (db/014, 2026-09-28)**, found in the tool-surface review as Projects' Phase 1 found its own:
 `mcp_hours_weekly` (a person's scheduled paid hours per site and week against their limit and the overtime threshold),

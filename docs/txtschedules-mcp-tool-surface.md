@@ -144,6 +144,9 @@ never pay**) · `wage.update` — `after.scope` (employee or position_default), 
 | `week` | `week_schedule` | `q` (a date) | `week_id` | `label` |
 | `template` | `find_templates` | `q` (name) | `template_id` | `name` |
 | `time_off_type` | `site_settings` (time-off types) | `q` | `type_id` | `name` |
+| `day_part` | `site_settings` (day-parts) | `q` | `day_part_id` | `name` |
+| `availability` | `availability` | `q` | `availability_id` | `label` |
+| `blackout` | `time_off` (blackout dates) | `q` (a date) | `blackout_id` | `label` |
 | `request` | `time_off` | `q` | `request_id` | `label` |
 | `rule` | `site_rules` | `q` | `rule_key` | `name` |
 | `announcement` | `announcements` | `q` | `announcement_id` | `title` |

@@ -34,9 +34,9 @@ BEGIN
     IF v_new THEN
         INSERT INTO site_settings (scope_id, week_start, currency)
         SELECT p_scope, a.default_week_start, a.default_currency FROM app_settings a WHERE a.id = 1;
-        INSERT INTO day_parts (scope_id, key, name, starts_at, ends_at, sort_order) VALUES
-            (p_scope, 'lunch', 'Lunch', '11:00', '15:00', 1),
-            (p_scope, 'dinner', 'Dinner', '17:00', '22:00', 2);
+        INSERT INTO day_parts (scope_id, key, name, starts_at, ends_at, sort_order, service_name) VALUES
+            (p_scope, 'lunch', 'Lunch', '11:00', '15:00', 1, 'Lunch'),          -- service_name: Reservations' own word (ZozoCal's default services)
+            (p_scope, 'dinner', 'Dinner', '17:00', '22:00', 2, 'Dinner');
         INSERT INTO time_off_types (scope_id, key, name, paid, tracks_balance, sort_order) VALUES
             (p_scope, 'vacation', 'Vacation / PTO', true, true, 1),
             (p_scope, 'sick', 'Sick', true, true, 2),
@@ -257,7 +257,7 @@ SELECT b.id AS budget_id, b.scope_id AS site_id, b.week_start, b.area, b.budget_
  WHERE b.scope_id IN (SELECT ts_scopes_with_right('labor.view'));
 
 CREATE OR REPLACE VIEW mcp_day_parts WITH (security_barrier = true) AS
-SELECT d.id AS day_part_id, d.scope_id AS site_id, d.key, d.name, d.starts_at, d.ends_at, d.sort_order
+SELECT d.id AS day_part_id, d.scope_id AS site_id, d.key, d.name, d.starts_at, d.ends_at, d.sort_order, d.service_name
   FROM day_parts d
  WHERE d.archived_at IS NULL AND d.scope_id IN (SELECT ts_held_scope_ids());
 

@@ -291,10 +291,6 @@
     {
       "action": "wage_update",
       "category": "other"
-    },
-    {
-      "action": "position_rate_update",
-      "category": "other"
     }
   ],
   "reads": [

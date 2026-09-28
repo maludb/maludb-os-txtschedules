@@ -19,6 +19,8 @@ Reservations.
 maludb-os.json                 what the kernel's installer reads (registration.md)
 db/                            numbered, additive migrations — run in order as postgres; db/proof/ the schema's proofs
 docs/txtschedules-design.md    Phase 0: purpose, actors, the one rule, memory, questions, screens, agents, decisions, state
+docs/txtschedules-mcp-tool-surface.md, docs/txtschedules-action-manifest.md, docs/build-specs/   Phase 1: the checkpoint set (tools, actions, one spec per slice)
+mcp/action_registry.json       built from the manifest by bin/build_action_registry.php
 os/                            each shipped agent's job description (expert.md, scheduler.md)
 skills/                        txtschedules-basics, scheduling-rules, shift-marketplace (skills); build-next-week,
                                cover-a-gap, approve-requests (runbooks, kind: runbook)
