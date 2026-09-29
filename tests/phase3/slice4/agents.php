@@ -1,0 +1,67 @@
+<?php
+/** Proof — agents (spec "Proof": an agent's wage_update and certification_verify are paused for a person): the run token acts as its agent's member under the same rights, the rows are source agent with the run's request id, no rate is echoed even in the action headers, and the approvals are registered `other` for the kernel to pause. */
+require __DIR__ . '/lib.php';
+$W = reset4();
+$lee = as_member(31); $owner = as_member(1, 102);
+$key = need('ACTION_TOKEN_KEY'); $relayKey = need('ACTIONS_RELAY_KEY');
+$run = fn (int $m, int $runId): string => ($p = $m . '.' . (time() + 300) . '.' . $runId) . '.' . hash_hmac('sha256', 'run:' . $p, $key);
+$relay = fn (string $tok): string => hash_hmac('sha256', $tok, $relayKey);
+$post = fn (string $path, array $form, array $h): array => (function () use ($path, $form, $h) { $r = req('POST', $path, ['headers' => array_merge(JSONH, $h), 'form' => $form]); return [$r['code'], json_decode($r['body'], true) ?? [], $r]; })();
+admin_sql("INSERT INTO members (id, member_kind, display_name, business_role, status, capability, roles) VALUES (905, 'agent', 'SMOKE Leave desk', 'user', 'active', 'write', '{manager}') ON CONFLICT DO NOTHING;
+           INSERT INTO member_site_roles (member_id, scope_id, role_key, roles, capability) VALUES (905, 102, 'manager', '{manager}', 'write') ON CONFLICT DO NOTHING;
+           INSERT INTO members (id, member_kind, display_name, business_role, status, capability, roles) VALUES (906, 'agent', 'SMOKE Helper', 'user', 'active', 'write', '{staff}') ON CONFLICT DO NOTHING;
+           INSERT INTO member_site_roles (member_id, scope_id, role_key, roles, capability) VALUES (906, 102, 'staff', '{staff}', 'write') ON CONFLICT DO NOTHING;
+           INSERT INTO members (id, member_kind, display_name, business_role, status, capability, roles) VALUES (907, 'agent', 'SMOKE Payroll agent', 'user', 'active', 'admin', '{admin}') ON CONFLICT DO NOTHING;
+           INSERT INTO member_site_roles (member_id, scope_id, role_key, roles, capability) VALUES (907, 102, 'admin', '{admin}', 'admin') ON CONFLICT DO NOTHING;");
+kernel_state(function ($s) {
+    foreach ([[711, 905], [712, 906], [713, 907]] as [$r, $m]) { $s['facts'][(string) $r] = ['valid' => true, 'is_agent' => true, 'member_id' => $m, 'run_id' => $r, 'request_id' => "req-run-$r", 'trigger' => 'chat', 'endpoints' => [['name' => 'Records MCP']]]; }
+    return $s;
+});
+$hdr = function (int $m, int $r) use ($run, $relay): array { $t = $run($m, $r); return ['X-Action-Token: ' . $t, 'X-Action-Relay: ' . $relay($t)]; };
+$srv = $W['aSrv'];
+$fh = kind(102, 'food_handler');
+echo "1. The manager agent (schedule.build, labor.view — no pay.edit, no settings.manage)\n";
+$since = last_activity_id();
+[$c, $b] = $post('/staff/save.php', ['member' => 31, 'max_hours_week' => 24, 'positions' => ['Server']], $hdr(905, 711));
+$row = q("SELECT source, agent_run_id, request_id, scope_id, actor_member_id FROM activity_log WHERE action = 'staff.save' AND entity_id = 31 AND id > :s", ['s' => $since])[0] ?? [];
+ok($c === 200 && one('SELECT max_hours_week FROM staff_profiles WHERE member_id = 31') == 24 && ($row['source'] ?? '') === 'agent' && (int) $row['agent_run_id'] === 711 && $row['request_id'] === 'req-run-711' && (int) $row['scope_id'] === 102 && (int) $row['actor_member_id'] === 905, 'staff_save under the run token: 200; the row is source agent, run 711, the run\'s request id, the site, the agent\'s member');
+[$c, $b, $r] = $post('/staff/certifications/add.php', ['member' => 31, 'kind' => 'Food handler', 'issued_on' => today_plus(-3), 'expires_on' => today_plus(200)], $hdr(905, 711));
+$cid = (int) ($b['record_id'] ?? 0);
+ok($c === 200 && $cid > 0 && q('SELECT verified_by FROM certifications WHERE id = :i', ['i' => $cid])[0]['verified_by'] == 905 && $b['location'] === "/staff/31?notice=st_cert_added_verified#certification-$cid", 'certification_add for a person, by kind NAME: 200, verified by the agent (a manager), the location ends in the record id');
+[$c, $b] = $post('/staff/certifications/verify.php', ['certification' => $cid, 'verified' => 'no'], $hdr(905, 711));
+ok($c === 200 && q('SELECT verified_at FROM certifications WHERE id = :i', ['i' => $cid])[0]['verified_at'] === null, 'certification_verify: 200 (the kernel pauses it first — registered `other`, below)');
+[$c, $b] = $post('/staff/wage.php', ['member' => 31, 'position' => $srv, 'rate' => '31.07'], $hdr(905, 711));
+ok($c === 403 && msg($b) === 'You may not change pay or balances here.' && (float) one('SELECT default_wage_rate FROM positions WHERE id = :p', ['p' => $srv]) === 21.37 && one('SELECT wage_override FROM staff_positions WHERE member_id = 31 AND position_id = :p', ['p' => $srv]) === null, 'wage_update without pay.edit: 403 "' . msg($b) . '", nothing changed');
+[$c, $b] = $post('/positions/rate.php', ['position' => $srv, 'rate' => '31.07'], $hdr(905, 711));
+ok($c === 403, 'position_rate_update without pay.edit: 403');
+[$c, $b] = $post('/positions/save.php', ['site' => 102, 'name' => 'SMOKE Agent position'], $hdr(905, 711));
+ok($c === 403, 'position_save without settings.manage: 403');
+echo "2. The staff agent\n";
+[$c, $b] = $post('/staff/save.php', ['member' => 31, 'max_hours_week' => 10], $hdr(906, 712));
+ok($c === 403, 'staff_save → 403');
+[$c, $b] = $post('/staff/certifications/add.php', ['kind' => 'Food handler', 'expires_on' => today_plus(100)], $hdr(906, 712));
+ok($c === 200 && (int) one('SELECT member_id FROM certifications WHERE id = :i', ['i' => (int) $b['record_id']]) === 906 && one('SELECT verified_by FROM certifications WHERE id = :i', ['i' => (int) $b['record_id']]) === null, 'certification_add for itself: 200, unverified');
+[$c, $b] = $post('/staff/certifications/add.php', ['member' => 31, 'kind' => 'Food handler', 'expires_on' => today_plus(100)], $hdr(906, 712));
+ok($c === 403, 'and for a colleague: 403');
+[$c, $b] = $post('/staff/certifications/verify.php', ['certification' => $cid], $hdr(906, 712));
+ok($c === 403, 'certification_verify → 403');
+echo "3. The payroll agent (admin) — the kernel pauses these first\n";
+$since = last_activity_id();
+[$c, $b, $r] = $post('/staff/wage.php', ['member' => 31, 'position' => $srv, 'rate' => '31.07'], $hdr(907, 713));
+$row = q("SELECT source, agent_run_id, request_id, scope_id, after FROM activity_log WHERE action = 'wage.update' AND id > :s ORDER BY id DESC LIMIT 1", ['s' => $since])[0] ?? [];
+ok($c === 200 && (float) one('SELECT wage_override FROM staff_positions WHERE member_id = 31 AND position_id = :p', ['p' => $srv]) === 31.07 && ($row['source'] ?? '') === 'agent' && (int) $row['agent_run_id'] === 713 && (int) $row['scope_id'] === 102, 'wage_update under the token, once approved: 200, source agent, run 713, the site');
+ok(wage_leaks($r['headers'] . $r['body'] . $row['after']) === [], 'and neither the reply, its X-Action-Data header nor the row holds the rate');
+[$c, $b, $r] = $post('/positions/rate.php', ['position' => $srv, 'rate' => '26.19'], $hdr(907, 713));
+ok($c === 200 && wage_leaks($r['headers'] . $r['body']) === [], 'position_rate_update: 200, no rate in the reply or headers');
+echo "4. Agents use the tools, not the screens\n";
+$codes = [];
+foreach (['/staff/?site=102', '/staff/31', '/staff/31/edit', '/positions/?site=102', '/positions/new?site=102', '/certifications/?site=102', '/certifications/mine', '/certifications/kinds/new?site=102'] as $p) { $codes[] = req('GET', $p, ['headers' => array_merge(JSONH, $hdr(905, 711))])['code']; }
+ok(array_unique($codes) === [403], 'the eight screens answer an agent 403 (people only): ' . implode(',', $codes));
+echo "5. What pauses in the kernel (registered here; the pause itself is the kernel's and Phase 4's proof)\n";
+$reg = json_decode((string) file_get_contents(dirname(__DIR__, 3) . '/mcp/action_registry.json'), true)['actions'];
+$appr = fn (string $a) => isset($reg[$a]) ? ($reg[$a]['approval'] ?? null) : 'MISSING';
+ok($appr('wage_update') === 'other' && $appr('position_rate_update') === 'other' && $appr('certification_verify') === 'other', 'wage_update, position_rate_update and certification_verify are registered `other` — an agent\'s call pauses for a person');
+ok($reg['wage_update']['log_event'] === 'wage.update' && $reg['position_rate_update']['log_event'] === 'wage.update', 'both pay actions log `wage.update`, the event the approval policy matches');
+ok(array_reduce(['staff_save', 'certification_add', 'certification_update', 'certification_remove', 'certification_kind_save', 'certification_kind_archive', 'position_save', 'position_archive'], fn ($ok, $a) => $ok && $appr($a) === null, true), 'the other eight carry no approval');
+kernel_state(function ($s) { unset($s['facts']); return $s; });
+finish();

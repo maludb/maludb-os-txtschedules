@@ -18,3 +18,7 @@ set -euo pipefail
 # and six screens are files under html/ (/availability, /time-off, /time-off/new, /time-off/{id}, /time-off/balances, /site/time-off resolve through the vhost's existing canonical-URL
 # rules; the stub html/time-off.php was removed so /time-off is html/time-off/index.php). After the owner's deploy the registry refresh (mcp/action_registry.json, 43 of 69 actions
 # built) is the same one step the installer's plan already lists.
+
+# Phase 3 slice 4 (2026-09-29) — people, positions and certifications: NO root step. No migration (db/015 is still the last), no port, unit, vhost line or environment key: the eleven handlers and ten screens are files
+# under html/ (/staff/, /staff/{id}, /staff/{id}/edit, /positions/, /positions/new, /positions/{id}/edit, /certifications/, /certifications/mine, /certifications/kinds/new and /certifications/kinds/{id}/edit resolve through the
+# vhost's existing canonical-URL rules). After the owner's deploy the registry refresh (mcp/action_registry.json, 54 of 69 actions built) is the same one step the installer's plan already lists.

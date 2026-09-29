@@ -37,8 +37,8 @@ foreach ($matrix as $route => $allowed) {
 ok($wrong === [], "$n role × screen checks (" . count($matrix) . ' screens × 4 roles) answer 200 or 403 as the rights say' . ($wrong ? ': ' . implode('; ', array_slice($wrong, 0, 5)) : ''));
 $r = page($jStaff, '/builder');
 ok(str_contains($r['body'], 'You may not build the schedule here.'), 'a refusal says what the person may not do, in words ("You may not build the schedule here.")');
-$r = page($jMgr, '/staff/');
-ok($r['code'] === 200 && str_contains($r['body'], 'id="staff-list-empty"') && str_contains($r['body'], '(slice 4) fill this.'), 'an empty state names the slice that fills it (the builder itself is real since slice 2)');
+$r = page($jMgr, '/forecast');
+ok($r['code'] === 200 && str_contains($r['body'], 'id="forecast-empty"') && str_contains($r['body'], '(slice 5) fill this.'), 'an empty state names the slice that fills it (the builder itself is real since slice 2)');
 $menu = fn (string $j): array => (preg_match_all('/id="nav-([a-z-]+)"/', page($j, '/')['body'], $m) ? $m[1] : []);
 $sm = $menu($jStaff); $mm = $menu($jMgr); $am = $menu($jAdmin);
 ok(!in_array('builder', $sm, true) && !in_array('site-settings', $sm, true) && in_array('my-schedule', $sm, true), 'the menu follows the rights: staff see no Builder or Settings');

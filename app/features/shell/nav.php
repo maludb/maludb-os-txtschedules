@@ -25,9 +25,9 @@ function nav_groups(): array
             ['approvals', '/approvals', 'feather-check-circle', 'Approvals', 'requests.approve|market.approve_day', true, ''],
             ['coverage', '/coverage', 'feather-life-buoy', 'Coverage', 'coverage.fill', true, ''],
             ['templates-list', '/templates/', 'feather-copy', 'Templates', 'schedule.build', true, ''],
-            ['staff-list', '/staff/', 'feather-user-check', 'Staff', 'schedule.build', false, 'The people who work here, with position and main restaurant. People and positions (slice 4) fill this.'],
-            ['positions-list', '/positions/', 'feather-tag', 'Positions', 'schedule.build', false, 'The restaurant\'s positions and their default rates. People and positions (slice 4) fill this.'],
-            ['certifications', '/certifications/', 'feather-award', 'Certifications', 'schedule.build', false, 'Certification kinds, and who is expired, due, missing one or has one to verify. People and positions (slice 4) fill this.'],
+            ['staff-list', '/staff/', 'feather-user-check', 'Staff', 'schedule.build', true, ''],
+            ['positions-list', '/positions/', 'feather-tag', 'Positions', 'schedule.build', true, ''],
+            ['certifications', '/certifications/', 'feather-award', 'Certifications', 'schedule.build', true, ''],
             ['forecast', '/forecast', 'feather-trending-up', 'Forecast', 'schedule.build', false, 'Covers expected per day-part and the staffing they call for. Labor and forecast (slice 5) fill this.'],
             ['budget', '/budget', 'feather-dollar-sign', 'Budget', 'labor.view', false, 'The weekly labor budget against what is scheduled. Labor and forecast (slice 5) fill this.'],
             ['reports', '/reports/', 'feather-bar-chart-2', 'Reports', 'schedule.build', false, 'Hours, labor against budget, open shifts, trades, overtime and overrides. Settings, rules and reports (slice 7) fill this.'],
@@ -37,7 +37,7 @@ function nav_groups(): array
             ['rules', '/rules/', 'feather-shield', 'Rules', 'settings.manage', false, 'The rules the restaurant runs and how strict each is. Settings, rules and reports (slice 7) fill this.'],
         ],
         'Me' => [
-            ['my-certifications', '/certifications/mine', 'feather-award', 'My certifications', 'schedule.view_own', false, 'Your certifications, and adding one. People and positions (slice 4) fill this.'],
+            ['my-certifications', '/certifications/mine', 'feather-award', 'My certifications', 'schedule.view_own', true, ''],
             ['settings', '/settings/', 'feather-sliders', 'My settings', 'schedule.view_own', false, 'How you are told (email and text), which events, and your calendar link. Announcements and notifications (slice 6) fill this.'],
             ['tokens', '/settings/tokens/', 'feather-key', 'Tokens', 'schedule.view_own', true, ''],
             ['activity', '/activity', 'feather-activity', 'Activity', 'schedule.view_own', true, ''],
@@ -118,7 +118,8 @@ function back_link(): ?array
     $path = parse_url($back, PHP_URL_PATH) ?: '/';
     $labels = ['/' => 'Home', '/my-schedule' => 'My schedule', '/team-schedule' => 'Team schedule', '/marketplace' => 'Marketplace',
                '/approvals' => 'Approvals', '/requests' => 'My requests', '/coverage' => 'Coverage', '/builder' => 'Builder', '/builder/day' => 'Day view',
-               '/templates/' => 'Templates', '/availability' => 'Availability', '/time-off' => 'Time off', '/time-off/balances' => 'Balances', '/site/time-off' => 'Time-off types'];
+               '/templates/' => 'Templates', '/availability' => 'Availability', '/time-off' => 'Time off', '/time-off/balances' => 'Balances', '/site/time-off' => 'Time-off types',
+               '/staff/' => 'Staff', '/positions/' => 'Positions', '/certifications/' => 'Certifications', '/certifications/mine' => 'My certifications'];
     foreach ($labels as $p => $label) {
         if ($path === $p) {
             return [$back, $label];
@@ -126,6 +127,9 @@ function back_link(): ?array
     }
     if (preg_match('#^/templates/\d+$#', $path)) {
         return [$back, 'the template'];
+    }
+    if (preg_match('#^/staff/\d+$#', $path)) {
+        return [$back, 'the person'];
     }
     if (preg_match('#^/time-off/\d+$#', $path)) {
         return [$back, 'the request'];

@@ -15,7 +15,7 @@ $screens = ['availability', 'time-off', 'time-off-add', 'time-off-view', 'balanc
 $bad = [];
 foreach ($screens as $s) { $r = $reg['screens'][$s] ?? null; if ($r === null || $r['built'] !== true) { $bad[] = $s; } }
 ok($bad === [], 'all six screens are built in the registry' . ($bad ? ' — ' . implode(', ', $bad) : ''));
-ok(count(array_filter($reg['actions'], fn ($a) => $a['built'])) === 43, 'the registry now counts 43 of 69 actions built (30 + 13)');
+ok(count(array_filter($reg['actions'], fn ($a) => $a['built'])) >= 43, 'the registry counts at least 43 of 69 actions built (30 + 13; later slices add more)');
 $params = fn (string $a): array => array_column($reg['actions'][$a]['params'], 'name');
 ok($params('time_off_approve') === ['request', 'note', 'open_shifts'] && in_array('member', $params('time_off_request'), true) && in_array('hours', $params('time_off_request'), true), 'the manifest\'s parameters reach the registry (open_shifts, member, hours)');
 foreach ([['/availability', $priya], ['/time-off', $priya], ['/availability', $mara], ['/time-off', $owner]] as [$p, $jar]) {

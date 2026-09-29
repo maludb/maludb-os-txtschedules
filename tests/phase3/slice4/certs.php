@@ -1,0 +1,214 @@
+<?php
+/**
+ * Proof — certifications (the owner's D15; spec "Proof": Certification kinds; Cards and the rule; Staff on the phone; Verify; The due list). Kinds are the restaurant's own; an unverified card counts for the
+ * rule; a manager entering a card verifies it; the due list is a manager's and reads expired / due / missing / to verify.
+ */
+require __DIR__ . '/lib.php';
+$W = reset4();
+$owner = as_member(1, 102); $mara = as_member(33); $lee = as_member(31); $priya = as_member(26); $ana = as_member(30); $dee = as_dee(); $marco = as_member(27, 101); $pat = as_planner(); $joe = as_member(34);
+$srv = $W['aSrv'];
+$since = last_activity_id();
+$fh = kind(102, 'food_handler'); $fhD = kind(101, 'food_handler');
+$html = fn (string $jar, string $p): string => page($jar, $p)['body'];
+$due = function (string $jar, int $site = 102, string $extra = ''): array { [$c, $d] = screen($jar, "/certifications/?site=$site$extra"); return $d['due'] ?? []; };
+$dueOf = fn (array $rows, int $member, ?string $kindName = null): array => array_values(array_filter($rows, fn ($r) => $r['member']['member_id'] === $member && ($kindName === null || $r['kind'] === $kindName)));
+
+echo "1. Kinds: the restaurant's own\n";
+[$c, $b] = act($owner, '/positions/save.php', ['site' => 102, 'name' => 'SMOKE Host', 'certifications' => ['Food handler']]);
+$host = (int) $b['record_id'];
+[$c, $b] = act($owner, '/certifications/kinds/save.php', ['site' => 102, 'name' => 'SMOKE First aid', 'track_expiry' => 'no', 'warn_days' => 0, 'positions' => [$host]]);
+$fa = (int) ($b['record_id'] ?? 0);
+$k = q('SELECT scope_id, key, track_expiry, warn_days FROM certification_kinds WHERE id = :i', ['i' => $fa])[0] ?? [];
+ok($c === 200 && $fa > 0 && str_ends_with((string) $b['location'], "#kind-$fa") && (int) $k['scope_id'] === 102 && $k['track_expiry'] === false && (int) $k['warn_days'] === 0 && $k['key'] === 'smoke_first_aid', 'certification_kind_save: SMOKE First aid at Airport — no expiry tracked, 0 days of warning, the location ends in the record id');
+ok(q('SELECT position_id FROM position_certifications WHERE kind_id = :k', ['k' => $fa]) === [['position_id' => $host]], 'and Host needs it');
+[$c, $d] = screen($owner, '/certifications/?site=102');
+$kinds = array_column($d['kinds'], null, 'name');
+ok(isset($kinds['SMOKE First aid']) && $kinds['SMOKE First aid']['track_expiry'] === false && $kinds['Food handler']['track_expiry'] === true && $kinds['Food handler']['warn_days'] === 30, 'the screen lists the kinds with expiry and warning days');
+[$c, $d] = screen($owner, '/certifications/?site=101');
+ok(!isset(array_column($d['kinds'], null, 'name')['SMOKE First aid']), 'Downtown does not have First aid');
+[$c, $b] = act($owner, '/certifications/kinds/save.php', ['site' => 102, 'name' => 'smoke first AID']);
+ok($c === 422 && str_contains(msg($b), 'is already a certification here'), 'a duplicate kind name in one restaurant: 422 "' . msg($b) . '"');
+[$c, $b] = act($owner, '/certifications/kinds/save.php', ['site' => 101, 'name' => 'SMOKE First aid']);
+ok($c === 200, 'the same name at Downtown is its own kind');
+$faD = (int) $b['record_id'];
+$dtPos = (int) $W['dSrv'];
+[$c, $b] = act($owner, '/certifications/kinds/save.php', ['kind' => $fa, 'positions' => [$dtPos]]);
+ok($c === 422 && str_contains(msg($b), 'own positions'), 'a kind cannot be needed by another restaurant\'s position: 422 "' . msg($b) . '"');
+[$c, $b] = act($owner, '/positions/save.php', ['position' => $host, 'certifications' => [$faD]]);
+ok($c === 422 && str_contains(msg($b), 'own certifications'), 'nor a position given another restaurant\'s kind: 422 "' . msg($b) . '"');
+try { admin_sql("INSERT INTO position_certifications (position_id, kind_id) VALUES ($host, $faD)"); $r = admin_sql("INSERT INTO position_certifications (position_id, kind_id) VALUES ($host, $faD)"); ok(str_contains($r, 'A position needs a certification of its own restaurant.'), 'and the database refuses it itself'); } catch (Throwable $e) { ok(false, $e->getMessage()); }
+[$c, $b] = act($owner, '/certifications/kinds/save.php', ['kind' => $fa, 'name' => 'SMOKE First aid & CPR', 'warn_days' => 400]);
+ok($c === 422, 'warning days of 400: 422 (' . msg($b) . ')');
+[$c, $b] = act($owner, '/certifications/kinds/save.php', ['kind' => $fa, 'name' => 'SMOKE First aid & CPR', 'warn_days' => 14, 'track_expiry' => 'yes']);
+$k = q('SELECT name, track_expiry, warn_days FROM certification_kinds WHERE id = :i', ['i' => $fa])[0];
+ok($c === 200 && $k['name'] === 'SMOKE First aid & CPR' && $k['track_expiry'] === true && (int) $k['warn_days'] === 14 && q('SELECT 1 FROM position_certifications WHERE kind_id = :k', ['k' => $fa]) !== [], 'a change: renamed, 14 days, expiry on; the positions left out stayed');
+act($owner, '/certifications/kinds/save.php', ['kind' => $fa, 'name' => 'SMOKE First aid', 'warn_days' => 0, 'track_expiry' => 'no']);
+$row = q("SELECT scope_id, before, after FROM activity_log WHERE action = 'certification_kind.save' AND entity_id = :i ORDER BY id DESC LIMIT 1", ['i' => $fa])[0];
+$bf = json_decode($row['before'], true); $af = json_decode($row['after'], true);
+ok((int) $row['scope_id'] === 102 && $bf['name'] === 'SMOKE First aid & CPR' && $af['name'] === 'SMOKE First aid' && $af['track_expiry'] === false && $af['position_ids'] === [$host], 'certification_kind.save: the site and before/after of name, track_expiry, warn_days, position ids');
+foreach (['Mara' => $mara, 'Pat' => $pat, 'Lee' => $lee] as $who => $jar) { [$c1] = act($jar, '/certifications/kinds/save.php', ['site' => 102, 'name' => 'SMOKE Nope']); [$c2] = act($jar, '/certifications/kinds/archive.php', ['kind' => $fa]); ok($c1 === 403 && $c2 === 403, "$who (no settings.manage): kind save and archive → 403"); }
+[$c] = act($dee, '/certifications/kinds/save.php', ['kind' => $fa, 'name' => 'SMOKE Hijack']);
+ok($c === 404, 'Dee (Downtown): an Airport kind is 404');
+
+echo "2. Cards and the rule\n";
+[$c, $b] = act($owner, '/positions/save.php', ['position' => $srv, 'certifications' => [$fh]]);
+ok($c === 200, 'Server needs a food handler card');
+$day = today_plus(3);
+$w = warns(31, 102, $srv, $day);
+ok($w === ['Certification: Food handler missing'], 'Lee (no card, works Server): scheduling him warns "' . ($w[0] ?? '') . '"');
+$rows = $due($mara);
+$l = $dueOf($rows, 31, 'Food handler');
+ok(count($l) === 1 && $l[0]['state'] === 'missing', 'the due list shows him as missing');
+// hard / soft, through the builder's assign
+$sid = fx(102, $srv, null, wk(93), 2, '17:00', '23:00');
+admin_sql("UPDATE site_rules SET severity = 'hard' WHERE rule_key = 'cert_required'");
+[$c, $b] = act($owner, '/shifts/assign.php', ['shift' => $sid, 'assignee' => 31]);
+ok($c === 422 && str_contains(msg($b), 'Certification: Food handler missing'), 'hard: the same shift is refused — "' . msg($b) . '"');
+admin_sql("UPDATE site_rules SET severity = 'soft' WHERE rule_key = 'cert_required'");
+[$c, $b] = act($owner, '/shifts/assign.php', ['shift' => $sid, 'assignee' => 31]);
+ok($c === 422 && str_contains(msg($b), 'Certification'), 'soft: it asks for a reason first — "' . msg($b) . '"');
+[$c, $b] = act($owner, '/shifts/assign.php', ['shift' => $sid, 'assignee' => 31, 'override_reason' => 'SMOKE card on its way']);
+ok($c === 200 && holder_of($sid) === 31, 'soft with a reason: assigned, and the override is recorded');
+admin_sql("UPDATE shifts SET assignee_member_id = NULL WHERE id = $sid");
+// Lee adds a card that expired yesterday
+[$c, $b] = act($lee, '/staff/certifications/add.php', ['kind' => $fh, 'issued_on' => today_plus(-800), 'expires_on' => today_plus(-1), 'reference' => 'SMOKE-LEE-1']);
+$old = (int) ($b['record_id'] ?? 0);
+ok($c === 200 && $old > 0, 'Lee adds a food handler card that expired yesterday');
+$w = warns(31, 102, $srv, $day);
+ok($w === ['Certification: Food handler expired'], 'the warning now says expired: "' . ($w[0] ?? '') . '"');
+$l = $dueOf($due($mara), 31, 'Food handler');
+ok(count($l) === 1 && $l[0]['state'] === 'expired' && $l[0]['days_left'] === -1, 'the due list: expired (-1 day), not also missing or to verify');
+// a current one clears both
+[$c, $b] = act($lee, '/staff/certifications/add.php', ['kind' => $fh, 'issued_on' => today_plus(-10), 'expires_on' => today_plus(300), 'reference' => 'SMOKE-LEE-2']);
+$cur = (int) ($b['record_id'] ?? 0);
+ok(warns(31, 102, $srv, $day) === [], 'adding a current card clears the warning');
+$l = $dueOf($due($mara), 31, 'Food handler');
+ok(count($l) === 1 && $l[0]['state'] === 'to_verify' && $l[0]['certification_id'] === $cur, 'and the expired row: only the new card remains on the list, to verify — the old card is not "expired" because it was renewed');
+// First aid with a past date: the kind tracks no expiry
+[$c, $b] = act($owner, '/staff/certifications/add.php', ['member' => 31, 'kind' => $fa, 'issued_on' => today_plus(-900), 'expires_on' => today_plus(-400)]);
+ok($c === 200, 'the owner enters Lee\'s First aid card with a date long past');
+ok(warns(31, 102, $host, $day) === [], 'it does not warn: the kind tracks no expiry');
+ok($dueOf($due($mara), 31, 'SMOKE First aid') === [], 'and it is not on the due list');
+$fa1 = q('SELECT id FROM certifications WHERE member_id = 31 AND kind_id = :k', ['k' => $fa])[0]['id'];
+admin_sql("UPDATE certification_kinds SET track_expiry = true WHERE id = $fa");
+ok(count(warns(31, 102, $host, $day)) === 1, 'turn expiry tracking on and the same card counts as expired: ' . (warns(31, 102, $host, $day)[0] ?? ''));
+admin_sql("UPDATE certification_kinds SET track_expiry = false WHERE id = $fa");
+// kinds that track expiry need a date
+[$c, $b] = act($lee, '/staff/certifications/add.php', ['kind' => $fh]);
+ok($c === 422 && str_contains(msg($b), 'expires: give the expiry date'), 'a card for a kind that expires needs its date: 422 "' . msg($b) . '"');
+[$c, $b] = act($lee, '/staff/certifications/add.php', ['kind' => $fh, 'issued_on' => today_plus(-1), 'expires_on' => today_plus(-5)]);
+ok($c === 422 && str_contains(msg($b), 'cannot expire before'), 'expiry before issue: 422');
+[$c, $b] = act($lee, '/staff/certifications/add.php', ['kind' => $fh, 'expires_on' => 'next spring']);
+ok($c === 422, 'a date that is not a date: 422');
+// archiving the kind
+[$c, $b] = act($owner, '/certifications/kinds/archive.php', ['kind' => $fa]);
+ok($c === 200 && q('SELECT archived_at FROM certification_kinds WHERE id = :k', ['k' => $fa])[0]['archived_at'] !== null, 'archiving First aid: 200');
+admin_sql("UPDATE certifications SET expires_on = NULL WHERE kind_id = $fa");
+ok(warns(31, 102, $host, $day) === [], 'the archived kind leaves the rule (Host no longer asks for it)');
+[$c, $d] = screen($lee, '/certifications/mine');
+ok(!in_array('SMOKE First aid', array_column($d['kinds'], 'name'), true) && count(array_filter($d['certifications'], fn ($x) => $x['kind'] === 'SMOKE First aid')) === 1, 'and the pickers, while the card already entered stays on Lee\'s list');
+[$c, $b] = act($lee, '/staff/certifications/add.php', ['kind' => $fa, 'expires_on' => today_plus(9)]);
+ok($c === 422, 'a card cannot be added for an archived kind: 422 (' . msg($b) . ')');
+[$c, $b] = act($owner, '/certifications/kinds/archive.php', ['kind' => $fa]);
+ok($c === 422 && str_contains(msg($b), 'already archived'), 'archiving twice: 422');
+
+echo "3. Staff on the phone\n";
+admin_sql("DELETE FROM certifications WHERE member_id = 31");
+act($owner, '/staff/certifications/add.php', ['member' => 26, 'kind' => $fh, 'issued_on' => today_plus(-30), 'expires_on' => today_plus(200), 'reference' => 'SMOKE-PRIYA-REF']);
+$mine = page($lee, '/certifications/mine');
+ok($mine['code'] === 200 && str_contains($mine['body'], 'Food handler') && str_contains($mine['body'], 'Alcohol service') && str_contains($mine['body'], 'certification-form-field-kind'), 'Lee opens /certifications/mine and sees Airport\'s kinds to choose from');
+ok(!str_contains($mine['body'], 'SMOKE-PRIYA-REF') && !str_contains($mine['body'], 'SMOKE Priya') && !str_contains(json_encode(screen($lee, '/certifications/mine')[1]), 'PRIYA'), 'nothing of Priya\'s cards is on his page or in its JSON');
+[$c, $b] = act($lee, '/staff/certifications/add.php', ['kind' => $fh, 'issued_on' => today_plus(-5), 'expires_on' => today_plus(360), 'reference' => 'SMOKE-LEE-3', 'return_to' => '/certifications/mine']);
+$lc = (int) $b['record_id'];
+ok($c === 200 && str_ends_with((string) $b['location'], "#certification-$lc") && str_starts_with((string) $b['location'], '/certifications/mine?notice=st_cert_added'), 'add: 200, back to /certifications/mine, the location ends in the card');
+$r = q('SELECT verified_by, verified_at, recorded_by FROM certifications WHERE id = :i', ['i' => $lc])[0];
+ok($r['verified_by'] === null && $r['verified_at'] === null && (int) $r['recorded_by'] === 31, 'a card a person enters is unverified');
+$pg = $html($lee, '/certifications/mine');
+ok(str_contains($pg, 'Waiting for a manager to check') && !str_contains($pg, 'Verified by a manager'), 'the phone says "Waiting for a manager to check"');
+$l = $dueOf($due($owner), 31, 'Food handler');
+ok(count($l) === 1 && $l[0]['state'] === 'to_verify', 'and to the owner it is "to verify"');
+ok(warns(31, 102, $srv, $day) === [], 'an unverified card counts as held for the rule');
+foreach (['Lee cannot verify' => $lee, 'Priya cannot verify' => $priya] as $who => $jar) { [$c] = act($jar, '/staff/certifications/verify.php', ['certification' => $lc]); ok($c === 403, "$who: verify.php → 403"); }
+[$c] = act($dee, '/staff/certifications/verify.php', ['certification' => $lc]);
+ok($c === 404, 'Dee (Downtown): 404');
+[$c, $b] = act($owner, '/staff/certifications/verify.php', ['certification' => $lc]);
+$r = q('SELECT verified_by, verified_at FROM certifications WHERE id = :i', ['i' => $lc])[0];
+ok($c === 200 && (int) $r['verified_by'] === 1 && $r['verified_at'] !== null, 'the owner verifies it');
+ok($dueOf($due($owner), 31, 'Food handler') === [], 'it leaves "to verify"');
+$pg = $html($lee, '/certifications/mine');
+ok(str_contains($pg, 'Verified by a manager') && !str_contains($pg, 'Waiting for a manager to check'), 'Lee\'s phone now reads "Verified by a manager"');
+$row = q("SELECT scope_id, after FROM activity_log WHERE action = 'certification.verify' AND entity_id = :i", ['i' => $lc])[0];
+$af = json_decode($row['after'], true);
+ok((int) $row['scope_id'] === 102 && $af['member_id'] === 31 && $af['kind_id'] === $fh && $af['verified'] === true, 'certification.verify: the site, member, kind, verified');
+[$c, $b] = act($lee, '/staff/certifications/update.php', ['certification' => $lc, 'reference' => 'SMOKE-LEE-3b']);
+$r = q('SELECT verified_by, verified_at, reference FROM certifications WHERE id = :i', ['i' => $lc])[0];
+ok($c === 200 && $r['verified_by'] === null && $r['verified_at'] === null && $r['reference'] === 'SMOKE-LEE-3b', 'Lee correcting his verified card clears the verification');
+ok(count($dueOf($due($owner), 31, 'Food handler')) === 1, 'and it is back on the manager\'s list to verify');
+[$c, $b] = act($mara, '/staff/certifications/update.php', ['certification' => $lc, 'expires_on' => today_plus(365)]);
+$r = q('SELECT verified_by, expires_on::text AS e FROM certifications WHERE id = :i', ['i' => $lc])[0];
+ok($c === 200 && (int) $r['verified_by'] === 33 && $r['e'] === today_plus(365), 'a manager correcting a card verifies it (Mara)');
+[$c, $b] = act($owner, '/staff/certifications/verify.php', ['certification' => $lc, 'verified' => 'no']);
+ok($c === 200 && q('SELECT verified_at FROM certifications WHERE id = :i', ['i' => $lc])[0]['verified_at'] === null, 'verified=no marks it unchecked again');
+echo "3b. Whose cards\n";
+$pc = (int) one('SELECT id FROM certifications WHERE member_id = 26');
+foreach (['update' => ['reference' => 'x'], 'remove' => [], 'verify' => []] as $verb => $more) { [$c] = act($lee, "/staff/certifications/$verb.php", ['certification' => $pc] + $more); ok($c === 403, "Lee $verb Priya's card → 403"); }
+[$c] = act($lee, '/staff/certifications/add.php', ['member' => 30, 'kind' => $fh, 'expires_on' => today_plus(100)]);
+ok($c === 403, 'Lee adding a card for Ana → 403');
+[$c] = act($dee, '/staff/certifications/remove.php', ['certification' => $pc]);
+ok($c === 404, 'Dee removing an Airport card → 404');
+[$c, $b] = act($mara, '/staff/certifications/add.php', ['member' => 30, 'kind' => 'Food handler', 'issued_on' => today_plus(-10), 'expires_on' => today_plus(100), 'reference' => 'SMOKE-ANA']);
+$ac = (int) ($b['record_id'] ?? 0);
+$r = q('SELECT verified_by, recorded_by FROM certifications WHERE id = :i', ['i' => $ac])[0] ?? [];
+ok($c === 200 && (int) $r['verified_by'] === 33 && (int) $r['recorded_by'] === 33, 'a manager (Mara) entering Ana\'s card — by the kind\'s NAME — verifies it at once');
+ok(str_contains($html($ana, '/certifications/mine'), 'Verified by a manager'), 'Ana\'s phone: verified');
+ok($dueOf($due($mara), 30, 'Food handler') === [], 'and it is not on the to-verify list');
+[$c, $b] = act($lee, '/staff/certifications/remove.php', ['certification' => $lc]);
+ok($c === 200 && q('SELECT removed_at FROM certifications WHERE id = :i', ['i' => $lc])[0]['removed_at'] !== null && count(cards_of(31)) === 0, 'a person removes their own card (kept, marked removed)');
+$row = q("SELECT after FROM activity_log WHERE action = 'certification.remove' AND entity_id = :i", ['i' => $lc])[0] ?? null;
+ok($row !== null, 'certification.remove is logged');
+
+echo "3c. One card for every restaurant that has the kind\n";
+[$c, $b] = act($marco, '/staff/certifications/add.php', ['kind' => $fhD, 'issued_on' => today_plus(-5), 'expires_on' => today_plus(400), 'reference' => 'SMOKE-MARCO']);
+$rows = q('SELECT c.id, k.scope_id, c.verified_by FROM certifications c JOIN certification_kinds k ON k.id = c.kind_id WHERE c.member_id = 27 ORDER BY k.scope_id');
+ok($c === 200 && count($rows) === 2 && array_column($rows, 'scope_id') == [101, 102] && count($b['certification_ids'] ?? []) === 2, 'Marco works at both: one entry made two cards, one per restaurant (Downtown and Airport)');
+ok((int) $rows[0]['verified_by'] === 27 && $rows[1]['verified_by'] === null, 'verified where he is a manager (Downtown), waiting where he is staff (Airport)');
+ok(str_contains($html($marco, '/certifications/mine'), 'SMOKE Downtown') && str_contains($html($marco, '/certifications/mine'), 'SMOKE Airport'), 'his list names the restaurants because he holds two');
+
+echo "4. The due list\n";
+admin_sql('DELETE FROM certifications');
+[$c, $b] = act($owner, '/staff/certifications/add.php', ['member' => 30, 'kind' => $fh, 'expires_on' => today_plus(10)]);
+[$c, $b] = act($owner, '/staff/certifications/add.php', ['member' => 31, 'kind' => $fh, 'expires_on' => today_plus(-1)]);
+[$c, $b] = act($lee, '/staff/certifications/add.php', ['kind' => 'Alcohol service', 'expires_on' => today_plus(500)]);
+$rows = $due($mara);
+$byMember = fn (int $m) => array_values(array_filter($rows, fn ($r) => $r['member']['member_id'] === $m && $r['kind'] === 'Food handler'))[0] ?? null;
+ok(($byMember(30)['state'] ?? '') === 'due' && $byMember(30)['days_left'] === 10, 'expiring in 10 days with 30 warned: due, 10 days left');
+ok(($byMember(31)['state'] ?? '') === 'expired' && $byMember(31)['days_left'] === -1, 'expired yesterday: expired');
+ok(($byMember(26)['state'] ?? '') === 'missing' && ($byMember(32)['state'] ?? '') === 'missing', 'Priya and Dana work Server and hold no card: missing');
+$states = array_column($rows, 'state');
+$order = ['expired' => 0, 'missing' => 1, 'due' => 2, 'to_verify' => 3];
+$ranks = array_map(fn ($s) => $order[$s], $states);
+$sorted = $ranks; sort($sorted);
+ok($ranks === $sorted, 'most urgent first: ' . implode(', ', array_unique($states)));
+$to = array_values(array_filter($rows, fn ($r) => $r['kind'] === 'Alcohol service' && $r['member']['member_id'] === 31));
+ok(count($to) === 1 && $to[0]['state'] === 'to_verify', 'Lee\'s alcohol card is to verify');
+$only = fn (string $s) => $due($mara, 102, '&state=' . $s);
+ok(array_unique(array_column($only('expired'), 'state')) === ['expired'] && count($only('due')) === 1 && array_unique(array_column($only('missing'), 'state')) === ['missing'], 'the state filter works (expired, due, missing)');
+$byPos = $due($mara, 102, '&position=' . $W['aBar']);
+ok(array_unique(array_column($byPos, 'member')) === [] || array_unique(array_map(fn ($r) => $r['member']['member_id'], $byPos)) === [30], 'the position filter keeps people who work it (Bar → Ana only)');
+ok(req('GET', '/certifications/?site=102', ['jar' => $lee])['code'] === 403 && req('GET', '/certifications/?site=102', ['jar' => $priya])['code'] === 403, 'the list is a manager\'s: Lee and Priya get 403');
+$dd = $due($dee, 101);
+ok(count(array_filter($dd, fn ($r) => in_array($r['member']['member_id'], [26, 30, 31, 32], true))) === 0 && req('GET', '/certifications/?site=102', ['jar' => $dee])['code'] === 404, 'a manager of Downtown: nothing of Airport in hers, and Airport\'s list is 404');
+[$c, $d] = screen($lee, '/certifications/mine');
+ok($c === 200 && array_unique(array_column($d['certifications'], 'member_id')) === [31], 'Lee\'s own view is his own cards only');
+$pg = $html($mara, '/certifications/?site=102');
+ok(str_contains($pg, 'id="certifications-due"') && preg_match('/id="due-cert-\d+-verify-btn"/', $pg) && preg_match('/id="due-missing-26-\d+-add-btn"/', $pg), 'each row has its action: Verify on a card to check, Add the card on a missing one');
+$staff = $html($mara, '/staff/?site=102');
+ok(str_contains($staff, 'id="staff-card-31-expired"') && !str_contains($staff, 'id="staff-card-30-expired"') && !str_contains($staff, 'id="staff-card-26-expired"'), 'the staff list\'s danger chip agrees: Lee (expired) has one; Ana (due) and Priya (missing) do not');
+$expired = array_map(fn ($r) => $r['member']['member_id'], array_filter($rows, fn ($r) => $r['state'] === 'expired'));
+ok(array_values($expired) === [31], 'and the due list\'s expired rows are Lee alone');
+$text = json_encode(q("SELECT action, before, after FROM activity_log WHERE (action LIKE 'certification%') AND id > :s", ['s' => $since]));
+$addText = json_encode(q("SELECT after FROM activity_log WHERE action IN ('certification.add', 'certification.verify', 'certification.remove') AND id > :s", ['s' => $since]));
+ok(!str_contains($addText, 'SMOKE-') && !str_contains($addText, 'reference'), 'add, verify and remove rows carry ids and dates — no card number (only an update\'s before/after names the reference, as the spec says)');
+$rowsAll = q("SELECT scope_id, action FROM activity_log WHERE action LIKE 'certification%' AND id > :s", ['s' => $since]);
+ok(count($rowsAll) > 10 && count(array_filter($rowsAll, fn ($r) => $r['scope_id'] === null)) === 0, count($rowsAll) . ' certification log rows, every one with its site');
+finish();

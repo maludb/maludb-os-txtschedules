@@ -1,6 +1,6 @@
 {
     "generated_from": "docs/business-os-action-manifest.md",
-    "generated_at": "2026-09-29T14:50:54+00:00",
+    "generated_at": "2026-09-29T15:43:44+00:00",
     "screens": {
         "dashboard": {
             "screen": "dashboard",
@@ -296,7 +296,7 @@
             "section": "People and positions",
             "when": "one person: positions and certifications and hours and time off; pay for whoever may see it",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "staff-edit": {
@@ -305,7 +305,7 @@
             "section": "People and positions",
             "when": "to change a person's main restaurant or limits or positions",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "positions-list": {
@@ -327,7 +327,7 @@
             "params": [
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "position-edit": {
@@ -336,7 +336,7 @@
             "section": "People and positions",
             "when": "to change a position",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "certifications": {
@@ -360,7 +360,7 @@
             "params": [
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "certification-kind-edit": {
@@ -369,7 +369,7 @@
             "section": "People and positions",
             "when": "to change a certification kind: its name and expiry and warning days and the positions that need it",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "my-certifications": {
@@ -1907,7 +1907,7 @@
             "approval": null,
             "log_event": "staff.save",
             "who": "build",
-            "built": false
+            "built": true
         },
         "wage_update": {
             "action": "wage_update",
@@ -1938,7 +1938,7 @@
             "approval": "other",
             "log_event": "wage.update",
             "who": "pay",
-            "built": false
+            "built": true
         },
         "certification_add": {
             "action": "certification_add",
@@ -1981,7 +1981,7 @@
             "approval": null,
             "log_event": "certification.add",
             "who": "own (a manager for anyone)",
-            "built": false
+            "built": true
         },
         "certification_update": {
             "action": "certification_update",
@@ -2016,7 +2016,7 @@
             "approval": null,
             "log_event": "certification.update",
             "who": "own (a manager for anyone)",
-            "built": false
+            "built": true
         },
         "certification_remove": {
             "action": "certification_remove",
@@ -2035,7 +2035,7 @@
             "approval": null,
             "log_event": "certification.remove",
             "who": "own (a manager for anyone)",
-            "built": false
+            "built": true
         },
         "certification_verify": {
             "action": "certification_verify",
@@ -2060,7 +2060,7 @@
             "approval": "other",
             "log_event": "certification.verify",
             "who": "build",
-            "built": false
+            "built": true
         },
         "certification_kind_save": {
             "action": "certification_kind_save",
@@ -2109,7 +2109,7 @@
             "approval": null,
             "log_event": "certification_kind.save",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "certification_kind_archive": {
             "action": "certification_kind_archive",
@@ -2128,7 +2128,7 @@
             "approval": null,
             "log_event": "certification_kind.archive",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "position_save": {
             "action": "position_save",
@@ -2183,7 +2183,7 @@
             "approval": null,
             "log_event": "position.save",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "position_rate_update": {
             "action": "position_rate_update",
@@ -2208,7 +2208,7 @@
             "approval": "other",
             "log_event": "wage.update",
             "who": "pay",
-            "built": false
+            "built": true
         },
         "position_archive": {
             "action": "position_archive",
@@ -2227,7 +2227,7 @@
             "approval": null,
             "log_event": "position.archive",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "budget_save": {
             "action": "budget_save",
