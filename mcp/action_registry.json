@@ -1,6 +1,6 @@
 {
     "generated_from": "docs/business-os-action-manifest.md",
-    "generated_at": "2026-09-29T13:44:35+00:00",
+    "generated_at": "2026-09-29T14:50:54+00:00",
     "screens": {
         "dashboard": {
             "screen": "dashboard",
@@ -253,7 +253,7 @@
                 "from",
                 "to"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "time-off-view": {
@@ -262,7 +262,7 @@
             "section": "Availability and time off",
             "when": "one request and its decision",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "balances": {
@@ -274,7 +274,7 @@
                 "member",
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "staff-list": {
@@ -458,7 +458,7 @@
             "params": [
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "rules": {
@@ -1486,7 +1486,7 @@
             "approval": null,
             "log_event": "availability.submit",
             "who": "own (a manager for anyone)",
-            "built": false
+            "built": true
         },
         "availability_remove": {
             "action": "availability_remove",
@@ -1505,7 +1505,7 @@
             "approval": null,
             "log_event": "availability.remove",
             "who": "own or build",
-            "built": false
+            "built": true
         },
         "availability_approve": {
             "action": "availability_approve",
@@ -1530,7 +1530,7 @@
             "approval": null,
             "log_event": "availability.approve",
             "who": "approve",
-            "built": false
+            "built": true
         },
         "availability_decline": {
             "action": "availability_decline",
@@ -1555,7 +1555,7 @@
             "approval": null,
             "log_event": "availability.decline",
             "who": "approve",
-            "built": false
+            "built": true
         },
         "time_off_request": {
             "action": "time_off_request",
@@ -1610,7 +1610,7 @@
             "approval": null,
             "log_event": "timeoff.request",
             "who": "own (a manager for anyone)",
-            "built": false
+            "built": true
         },
         "time_off_approve": {
             "action": "time_off_approve",
@@ -1628,6 +1628,12 @@
                     "required": false,
                     "repeated": false,
                     "hint": ""
+                },
+                {
+                    "name": "open_shifts",
+                    "required": false,
+                    "repeated": false,
+                    "hint": "yes also opens the published shifts the time off covers"
                 }
             ],
             "undo": "time_off_cancel",
@@ -1635,7 +1641,7 @@
             "approval": "other",
             "log_event": "timeoff.approve",
             "who": "approve",
-            "built": false
+            "built": true
         },
         "time_off_decline": {
             "action": "time_off_decline",
@@ -1660,7 +1666,7 @@
             "approval": null,
             "log_event": "timeoff.decline",
             "who": "approve",
-            "built": false
+            "built": true
         },
         "time_off_cancel": {
             "action": "time_off_cancel",
@@ -1679,7 +1685,7 @@
             "approval": null,
             "log_event": "timeoff.cancel",
             "who": "own or approve",
-            "built": false
+            "built": true
         },
         "balance_adjust": {
             "action": "balance_adjust",
@@ -1716,7 +1722,7 @@
             "approval": "other",
             "log_event": "balance.adjust",
             "who": "pay",
-            "built": false
+            "built": true
         },
         "time_off_type_save": {
             "action": "time_off_type_save",
@@ -1771,7 +1777,7 @@
             "approval": null,
             "log_event": "timeoff_type.save",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "time_off_type_archive": {
             "action": "time_off_type_archive",
@@ -1790,7 +1796,7 @@
             "approval": null,
             "log_event": "timeoff_type.archive",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "blackout_save": {
             "action": "blackout_save",
@@ -1821,7 +1827,7 @@
             "approval": null,
             "log_event": "blackout.save",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "blackout_remove": {
             "action": "blackout_remove",
@@ -1840,7 +1846,7 @@
             "approval": null,
             "log_event": "blackout.remove",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "staff_save": {
             "action": "staff_save",

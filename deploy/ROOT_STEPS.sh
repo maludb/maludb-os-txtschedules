@@ -13,3 +13,8 @@ set -euo pipefail
 # handlers and screens are files under html/ (/builder, /builder/day, /shifts/new, /shifts/{id}/edit, /templates/, /templates/{id}, /weeks/publish-confirm
 # all resolve through the vhost's existing canonical-URL rules), SortableJS is a static file under html/assets/vendors/sortablejs/. After the owner's deploy the
 # registry refresh (mcp/action_registry.json, 30 of 69 actions built) is the same one step the installer's plan already lists.
+
+# Phase 3 slice 3 (2026-09-29) — availability and time off: NO root step. No migration (db/015 is still the last), no port, unit, vhost line or environment key: the thirteen handlers
+# and six screens are files under html/ (/availability, /time-off, /time-off/new, /time-off/{id}, /time-off/balances, /site/time-off resolve through the vhost's existing canonical-URL
+# rules; the stub html/time-off.php was removed so /time-off is html/time-off/index.php). After the owner's deploy the registry refresh (mcp/action_registry.json, 43 of 69 actions
+# built) is the same one step the installer's plan already lists.

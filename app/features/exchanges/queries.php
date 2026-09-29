@@ -303,7 +303,7 @@ function find_approver_ids(PDO $pdo, int $siteId, bool $sameDay, int $exceptMemb
     return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
 }
 
-/** How many trades wait for the caller at a site (the menu badge). */
+/** How many things wait for the caller at a site — trades, time off, availability changes (the menu badge). */
 function count_approvals(PDO $pdo, int $siteId, int $memberId): int
 {
     $full = has_right('requests.approve', $siteId);
@@ -311,7 +311,10 @@ function count_approvals(PDO $pdo, int $siteId, int $memberId): int
     if (!$full && !$day) {
         return 0;
     }
-    return count(find_approvals($pdo, $full ? [$siteId] : [], $memberId, $day ? [$siteId] : []));
+    require_once dirname(__DIR__) . '/availability/queries.php';
+    require_once dirname(__DIR__) . '/timeoff/queries.php';
+    $n = count(find_approvals($pdo, $full ? [$siteId] : [], $memberId, $day ? [$siteId] : []));
+    return $full ? $n + count(find_time_off_approvals($pdo, [$siteId], $memberId)) + count(find_availability_approvals($pdo, [$siteId], $memberId)) : $n;
 }
 
 /** The soft warnings recorded on a member's claim (sentences). */

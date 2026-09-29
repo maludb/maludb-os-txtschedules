@@ -44,7 +44,7 @@ function home_waiting(PDO $pdo, int $memberId, ?int $siteId = null): array
         $items[] = ['kind' => 'coverage', 'text' => 'You were asked to cover a shift', 'when' => $x['shift_starts_at'], 'href' => '/exchanges/' . (int) $x['exchange_id']];
     }
     if ($siteId !== null && ($n = count_approvals($pdo, $siteId, $memberId)) > 0) {
-        $items[] = ['kind' => 'approvals', 'text' => $n . ($n === 1 ? ' trade waits' : ' trades wait') . ' for your decision', 'when' => null, 'href' => '/approvals'];
+        $items[] = ['kind' => 'approvals', 'text' => $n . ($n === 1 ? ' request waits' : ' requests wait') . ' for your decision', 'when' => null, 'href' => '/approvals'];
     }
     return $items;
 }

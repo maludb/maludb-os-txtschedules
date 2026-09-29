@@ -1,14 +1,27 @@
 <?php
-/** Approvals (screen `approvals`). Data: rows (exchanges, oldest first), zone, notice, sites. Each: the trade in one line, its warnings as chips, Approve / Decline inline. */
+/** Approvals (screen `approvals`). Data: rows (exchanges, oldest first), timeOff, avail, kind, zone, notice, sites. Each: the request in one card, its warnings or its covered shifts, Approve / Decline inline. */
+$kinds = ['' => 'All', 'time_off' => 'Time off', 'availability' => 'Availability', 'exchange' => 'Trades'];
 ?>
 <?= view('shared/header.php', ['id' => 'approvals', 'title' => 'Approvals', 'crumbs' => [['Home', '/'], ['Approvals', null]]]) ?>
 <div class="main-content" id="approvals-content">
     <?= view('shared/notice.php', ['notice' => $notice]) ?>
-    <?php if ($rows === []): ?>
+    <div class="d-flex flex-wrap gap-1 mb-3" id="approvals-kind-chips">
+        <?php foreach ($kinds as $k => $l): ?><?= hx_link('/approvals' . ($k === '' ? '' : '?kind=' . $k), e($l), 'btn btn-touch ' . (($kind ?? '') === $k ? 'btn-primary' : 'btn-light'), 'id="approvals-kind-' . ($k === '' ? 'all' : e($k)) . '"') ?><?php endforeach; ?>
+    </div>
+    <?php if ($timeOff !== []): ?><h6 class="text-muted text-uppercase fs-11" id="approvals-time-off-heading">Time off</h6><?php endif; ?>
+    <?php foreach ($timeOff as $t) { echo view('timeoff/partials/request-card.php', ['r' => $t, 'mode' => 'approval', 'back' => '/approvals', 'zone' => $zone, 'withBalance' => true, 'shifts' => $t['covered'], 'showMember' => true]); } ?>
+    <?php if ($avail !== []): ?>
+        <h6 class="text-muted text-uppercase fs-11" id="approvals-availability-heading">Availability changes</h6>
+        <div class="card mb-3" id="approvals-availability"><div class="card-body pt-2">
+            <?php foreach ($avail as $b) { echo view('availability/partials/block.php', ['b' => $b, 'mode' => 'approval', 'may' => ['decide' => true], 'back' => '/approvals', 'showMember' => true, 'multi' => true]); } ?>
+        </div></div>
+    <?php endif; ?>
+    <?php if ($rows !== []): ?><h6 class="text-muted text-uppercase fs-11" id="approvals-trades-heading">Trades</h6><?php endif; ?>
+    <?php if ($rows === [] && $timeOff === [] && $avail === []): ?>
         <div class="card" id="approvals-empty"><div class="card-body text-center py-4">
             <div class="avatar-text avatar-xl rounded mx-auto mb-3"><i class="feather-check-circle"></i></div>
             <div class="fw-semibold">Nothing waits for you.</div>
-            <div class="text-muted fs-12 mt-1">Trades that need a manager appear here. Time off and availability join them later.</div>
+            <div class="text-muted fs-12 mt-1">Time off, availability changes and trades that need a manager appear here.</div>
         </div></div>
     <?php endif; ?>
     <?php foreach ($rows as $x): $id = (int) $x['exchange_id']; $choose = $x['status'] === 'open'; $soft = array_values(array_filter($x['warnings'], static fn (array $w): bool => ($w['severity'] ?? 'soft') === 'soft')); ?>

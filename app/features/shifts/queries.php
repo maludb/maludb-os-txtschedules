@@ -161,7 +161,7 @@ function find_open_shifts(PDO $pdo, int $siteId, int $limit = 40): array
 function find_site_row(PDO $pdo, int $siteId): ?array
 {
     $st = $pdo->prepare('SELECT site_id, name, timezone, currency, week_start, allow_offer, allow_pickup, allow_swap, allow_give, approval_pickup, approval_swap, approval_give,
-                                cutoff_minutes, shift_lead_approves_same_day, claim_mode, offer_expires, my_role FROM mcp_sites WHERE site_id = :s');
+                                cutoff_minutes, shift_lead_approves_same_day, claim_mode, offer_expires, my_role, time_off_day_hours FROM mcp_sites WHERE site_id = :s');
     $st->execute(['s' => $siteId]);
     $row = $st->fetch();
     return $row === false ? null : $row;

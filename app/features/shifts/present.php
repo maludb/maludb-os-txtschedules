@@ -124,6 +124,12 @@ function activity_words(array $r): string
         case 'exchange.decline':  return $who . ' declined the trade' . (($a['note'] ?? '') !== '' ? ': ' . $a['note'] : '');
         case 'exchange.cancel':   return $who . ' withdrew the trade';
         case 'exchange.expire':   return 'The offer expired';
+        case 'timeoff.request':   return $who . ' asked for time off (' . days_label($a['hours'] ?? 0) . ' h)';
+        case 'timeoff.approve':   return $who . ' approved it' . (($n = count($a['shifts_opened'] ?? [])) > 0 ? ' and opened ' . $n . ($n === 1 ? ' shift' : ' shifts') : '') . (($a['note'] ?? '') !== '' ? ': ' . $a['note'] : '');
+        case 'timeoff.decline':   return $who . ' declined it' . (($a['note'] ?? '') !== '' ? ': ' . $a['note'] : '');
+        case 'timeoff.cancel':    return $who . ' cancelled it' . ((float) ($a['hours_returned'] ?? 0) > 0 ? ' — ' . days_label($a['hours_returned']) . ' h went back' : '');
+        case 'shift.change':
+            return ($a['via'] ?? '') === 'time_off' ? 'It was opened because time off was approved' : $who . ' changed it';
         case 'shift.assign':
             $from = $r['before']['assignee_name'] ?? null;
             return ($a['assignee_name'] ?? null) !== null

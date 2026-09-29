@@ -294,6 +294,41 @@ The owner's nine decisions are §9 (D1–D9). The four questions Phase 0 left op
 
 ## 13. State
 
+**Phase 3, slice 3 — availability and time off: built and proven, 2026-09-29** (`docs/build-specs/availability-time-off.md`; proofs in `tests/phase3/slice3/`, run by
+`tests/phase3/slice3/run.sh` on the scratch database `txtschedules_dev5` — see CLAUDE.md State for the per-proof counts; plus the Phase 0 schema proof 129 of 129).
+**Built:** the screens `availability` (seven day cards, effective blocks apart from what waits, the add form on the page, a manager's person chooser), `time-off` (mine / Everyone / one person / who is off on a date, status chips,
+pages), `time-off-add` (one form with the live preview line), `time-off-view` (the request, the shifts it covers, the balance before and after, decide / cancel, history), `balances` (balance cards with the ledger, the pay.edit adjust form)
+and `time-off-types` (kinds as cards, blackout dates); thirteen handlers (`html/availability/{save remove approve decline}`, `html/time-off/{request approve decline cancel balance}`, `html/time-off/types/{save archive}`,
+`html/time-off/blackout/{save remove}`); `app/features/{availability,timeoff}/`; Approvals gained time-off and availability cards (with `?kind=`), My requests gained time off and availability changes, the menu badge and the
+home line count all three; Availability and Time off left the placeholder list. **No migration** (db/015 is still the last). Registry: 69 actions, 43 built; 43 screens, 35 built.
+
+**Decisions taken (slice 3)** (the spec left these open; the conservative reading each time):
+1. **No schema change.** db/007, db/009, db/013 had everything; `tests/phase3/slice3/schema.php` proves the database's own refusals and that no PHP writes a balance or the ledger except through `ts_time_off_post()`.
+2. **The availability form is on the availability page** (`/availability?add=<weekday>`), not a page of its own — the spec lists no `form.php` for it. A create's location ends in the record id as an anchor
+   (`…#availability-block-12`, `#ledger-9`, `#type-4`, `#blackout-3`); `time_off_request` lands on `/time-off/{id}`.
+3. **A block with no restaurant** (`scope_id` NULL, "every restaurant I work at") is approved, declined and removed by someone who holds the right at ANY of the person's restaurants; it needs approval if ANY of them asks for it.
+4. **Whole day = 00:00 to 00:00** (the engine reads an end at or before the start as the next day, so it is 24 hours). A block may run past midnight.
+5. **A manager who may approve (`requests.approve`) and enters a block for another person** gets it approved at once (decided_by = the manager); anyone else's entry, and everyone's own, follows the restaurant's setting.
+   **Nobody decides their own** availability or time off (403 "You cannot decide your own …"); another approver — the owner — does.
+6. **Approving a block replaces** the older approved blocks of the same person, weekday and restaurant scope (NULL only against NULL) whose hours and dates it overlaps, whatever their kind. A block that takes effect LATER than
+   today does not wipe the present: the older one is ended the day before. **Removing** a block sets it `replaced` (there is no deleted state and no DELETE grant); it stays in the record.
+7. **Time off:** the restaurant is the kind's (a `site` that disagrees is 422); a request that overlaps one already pending or approved is refused; staff cannot ask for time already over or cancel time that is over (an approver can
+   do both); the person's own cancel of an approved request tells the approvers; a manager's cancel tells the person. `hours` given are kept, empty are counted by the database (D13). A request entered for someone else
+   by an approver is `pending` like any other (someone must still decide it; not the requester's own).
+8. **"Also open those shifts"** (`open_shifts=yes`) opens the person's published, scheduled shifts at THE REQUEST'S restaurant that overlap the time and have not ended: assignee to nobody (the database stamps
+   `changed_after_publish_at`), the shift's live trade is withdrawn, the old holder gets a `shift_changed` notice, one `shift.change` row each (`after.via = time_off`, `request_id`). Draft-week shifts are left to the builder's
+   warning (the engine's hard `time_off` rule); shifts at another restaurant of the same person are not the approver's to open. `timeoff.approve` records `shifts_opened` as the list of shift ids.
+9. **Balances:** a person reads their own; an approver reads their restaurant's staff (requests.approve at the type's restaurant); a builder without approve sees a request but no balance and cannot decide.
+   `balance_adjust` needs `pay.edit` at the kind's restaurant, a kind that keeps a balance, a person who works there, a non-zero number of hours (≤ 2000) and a reason of 3–500 characters; the record id is the ledger row.
+   The database's own sentence is used as is ("Not enough vacation / pto left: this needs 24.00 hours."; db/007 is not modified).
+10. **Types and blackout dates** (`settings.manage`): a new kind's key is made from its name and numbered when taken; `allow_negative` needs `tracks_balance`; archiving is one way (no restore action in the manifest). A blackout
+    date added later refuses NEW requests only; requests already asked stay decidable. `/site/time-off?site=&edit=&add=type` is one page (the spec's `html/site/time-off.php`).
+11. **The settings-screen half of the hours-a-day proof** (an admin changes `time_off_day_hours` on `/site/`; a manager without `settings.manage` gets 403 there) belongs to the settings handler of slice 7 and is not built: this slice proves
+    the database refuses 0, 25 and −1, that a change reaches new requests only, the cap, another restaurant's own setting and the preview line.
+12. **Approvals** shows time off for `requests.approve` sites only (a shift lead's day-only rights show trades only); `?kind=exchange|time_off|availability`. `mcp_availability` shows a person's blocks to builders, so an approver
+    reads pending blocks through `schedule.build` as well — both are the manager's rights in the shipped catalogue.
+13. **Not proved here:** the kernel's pause of `time_off_approve` and `balance_adjust` (D14, registered `other`) — asserted in the registry; Phase 4 proves the pause itself. HR's `time_off_taken` share is Phase 4; the sending of notices, slice 6.
+
 **Phase 3, slice 2 — the week builder: built and proven, 2026-09-29** (`docs/build-specs/week-builder.md`; proofs in `tests/phase3/slice2/`, run by
 `tests/phase3/slice2/run.sh` on the scratch database `txtschedules_dev4` — schema 7 · draft 24 · rules 38 · published 46 · numbers 20 · templates 43 · autofill 22 ·
 rights 23 · agents 15 · browser 55 = 293 checks, plus the Phase 0 schema proof 129 of 129). **Built:** the screens `builder` (the week as a grid, people or positions,

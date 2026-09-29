@@ -83,7 +83,11 @@ screens, the agents, the decisions, the state), then — once Phase 1 exists —
   The application is already applied on the kernel (application 56).
 - **Phase 3 slice 2 — the week builder (2026-09-29) built and proven** (`docs/build-specs/week-builder.md`): builder grid + phone day tabs, day view, shift form with live check, templates, publish page;
   fifteen handlers in `html/{weeks,shifts,templates}/`, `app/features/{weeks,templates,autofill}/`, `shifts/write.php`, SortableJS drag; **no migration**; **293 checks** in `tests/phase3/slice2/`
-  (`run.sh`, scratch `txtschedules_dev4`). Decisions: design §13. Next: slice 3 (availability and time off).
+  (`run.sh`, scratch `txtschedules_dev4`). Decisions: design §13.
+- **Phase 3 slice 3 — availability and time off (2026-09-29) built and proven** (`docs/build-specs/availability-time-off.md`): six screens (`availability`, `time-off`, `time-off-add` with the live preview, `time-off-view`, `balances`,
+  `time-off-types`), thirteen handlers in `html/{availability,time-off}/`, `app/features/{availability,timeoff}/`, Approvals / My requests / the menu badge carry time off and availability; approving can also open the covered shifts;
+  **no migration**; **401 checks** in `tests/phase3/slice3/` (`run.sh`, scratch `txtschedules_dev5`: schema 20 · availability 67 · timeoff 117 · hours 20 · zones 11 · rights 42 · agents 14 · registry 13 · browser 97; all screenshots read).
+  Registry 43 of 69 actions built. Decisions: design §13. Owed: the settings screen's half of the hours-a-day proof (slice 7). Next: slice 4 (people and positions).
 - **The proofs never touch the installed application**: `tests/setup_dev.sh` makes `txtschedules_dev` and puts its environment
   in `$TS_DEV_ENV` (real environment variables, read ahead of `config/.env`); **never put a `config/.env` here before the
   installer's `apply`** — it would keep the scratch keys and skip the fresh role passwords.

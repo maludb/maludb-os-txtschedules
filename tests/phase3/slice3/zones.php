@@ -1,0 +1,40 @@
+<?php
+/** Proof — time zones (spec "Proof": Time zones): a request entered in the restaurant's zone (New York vs Chicago) stores the right UTC range and shows back in that zone; the zone is named when a person holds both. */
+require __DIR__ . '/lib.php';
+$W = reset3();
+$priya = as_member(26); $marco = as_member(27, 101); $joe = as_member(34);
+$vac = typ(102, 'vacation'); $dvac = typ(101, 'vacation'); $unpaidD = typ(101, 'unpaid'); $unpaidA = typ(102, 'unpaid');
+$w = wk(76); $d = fn (int $i): string => dayn($w, $i);
+$utc = fn (string $local, string $tz): string => (new DateTimeImmutable($local, new DateTimeZone($tz)))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i');
+$stored = fn (int $id): array => array_map(fn ($v) => (new DateTimeImmutable($v))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i'), array_values(q('SELECT starts_at, ends_at FROM time_off_requests WHERE id = :i', ['i' => $id])[0]));
+
+echo "1. Entered in the restaurant's zone\n";
+[$c, $b] = act($marco, '/time-off/request.php', ['time_off_type' => $unpaidD, 'starts_at' => $d(1) . ' 09:00', 'ends_at' => $d(1) . ' 13:00']);
+$ny = (int) $b['record_id'];
+ok($c === 200 && $stored($ny) === [$utc($d(1) . ' 09:00', 'America/New_York'), $utc($d(1) . ' 13:00', 'America/New_York')], 'Downtown (New York), 09:00–13:00: stored as ' . implode(' – ', $stored($ny)) . ' UTC');
+[$c, $b] = act($marco, '/time-off/request.php', ['time_off_type' => $unpaidA, 'starts_at' => $d(2) . ' 09:00', 'ends_at' => $d(2) . ' 13:00']);
+$ch = (int) $b['record_id'];
+ok($c === 200 && $stored($ch) === [$utc($d(2) . ' 09:00', 'America/Chicago'), $utc($d(2) . ' 13:00', 'America/Chicago')], 'Airport (Chicago), the same wall-clock times: stored ' . implode(' – ', $stored($ch)) . ' UTC');
+$nyStart = new DateTimeImmutable($utc($d(1) . ' 09:00', 'America/New_York')); $chStart = new DateTimeImmutable($utc($d(1) . ' 09:00', 'America/Chicago'));
+ok($chStart->getTimestamp() - $nyStart->getTimestamp() === 3600, 'the same wall clock is an hour apart between the two restaurants');
+[$c, $b] = req_off($marco, $unpaidD, $d(3), $d(4));
+$whole = (int) $b['record_id'];
+ok($c === 200 && $stored($whole) === [$utc($d(3) . ' 00:00', 'America/New_York'), $utc($d(5) . ' 00:00', 'America/New_York')], 'whole days (two days) start at local midnight and end at the next one after the last day: ' . implode(' – ', $stored($whole)));
+echo "2. Shown back in the restaurant's zone\n";
+[, $x] = screen($marco, "/time-off/$ny");
+ok(preg_match('~9:00 am–1:00 pm E[SD]T$~', $x['request']['when']) === 1, 'Marco holds two zones, so the New York request names its zone: "' . $x['request']['when'] . '"');
+[, $x2] = screen($marco, "/time-off/$ch");
+ok(preg_match('~9:00 am–1:00 pm C[SD]T$~', $x2['request']['when']) === 1, 'and the Chicago one names CDT/CST: "' . $x2['request']['when'] . '"');
+$html = html_entity_decode(page($marco, "/time-off/$ny")['body']);
+ok(str_contains($html, $x['request']['when']) && str_contains($html, '(America/New_York)'), 'the rendered page has the same words and the zone name');
+[, $x3] = screen($marco, "/time-off/$whole");
+ok(preg_match('~^[A-Z][a-z]{2} [A-Z][a-z]{2} \d+ – [A-Z][a-z]{2} [A-Z][a-z]{2} \d+$~', $x3['request']['when']), 'whole days read as a date range without times: "' . $x3['request']['when'] . '"');
+$want = (new DateTimeImmutable($d(3)))->format('D M j') . ' – ' . (new DateTimeImmutable($d(4)))->format('D M j');
+ok($x3['request']['when'] === $want, 'and they are the days entered: "' . $want . '"');
+[$c, $b] = req_off($joe, $unpaidD, $d(6), $d(6));
+$jr = (int) $b['record_id'];
+$html = html_entity_decode(page($joe, "/time-off/$jr")['body']);
+ok(!preg_match('/\b(EDT|EST|CDT|CST)\b/', explode('id="time-off-history"', explode('id="page-content"', $html)[1] ?? $html)[0]), 'Joe holds one restaurant: the zone is not named in the words (only in the restaurant line)');
+[$c, $b] = act($marco, '/time-off/request.php', ['time_off_type' => $unpaidD, 'starts_at' => '2027-03-14 01:30', 'ends_at' => '2027-03-14 04:30']);
+ok($c === 200 && $stored((int) $b['record_id'])[1] === $utc('2027-03-14 04:30', 'America/New_York'), 'across the spring-forward night the stored end is still the right UTC instant');
+finish();

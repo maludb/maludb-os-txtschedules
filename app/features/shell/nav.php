@@ -16,8 +16,8 @@ function nav_groups(): array
             ['team-schedule', '/team-schedule', 'feather-users', 'Team schedule', 'schedule.view_own', true, ''],
             ['marketplace', '/marketplace', 'feather-repeat', 'Marketplace', 'market.trade', true, ''],
             ['my-requests', '/requests', 'feather-inbox', 'My requests', 'schedule.view_own', true, ''],
-            ['availability', '/availability', 'feather-clock', 'Availability', 'availability.edit', false, 'When you can work each week. Availability and time off (slice 3) fill this.'],
-            ['time-off', '/time-off', 'feather-sun', 'Time off', 'availability.edit', false, 'Time off you have asked for, your balances, and who is off. Availability and time off (slice 3) fill this.'],
+            ['availability', '/availability', 'feather-clock', 'Availability', 'availability.edit', true, ''],
+            ['time-off', '/time-off', 'feather-sun', 'Time off', 'availability.edit', true, ''],
             ['announcements-list', '/announcements/', 'feather-volume-2', 'Announcements', 'schedule.view_own', false, 'What managers have posted for your restaurant. Announcements and notifications (slice 6) fill this.'],
         ],
         'Manage' => [
@@ -118,7 +118,7 @@ function back_link(): ?array
     $path = parse_url($back, PHP_URL_PATH) ?: '/';
     $labels = ['/' => 'Home', '/my-schedule' => 'My schedule', '/team-schedule' => 'Team schedule', '/marketplace' => 'Marketplace',
                '/approvals' => 'Approvals', '/requests' => 'My requests', '/coverage' => 'Coverage', '/builder' => 'Builder', '/builder/day' => 'Day view',
-               '/templates/' => 'Templates'];
+               '/templates/' => 'Templates', '/availability' => 'Availability', '/time-off' => 'Time off', '/time-off/balances' => 'Balances', '/site/time-off' => 'Time-off types'];
     foreach ($labels as $p => $label) {
         if ($path === $p) {
             return [$back, $label];
@@ -126,6 +126,9 @@ function back_link(): ?array
     }
     if (preg_match('#^/templates/\d+$#', $path)) {
         return [$back, 'the template'];
+    }
+    if (preg_match('#^/time-off/\d+$#', $path)) {
+        return [$back, 'the request'];
     }
     if (preg_match('#^/(shifts|exchanges)/\d+$#', $path)) {
         return [$back, str_starts_with($path, '/shifts') ? 'the shift' : 'the trade'];

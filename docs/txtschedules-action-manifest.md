@@ -181,7 +181,7 @@ Actions (base `/time-off/`):
 | Action | File | Params | Undo | Confirm | Agent approval | Log | Who |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `time_off_request` | `request.php` | **time_off_type**, **starts_at** (site local as 2026-10-09 09:00), **ends_at** (site local as 2026-10-11 17:00), hours (empty counts each day at the restaurant's hours per day), note, member, site | time_off_cancel | | | `timeoff.request` | own (a manager for anyone) |
-| `time_off_approve` | `approve.php` | **request**, note | time_off_cancel | | other | `timeoff.approve` | approve |
+| `time_off_approve` | `approve.php` | **request**, note, open_shifts (yes also opens the published shifts the time off covers) | time_off_cancel | | other | `timeoff.approve` | approve |
 | `time_off_decline` | `decline.php` | **request**, note | — | | | `timeoff.decline` | approve |
 | `time_off_cancel` | `cancel.php` | **request** | — | ✔ | | `timeoff.cancel` | own or approve |
 | `balance_adjust` | `balance.php` | **member**, **time_off_type**, **delta_hours** (positive grants and negative removes), **reason** | the opposite adjustment | ✔ | other | `balance.adjust` | pay |
