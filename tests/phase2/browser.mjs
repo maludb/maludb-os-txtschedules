@@ -74,7 +74,7 @@ const shown = (page, sel) => page.evaluate((s) => { const e = document.querySele
   await page.waitForSelector('nav.nxl-navigation.mob-navigation-active');
   ok(await shown(page, '#nav-builder'), 'More opens the menu; a manager sees Builder');
   const groups = await page.locator('.nxl-navbar .nxl-caption label').allInnerTexts();
-  ok(groups.map((g) => g.toLowerCase()).join(',') === 'schedule,manage,me', 'the manager\'s groups: ' + groups.join(', ') + ' (no Restaurant: not an admin)');
+  ok(groups.map((g) => g.toLowerCase()).join(',') === 'schedule,manage,restaurant,me', 'the manager\'s groups: ' + groups.join(', ') + ' (Restaurant holds only Rules, to read: no Settings for a non-admin)');
   const last = await page.locator('.nxl-navbar .nxl-item:last-child .nxl-link').boundingBox();
   await page.waitForTimeout(500);                       // the slide-in finishes before the picture
   await page.screenshot({ path: `${SHOTS}/phone-more-menu.png` });

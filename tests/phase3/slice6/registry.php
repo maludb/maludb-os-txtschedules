@@ -14,7 +14,7 @@ ok($bad === [], 'all five actions are built and their endpoint files exist' . ($
 $bad = [];
 foreach (['announcements-list', 'announcement-add', 'settings'] as $s) { $r = $reg['screens'][$s] ?? null; if ($r === null || $r['built'] !== true) { $bad[] = $s; } }
 ok($bad === [], 'the three screens are built in the registry');
-ok(count(array_filter($reg['actions'], fn ($a) => $a['built'])) === 64, 'the registry now counts 64 of 69 actions built (59 + 5)');
+ok(count(array_filter($reg['actions'], fn ($a) => $a['built'])) >= 64, 'the registry counts at least 64 of 69 actions built (59 + 5; slice 7 adds the last five)');
 $params = fn (string $a): array => array_column($reg['actions'][$a]['params'], 'name');
 ok($params('announcement_post') === ['site', 'title', 'body', 'audience', 'position', 'members', 'pinned_until'] && $params('prefs_save') === ['by_email', 'by_sms', 'kinds', 'reminder_minutes'] && $params('calendar_feed_rotate') === [], 'the manifest\'s parameters reach the registry');
 foreach ([['/announcements/', $priya, 'announcements-list'], ['/settings/', $priya, 'settings'], ['/announcements/new?site=102', $mara, 'announcement-add']] as [$p, $jar, $id]) {
@@ -30,7 +30,7 @@ ok(in_array('deploy/txtschedules-notifications.service', $mf['services'], true) 
 $svc = (string) file_get_contents($root . '/deploy/txtschedules-notifications.service') . (string) file_get_contents($root . '/deploy/txtschedules-notifications.timer');
 ok(str_contains($svc, 'ExecStart=/usr/bin/php {{APP_DIR}}/bin/notifications.php') && str_contains($svc, 'OnUnitActiveSec=1min') && str_contains($svc, 'User=www-data') && str_contains($svc, 'Type=oneshot'), 'the unit runs bin/notifications.php once every minute as www-data');
 $rs = (string) file_get_contents($root . '/deploy/ROOT_STEPS.sh');
-ok(str_contains($rs, 'Phase 3 slice 6') && str_contains($rs, 'txtschedules-notifications.timer') && str_contains($rs, 'MALUMAIL_API_KEY'), 'deploy/ROOT_STEPS.sh names the slice, the timer and the mail key');
+ok(str_contains($rs, 'txtschedules-notifications.timer') && str_contains($rs, 'MALUMAIL_API_KEY'), 'deploy/ROOT_STEPS.sh names the timer and the mail key');
 $files = glob($root . '/db/0*.sql'); sort($files);
 ok(basename(end($files)) === '015_exchange_overlap.sql', 'no migration');
 $manifestEp = array_column($mf['endpoints'], 'path');

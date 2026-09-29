@@ -17,7 +17,7 @@ $matrix = [
     '/coverage' => 'lead manager admin',
     '/approvals' => 'lead manager admin', '/builder' => 'manager admin', '/templates/' => 'manager admin', '/staff/' => 'manager admin', '/positions/' => 'manager admin',
     '/certifications/' => 'manager admin', '/forecast' => 'manager admin', '/budget' => 'manager admin', '/reports/' => 'manager admin',
-    '/site/' => 'admin', '/rules/' => 'admin',
+    '/site/' => 'admin', '/rules/' => 'manager admin',        // rules: readable by whoever builds (slice 7), changed only with settings.manage
 ];
 [$jStaff, ] = sign_on(26, 102);
 [$jLead, ] = sign_on(28, 101);
@@ -38,11 +38,11 @@ ok($wrong === [], "$n role × screen checks (" . count($matrix) . ' screens × 4
 $r = page($jStaff, '/builder');
 ok(str_contains($r['body'], 'You may not build the schedule here.'), 'a refusal says what the person may not do, in words ("You may not build the schedule here.")');
 $r = page($jMgr, '/reports/');
-ok($r['code'] === 200 && str_contains($r['body'], 'id="reports-empty"') && str_contains($r['body'], '(slice 7) fill this.'), 'an empty state names the slice that fills it (the builder itself is real since slice 2)');
+ok($r['code'] === 200 && str_contains($r['body'], 'id="reports-header"') && !str_contains($r['body'], 'is not built yet'), 'the reports screen is real since slice 7 — no placeholder is left in the shell');
 $menu = fn (string $j): array => (preg_match_all('/id="nav-([a-z-]+)"/', page($j, '/')['body'], $m) ? $m[1] : []);
 $sm = $menu($jStaff); $mm = $menu($jMgr); $am = $menu($jAdmin);
 ok(!in_array('builder', $sm, true) && !in_array('site-settings', $sm, true) && in_array('my-schedule', $sm, true), 'the menu follows the rights: staff see no Builder or Settings');
-ok(in_array('builder', $mm, true) && in_array('budget', $mm, true) && !in_array('site-settings', $mm, true) && !in_array('rules', $mm, true), 'a manager sees Builder and Budget but not the restaurant\'s Settings and Rules');
+ok(in_array('builder', $mm, true) && in_array('budget', $mm, true) && !in_array('site-settings', $mm, true) && in_array('rules', $mm, true), 'a manager sees Builder, Budget and the Rules (to read) but not the restaurant\'s Settings');
 ok(in_array('site-settings', $am, true) && in_array('rules', $am, true), 'an admin sees Settings and Rules');
 echo "   — and it is per site: Marco is manager at Downtown, staff at Airport\n";
 ok(page($jMgr, '/builder')['code'] === 200 && in_array('builder', $menu($jMgr), true), 'at Downtown: /builder 200 and Builder in the menu');
