@@ -8,3 +8,8 @@ set -euo pipefail
 #   sudo -u postgres psql -v ON_ERROR_STOP=1 -d subello_txtschedules -f /srv/apps/txtschedules/db/015_exchange_overlap.sql
 # Nothing else in slice 1 needs root: no new port, unit, vhost line or environment key (the handlers and screens are files under html/;
 # the vhost's canonical-URL rewrites — /shifts/{id}, /exchanges/{id} — already exist).
+
+# Phase 3 slice 2 (2026-09-29) — the week builder: NO root step. No migration (db/015 is still the last), no port, unit, vhost line or environment key: the new
+# handlers and screens are files under html/ (/builder, /builder/day, /shifts/new, /shifts/{id}/edit, /templates/, /templates/{id}, /weeks/publish-confirm
+# all resolve through the vhost's existing canonical-URL rules), SortableJS is a static file under html/assets/vendors/sortablejs/. After the owner's deploy the
+# registry refresh (mcp/action_registry.json, 30 of 69 actions built) is the same one step the installer's plan already lists.

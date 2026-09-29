@@ -1,7 +1,7 @@
 <?php
 /**
  * Shift view (screen `shift-view`). Data: s, site, isHolder, live (its exchange), canTrade, liveShift, inCutoff, canCover, give (colleagues), swapWith, swapShifts,
- * history, me, back, notice, zone, canApprove
+ * history, me, back, notice, zone, canApprove, manage (a builder's tools: live, builder, people, days, over — or null)
  */
 $id = (int) $s['shift_id'];
 $here = '/shifts/' . $id;
@@ -9,7 +9,7 @@ $role = $isHolder ? 'Your shift' : ($s['is_open'] ? 'Open shift — nobody has i
 $may = $isHolder && $canTrade && $liveShift && $live === null;
 $others = shift_names($s['others'] ?? [], 6);
 ?>
-<?= view('shared/header.php', ['id' => 'shift', 'title' => 'Shift', 'crumbs' => [['Home', '/'], ['My schedule', '/my-schedule'], [shift_when($s['starts_at'], $s['ends_at'], $s['timezone']), null]], 'back' => $back]) ?>
+<?= view('shared/header.php', ['id' => 'shift', 'title' => 'Shift', 'crumbs' => [['Home', '/'], $manage !== null ? ['Builder', $manage['builder']] : ['My schedule', '/my-schedule'], [shift_when($s['starts_at'], $s['ends_at'], $s['timezone']), null]], 'back' => $back]) ?>
 <div class="main-content" id="shift-view-content">
     <?= view('shared/notice.php', ['notice' => $notice]) ?>
     <div class="card mb-3" id="shift-card">
@@ -128,6 +128,34 @@ $others = shift_names($s['others'] ?? [], 6);
 
     <?php if (!$isHolder && $live !== null && $live['status'] === 'open' && in_array($live['kind'], ['offer', 'open'], true)): ?>
         <div class="card mb-3" id="shift-take"><div class="card-body">This shift is up for grabs. <?= hx_link('/marketplace#exchange-card-' . (int) $live['exchange_id'], 'See it on the marketplace', 'fw-semibold', 'id="shift-take-link"') ?></div></div>
+    <?php endif; ?>
+
+    <?php if ($manage !== null && $s['status'] === 'scheduled'): $mLive = $manage['live']; ?>
+    <div class="card mb-3" id="shift-manage">
+        <div class="card-header"><h5 class="card-title mb-0">Manage this shift</h5></div>
+        <div class="card-body">
+            <?php if ($mLive): ?><div class="alert alert-warning fs-12" id="shift-manage-live" role="note"><i class="feather-radio me-1"></i>This is live: staff will be told.</div>
+            <?php else: ?><div class="fs-12 text-muted mb-2" id="shift-manage-draft">This week is a draft — staff cannot see this shift yet.</div><?php endif; ?>
+            <?= hx_link(with_back('/shifts/' . $id . '/edit', $here), '<i class="feather-edit-2 me-1"></i>' . ($mLive ? 'Change' : 'Edit'), 'btn btn-primary btn-touch w-100 mb-2', 'id="shift-edit-link"') ?>
+            <?= hx_link($manage['builder'], '<i class="feather-grid me-1"></i>Open the week in the builder', 'btn btn-light btn-touch w-100 mb-2', 'id="shift-builder-link"') ?>
+            <?php if (!$manage['over']) { echo view('builder/partials/move-form.php', ['s' => $s, 'days' => $manage['days'], 'people' => $manage['people'], 'live' => $mLive, 'idp' => 'shift']); } ?>
+            <?php if ($mLive && !$manage['over']): ?>
+                <form method="post" action="/shifts/cancel.php" hx-post="/shifts/cancel.php" hx-target="#flash" hx-confirm="This is live: staff will be told. Cancel this shift?" class="mt-3" id="shift-cancel-form">
+                    <?= csrf_field() ?><input type="hidden" name="shift" value="<?= $id ?>">
+                    <label class="form-label fs-12 text-muted" for="shift-form-field-cancel-reason">Why is it cancelled?</label>
+                    <input type="text" name="reason" id="shift-form-field-cancel-reason" class="form-control btn-touch mb-2" maxlength="500" required>
+                    <button type="submit" class="btn btn-light btn-touch w-100 text-danger" id="shift-cancel-btn"><i class="feather-x-circle me-1"></i>Cancel shift</button>
+                </form>
+            <?php elseif (!$mLive): ?>
+                <form method="post" action="/shifts/delete.php" hx-post="/shifts/delete.php" hx-target="#flash" hx-confirm="Delete this draft shift?" class="mt-3" id="shift-delete-form">
+                    <?= csrf_field() ?><input type="hidden" name="shift" value="<?= $id ?>">
+                    <button type="submit" class="btn btn-light btn-touch w-100 text-danger" id="shift-delete-btn"><i class="feather-trash-2 me-1"></i>Delete this draft shift</button>
+                </form>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php elseif ($manage !== null && $s['status'] === 'cancelled'): ?>
+    <div class="card mb-3" id="shift-cancelled-card"><div class="card-body fs-12 text-muted">Cancelled<?= ($s['cancel_reason'] ?? '') !== '' ? ': ' . e($s['cancel_reason']) : '' ?>. A cancelled shift is kept in the history, never deleted.</div></div>
     <?php endif; ?>
 
     <?php if ($canCover && $liveShift && $live === null): ?>

@@ -1,6 +1,6 @@
 {
     "generated_from": "docs/business-os-action-manifest.md",
-    "generated_at": "2026-09-29T13:11:30+00:00",
+    "generated_at": "2026-09-29T13:44:35+00:00",
     "screens": {
         "dashboard": {
             "screen": "dashboard",
@@ -158,7 +158,7 @@
                 "site",
                 "date"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "shift-add": {
@@ -172,7 +172,7 @@
                 "date",
                 "assignee"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "shift-edit": {
@@ -181,7 +181,7 @@
             "section": "The week builder",
             "when": "to change a shift's times or position or person",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "templates-list": {
@@ -201,7 +201,19 @@
             "section": "The week builder",
             "when": "one template: its shifts by weekday, and start a week from it",
             "params": [],
-            "built": false,
+            "built": true,
+            "stub": false
+        },
+        "week-publish": {
+            "screen": "week-publish",
+            "url": "/weeks/publish-confirm",
+            "section": "The week builder",
+            "when": "the summary before publishing a week: shifts, people told, open shifts left, every warning, the reason box",
+            "params": [
+                "site",
+                "week"
+            ],
+            "built": true,
             "stub": false
         },
         "availability": {
@@ -912,7 +924,7 @@
             "approval": null,
             "log_event": "week.create",
             "who": "build",
-            "built": false
+            "built": true
         },
         "week_copy": {
             "action": "week_copy",
@@ -937,7 +949,7 @@
             "approval": null,
             "log_event": "week.copy",
             "who": "build",
-            "built": false
+            "built": true
         },
         "week_autofill": {
             "action": "week_autofill",
@@ -962,7 +974,7 @@
             "approval": null,
             "log_event": "week.autofill",
             "who": "build",
-            "built": false
+            "built": true
         },
         "week_clear": {
             "action": "week_clear",
@@ -981,7 +993,7 @@
             "approval": null,
             "log_event": "week.clear",
             "who": "build",
-            "built": false
+            "built": true
         },
         "week_publish": {
             "action": "week_publish",
@@ -1006,7 +1018,7 @@
             "approval": "external_send",
             "log_event": "week.publish",
             "who": "build",
-            "built": false
+            "built": true
         },
         "shift_create": {
             "action": "shift_create",
@@ -1067,7 +1079,7 @@
             "approval": null,
             "log_event": "shift.create",
             "who": "build",
-            "built": false
+            "built": true
         },
         "shift_update": {
             "action": "shift_update",
@@ -1134,7 +1146,7 @@
             "approval": null,
             "log_event": "shift.update",
             "who": "build",
-            "built": false,
+            "built": true,
             "partial": true
         },
         "shift_assign": {
@@ -1166,7 +1178,7 @@
             "approval": null,
             "log_event": "shift.assign",
             "who": "build or lead",
-            "built": false
+            "built": true
         },
         "shift_delete": {
             "action": "shift_delete",
@@ -1185,7 +1197,7 @@
             "approval": null,
             "log_event": "shift.delete",
             "who": "build",
-            "built": false
+            "built": true
         },
         "shift_add": {
             "action": "shift_add",
@@ -1246,7 +1258,7 @@
             "approval": "other",
             "log_event": "shift.add",
             "who": "build",
-            "built": false
+            "built": true
         },
         "shift_change": {
             "action": "shift_change",
@@ -1307,7 +1319,7 @@
             "approval": "other",
             "log_event": "shift.change",
             "who": "build",
-            "built": false
+            "built": true
         },
         "shift_cancel": {
             "action": "shift_cancel",
@@ -1332,7 +1344,7 @@
             "approval": "other",
             "log_event": "shift.cancel",
             "who": "build",
-            "built": false
+            "built": true
         },
         "template_save": {
             "action": "template_save",
@@ -1369,7 +1381,7 @@
             "approval": null,
             "log_event": "template.save",
             "who": "build",
-            "built": false
+            "built": true
         },
         "template_apply": {
             "action": "template_apply",
@@ -1394,7 +1406,7 @@
             "approval": null,
             "log_event": "template.apply",
             "who": "build",
-            "built": false
+            "built": true
         },
         "template_archive": {
             "action": "template_archive",
@@ -1413,7 +1425,7 @@
             "approval": null,
             "log_event": "template.archive",
             "who": "build",
-            "built": false
+            "built": true
         },
         "availability_submit": {
             "action": "availability_submit",

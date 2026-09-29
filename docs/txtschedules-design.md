@@ -294,6 +294,43 @@ The owner's nine decisions are §9 (D1–D9). The four questions Phase 0 left op
 
 ## 13. State
 
+**Phase 3, slice 2 — the week builder: built and proven, 2026-09-29** (`docs/build-specs/week-builder.md`; proofs in `tests/phase3/slice2/`, run by
+`tests/phase3/slice2/run.sh` on the scratch database `txtschedules_dev4` — schema 7 · draft 24 · rules 38 · published 46 · numbers 20 · templates 43 · autofill 22 ·
+rights 23 · agents 15 · browser 55 = 293 checks, plus the Phase 0 schema proof 129 of 129). **Built:** the screens `builder` (the week as a grid, people or positions,
+drafts, cancelled, open row, hours bars, cost and budget with labor.view, the staffing strip, the warnings; a phone gets day tabs and cards), `day-view` (SVG bars on an
+hour axis, people on by hour), `shift-add` / `shift-edit` (one form; live check under the person; a draft posts shift_create/update, a published week shift_add/change), `templates-list`,
+`template-view`, and `week-publish` (the summary page, added to the manifest); fifteen handlers (`html/weeks/{save copy autofill clear publish}`, `html/shifts/{save assign delete add change cancel}`,
+`html/templates/{save apply archive}`) + `html/shifts/check.php` (the live check, a read); `app/features/{weeks,templates,autofill}/`, `app/features/shifts/write.php`;
+SortableJS drag (`html/assets/js/builder.js`) posting the same actions as the buttons; the shift page gained Change / Move to… / Cancel shift / Delete for a builder;
+Builder and Templates left the placeholder list. No migration (db/015 is still the last). Registry: 69 actions, 30 built; 43 screens, 31 built.
+
+**Decisions taken (slice 2)** (the spec left these open; the conservative reading each time):
+1. **No schema change.** Everything slice 2 needs was in db/008, 009, 013, 014; `tests/phase3/slice2/schema.php` proves the privileges and guards. `partial_update.php` no longer lists `/shifts/save.php`
+   (a prefill from the base row would put UTC times into a field the wire reads as local); `shift_update` keeps an absent field itself.
+2. **A create's location is the shift/template page** (`/shifts/{id}`, `/templates/{id}`), not the builder (the spec's `saved_go("/builder?...")`), so it ends in the record id; `week_create` has no page of its own: its
+   location is `/builder?site=&week=<Monday>` and `record_id` carries the week id. Week actions (copy, template, auto-fill, publish, clear) land on the builder.
+3. **Week actions take `week` (id) OR `site` + `week_start`** (any date in the week; the week is made as an empty draft when it does not exist). What a copy / template / auto-fill did (placed, left open with reasons,
+   filled, still open, hours) is answered in the action's data and shown ONCE on the builder (session, not for JSON callers).
+4. **Times on the wire:** `starts_at`/`ends_at` are site-local "2026-10-09 17:00" and an end before the start is refused; the form's `date`, `starts`, `ends` make an end at or before the start the next day; a lone `date` MOVES a
+   shift keeping its times (what drag and Move to… post). Times go in 15-minute steps, breaks are 0/15/30/45/60, at most 16 hours, note ≤ 200. A shift stays in its own week (a move across a week is refused).
+5. **Hard rules also stop a manager who gives a reason**; soft rules need `override_reason` (3–500 characters) and write one `rule_overrides` + one `rule.override` row each (context `build`, or `publish`). Hard sentences are
+   prefixed with the person ("SMOKE Lee: A minor may not work past 22:00."); a person who does not work at the restaurant and a clash with the person's own shift (named) are hard too.
+6. **`shift_assign` needs `schedule.build`** (a shift lead is 403): a lead fills gaps of the PUBLISHED schedule through coverage; a draft is the managers'. A published week's shift is never assigned by `shift_assign` (422, use shift_change).
+7. **Publishing** is refused for an empty week, a week already published, and any HARD warning (rules can tighten after a shift was saved); soft warnings need one reason for all. Each person with an assigned shift gets one
+   notice per channel (`publish:{week}:{member}`); open shifts tell nobody.
+8. **Live changes:** `shift_change`/`shift_cancel` are refused on a shift that has ended; a change of time, position or person withdraws the shift's live trade (and logs `exchange.cancel`); the notified are the holder,
+   the old and new holder on a reassignment, nobody else. `shift_cancel` needs a reason (3–500).
+9. **Copy / template / auto-fill:** a person is left open (and listed) when they no longer work here, have approved time off then (whatever the rule's severity), already have a shift then, or a hard rule would break. Copying
+   keeps LOCAL times across a clock change. Auto-fill order: preferred availability (overlap), then no soft warning, then fewest hours that week, then name, then id; excluded regardless of rule severity: time off and marked
+   unavailable; pool = staff whose MAIN restaurant it is, active, holding the position. `template` given seeds the week from it first; an EMPTY week with none is seeded from the last published week before it.
+10. **Drag:** SortableJS (copied from Projects' assets, loaded only when a draft grid is on the page); a published week's grid is not draggable (its changes are Change / Cancel, which confirm and tell staff);
+    a drop between rows of the same day posts `shift_assign`, to another day `shift_update` (`date`, and `assignee` when the row changed); in the by-position view a block moves between days only.
+11. **Live check** is an added read endpoint (`/shifts/check.php`, HTMX fragment) — the spec's live check needed one; its region keeps its wrapper so a quick second change is not lost; a hard rule disables Save (out of band).
+12. **Staff rows** in the grid are everyone with a role at the restaurant on the schedule, plus anyone with a shift that week. The builder is for people (agents use the tools): an agent opening the screen is 403.
+13. **Not proved here:** the kernel's pause of `week_publish` (external_send) and the live-change approvals (`other`) — registered in the registry and `maludb-os.json` and asserted there; Phase 4 proves the pause itself.
+    The sender of the queued notices is slice 6. The proof's "manager without labor.view" is a scratch role `planner` (schedule.build without labor.view) — the shipped catalogue has none.
+    Playwright's own click could not reach elements under the fixed command bar with scripts off, so the no-JavaScript proofs follow the link's href and press Enter in the form (the page itself scrolls fine).
+
 **Phase 3, slice 1 — shifts and the marketplace: built and proven, 2026-09-29** (`docs/build-specs/shifts-marketplace.md`; proofs in `tests/phase3/slice1/`,
 run by `tests/phase3/slice1/run.sh` on a scratch database `txtschedules_dev3`, against `php -S` and against a real Apache with the rendered deploy vhost
 (`TS_APP=apache`) — 317 checks: schema 6 · world 3 · see 25 · trade 30 · race 15 · refuse 29 · approval 36 · giveswap 27 · choose 24 · coverage 30 ·

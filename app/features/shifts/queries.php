@@ -160,7 +160,7 @@ function find_open_shifts(PDO $pdo, int $siteId, int $limit = 40): array
 /** A restaurant the caller holds, with its trade settings (mcp_sites): week start, allow_*, approval_*, cutoff, claim mode. */
 function find_site_row(PDO $pdo, int $siteId): ?array
 {
-    $st = $pdo->prepare('SELECT site_id, name, timezone, week_start, allow_offer, allow_pickup, allow_swap, allow_give, approval_pickup, approval_swap, approval_give,
+    $st = $pdo->prepare('SELECT site_id, name, timezone, currency, week_start, allow_offer, allow_pickup, allow_swap, allow_give, approval_pickup, approval_swap, approval_give,
                                 cutoff_minutes, shift_lead_approves_same_day, claim_mode, offer_expires, my_role FROM mcp_sites WHERE site_id = :s');
     $st->execute(['s' => $siteId]);
     $row = $st->fetch();

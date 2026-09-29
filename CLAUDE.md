@@ -80,7 +80,10 @@ screens, the agents, the decisions, the state), then — once Phase 1 exists —
 - **Phase 3 slice 1 — shifts and the marketplace (2026-09-29) built and proven** (`docs/build-specs/shifts-marketplace.md`, the exemplar): nine screens, thirteen
   handlers in `html/exchanges/`, `app/features/{shifts,exchanges}/`, **db/015** (overlap refused when a shift is taken — apply by hand on the installed database,
   `deploy/ROOT_STEPS.sh`), **317 checks** in `tests/phase3/slice1/` (`run.sh`, scratch database `txtschedules_dev3`, `php -S` and Apache). Decisions: design §13.
-  The application is already applied on the kernel (application 56). Next: slice 2 (the week builder).
+  The application is already applied on the kernel (application 56).
+- **Phase 3 slice 2 — the week builder (2026-09-29) built and proven** (`docs/build-specs/week-builder.md`): builder grid + phone day tabs, day view, shift form with live check, templates, publish page;
+  fifteen handlers in `html/{weeks,shifts,templates}/`, `app/features/{weeks,templates,autofill}/`, `shifts/write.php`, SortableJS drag; **no migration**; **293 checks** in `tests/phase3/slice2/`
+  (`run.sh`, scratch `txtschedules_dev4`). Decisions: design §13. Next: slice 3 (availability and time off).
 - **The proofs never touch the installed application**: `tests/setup_dev.sh` makes `txtschedules_dev` and puts its environment
   in `$TS_DEV_ENV` (real environment variables, read ahead of `config/.env`); **never put a `config/.env` here before the
   installer's `apply`** — it would keep the scratch keys and skip the fresh role passwords.

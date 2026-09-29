@@ -9,6 +9,9 @@ require_once dirname(__DIR__, 2) . '/app/features/shifts/queries.php';
 require_once dirname(__DIR__, 2) . '/app/features/shifts/present.php';
 require_once dirname(__DIR__, 2) . '/app/features/exchanges/queries.php';
 require_once dirname(__DIR__, 2) . '/app/features/exchanges/present.php';
+require_once dirname(__DIR__, 2) . '/app/features/weeks/queries.php';
+require_once dirname(__DIR__, 2) . '/app/features/weeks/present.php';
+require_once dirname(__DIR__, 2) . '/app/features/shifts/write.php';
 require_login();
 require_human();
 $pdo = db();
@@ -36,6 +39,14 @@ if ($isHolder && $canTrade && $live_shift && $live === null && !$inCutoff && ($s
         $swapWith = null;
     }
 }
+$canBuild = has_right('schedule.build', $siteId);
+$snap = $canBuild ? shift_snapshot($pdo, $id) : null;
+$manage = null;
+if ($snap !== null) {
+    $manage = ['live' => $snap['week_status'] === 'published', 'week_start' => $snap['week_start'], 'builder' => builder_url($siteId, $snap['week_start']),
+               'people' => find_schedulable_people($pdo, $siteId), 'days' => week_days($snap['week_start'], (new DateTimeImmutable('now', new DateTimeZone((string) $site['timezone'])))->format('Y-m-d')),
+               'over' => strtotime((string) $s['ends_at']) < time()];
+}
 $history = shift_history($pdo, $id);
 log_screen_view($pdo, 'shift-view');
 if (wants_json()) {
@@ -49,5 +60,5 @@ if (wants_json()) {
 $data = ['s' => $s, 'site' => $site, 'isHolder' => $isHolder, 'live' => $live, 'canTrade' => $canTrade, 'liveShift' => $live_shift, 'inCutoff' => $inCutoff,
          'canCover' => $canCover, 'give' => $give, 'swapWith' => $swapWith, 'swapShifts' => $swapShifts, 'history' => $history, 'me' => $me,
          'back' => back_link(), 'notice' => notice_words($_GET['notice'] ?? null), 'zone' => show_zone(),
-         'canApprove' => has_right('requests.approve', $siteId)];
+         'canApprove' => has_right('requests.approve', $siteId), 'manage' => $manage];
 render_screen('Shift', view('schedule/shift.php', $data), ['activeNav' => 'my-schedule', 'screen' => 'shift-view', 'entity' => 'shift', 'recordId' => (string) $id]);

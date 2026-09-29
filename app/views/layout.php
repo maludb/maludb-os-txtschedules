@@ -238,6 +238,7 @@ $navlink = function (string $id, string $url, string $icon, string $label) use (
             if (f && e.detail.xhr && e.detail.xhr.status >= 500) { f.innerHTML = '<div class="alert alert-danger m-3">Something went wrong. Try again.</div>'; }
         });
     </script>
+    <script src="/assets/js/builder.js"></script>
     <script src="/assets/js/common-init.min.js"></script>
     <script src="/assets/js/theme-customizer-init.min.js"></script>
 </body>

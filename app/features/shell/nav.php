@@ -21,10 +21,10 @@ function nav_groups(): array
             ['announcements-list', '/announcements/', 'feather-volume-2', 'Announcements', 'schedule.view_own', false, 'What managers have posted for your restaurant. Announcements and notifications (slice 6) fill this.'],
         ],
         'Manage' => [
-            ['builder', '/builder', 'feather-grid', 'Builder', 'schedule.build', false, 'The week as a grid: staff and positions down, days across, hours, labor against the budget and the warnings. The week builder (slice 2) fills this.'],
+            ['builder', '/builder', 'feather-grid', 'Builder', 'schedule.build', true, ''],
             ['approvals', '/approvals', 'feather-check-circle', 'Approvals', 'requests.approve|market.approve_day', true, ''],
             ['coverage', '/coverage', 'feather-life-buoy', 'Coverage', 'coverage.fill', true, ''],
-            ['templates-list', '/templates/', 'feather-copy', 'Templates', 'schedule.build', false, 'Saved weeks to start a new week from. The week builder (slice 2) fills this.'],
+            ['templates-list', '/templates/', 'feather-copy', 'Templates', 'schedule.build', true, ''],
             ['staff-list', '/staff/', 'feather-user-check', 'Staff', 'schedule.build', false, 'The people who work here, with position and main restaurant. People and positions (slice 4) fill this.'],
             ['positions-list', '/positions/', 'feather-tag', 'Positions', 'schedule.build', false, 'The restaurant\'s positions and their default rates. People and positions (slice 4) fill this.'],
             ['certifications', '/certifications/', 'feather-award', 'Certifications', 'schedule.build', false, 'Certification kinds, and who is expired, due, missing one or has one to verify. People and positions (slice 4) fill this.'],
@@ -117,11 +117,15 @@ function back_link(): ?array
     }
     $path = parse_url($back, PHP_URL_PATH) ?: '/';
     $labels = ['/' => 'Home', '/my-schedule' => 'My schedule', '/team-schedule' => 'Team schedule', '/marketplace' => 'Marketplace',
-               '/approvals' => 'Approvals', '/requests' => 'My requests', '/coverage' => 'Coverage'];
+               '/approvals' => 'Approvals', '/requests' => 'My requests', '/coverage' => 'Coverage', '/builder' => 'Builder', '/builder/day' => 'Day view',
+               '/templates/' => 'Templates'];
     foreach ($labels as $p => $label) {
         if ($path === $p) {
             return [$back, $label];
         }
+    }
+    if (preg_match('#^/templates/\d+$#', $path)) {
+        return [$back, 'the template'];
     }
     if (preg_match('#^/(shifts|exchanges)/\d+$#', $path)) {
         return [$back, str_starts_with($path, '/shifts') ? 'the shift' : 'the trade'];

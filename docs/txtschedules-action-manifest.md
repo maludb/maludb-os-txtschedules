@@ -123,6 +123,7 @@ Screens:
 | `shift-edit` | `/shifts/{id}/edit` | to change a shift's times or position or person |
 | `templates-list` | `/templates/` | the saved week templates (params: `site`) |
 | `template-view` | `/templates/{id}` | one template: its shifts by weekday, and start a week from it |
+| `week-publish` | `/weeks/publish-confirm` | the summary before publishing a week: shifts, people told, open shifts left, every warning, the reason box (params: `site`, `week`) |
 
 Actions (base `/weeks/`):
 

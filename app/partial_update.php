@@ -9,8 +9,9 @@ declare(strict_types=1);
 
 /** endpoint → [table, the form's id field, read view, the view's id column] */
 const PARTIAL_UPDATE_TARGETS = [
-    // the manifest (Phase 1) adds each *_update action's handler here
-    '/shifts/save.php'    => ['shifts', 'shift', 'mcp_shifts', 'shift_id'],
+    // the manifest (Phase 1) adds each *_update action's handler here.
+    // /shifts/save.php is NOT here (slice 2): a shift's times are the site's LOCAL time on the wire and UTC in the row, so a prefill from the base row would be read as local;
+    // shift_update keeps an absent field itself (shift_fields_from_request), which is the same partial update, in the right units.
     '/positions/save.php' => ['positions', 'position', 'mcp_positions', 'position_id'],
 ];
 

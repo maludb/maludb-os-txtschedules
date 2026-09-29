@@ -208,3 +208,50 @@ summary.btn::-webkit-details-marker { display: none; }
 .week-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; }
 @media (min-width: 992px) { .week-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
 .week-chips { gap: 2px !important; }
+
+/* ==========================================================================
+   txtSchedules slice 2 (2026-09-29) — the week builder. The grid scrolls inside its card at 992–1280 px (the scrollbar is the visible one above);
+   a shift is a block (position colour as an SVG bar, dashed when open, struck through when cancelled, a warning chip); bars are SVG
+   (no style attribute); a phone gets day tabs and cards instead of the grid.
+   ========================================================================== */
+.builder-grid { min-width: 1080px; table-layout: fixed; }
+.builder-grid th.grid-name { width: 150px; min-width: 150px; position: sticky; left: 0; z-index: 1; background: var(--bs-body-bg, #fff); vertical-align: middle; font-size: 13px; }
+.builder-grid th.grid-day { text-align: center; font-size: 12px; text-transform: uppercase; }
+.builder-grid th.grid-day.is-today { color: var(--bs-primary, #3454d1); }
+.builder-grid th.grid-hours, .builder-grid td.grid-hours { width: 130px; min-width: 130px; vertical-align: middle; }
+.builder-grid td.grid-cell { vertical-align: top; padding: 4px; min-height: 60px; height: 60px; }
+.builder-grid td.grid-cell.sortable-drag-over { background: rgba(52, 84, 209, .08); }
+.builder-grid tfoot th, .builder-grid tfoot td { background: var(--bs-tertiary-bg, #f8f9fa); }
+.shift-block { display: flex; align-items: stretch; gap: 6px; border: 1px solid rgba(0, 0, 0, .14); border-radius: 6px; padding: 4px 6px 4px 4px; margin-bottom: 4px;
+               background: var(--bs-body-bg, #fff); font-size: 12px; line-height: 1.2; position: relative; }
+.shift-block .pos-bar { min-height: 30px; flex: 0 0 5px; width: 5px; }
+.shift-block-link { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; text-decoration: none; color: inherit; }
+.shift-block-time { font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+.shift-block-label { color: var(--bs-secondary-color, #6c757d); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shift-block.shift-open, .shift-card.shift-open { border-style: dashed; }
+.shift-block.shift-cancelled, .shift-card.shift-cancelled { text-decoration: line-through; opacity: .6; }
+.shift-block.shift-changed { border-color: var(--bs-warning, #ffc107); }
+.shift-block[data-draggable] { cursor: grab; }
+.shift-block.is-saving { opacity: .5; }
+.shift-warn { color: var(--bs-warning, #ffc107); align-self: flex-start; font-size: 13px; }
+.sortable-ghost { opacity: .35; }
+.grid-add { display: flex; align-items: center; justify-content: center; min-height: 24px; color: var(--bs-secondary-color, #6c757d); border-radius: 4px; opacity: .45; text-decoration: none; }
+.grid-cell:hover .grid-add, .grid-add:focus { opacity: 1; background: rgba(52, 84, 209, .08); }
+.bar-svg { display: block; border-radius: 3px; }
+.bar-svg .bar-track { fill: #e9ecef; }
+.bar-svg .bar-fill.bar-primary { fill: var(--bs-primary, #3454d1); }
+.bar-svg .bar-fill.bar-warning { fill: var(--bs-warning, #ffc107); }
+.bar-svg .bar-fill.bar-danger { fill: var(--bs-danger, #dc3545); }
+html.app-skin-dark .bar-svg .bar-track { fill: #2a3548; }
+.needs-strip { display: flex; gap: .75rem; overflow-x: auto; }
+.needs-day { flex: 1 0 150px; min-width: 150px; }
+.move-details > summary { list-style: none; }
+.day-axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--bs-secondary-color, #6c757d); }
+.day-row { margin-bottom: .75rem; }
+.day-bar { display: block; width: 100%; height: 22px; border-radius: 4px; }
+.day-bar .bar-track { fill: #eef0f3; }
+.day-bar .day-grid { stroke: rgba(0, 0, 0, .12); stroke-width: .2; }
+.day-bar .day-shift { stroke: rgba(0, 0, 0, .25); stroke-width: .2; }
+html.app-skin-dark .day-bar .bar-track { fill: #1f2a3c; }
+.template-day { border-left: 3px solid var(--bs-primary, #3454d1); }
+.form-check-input.btn-touch-check { width: 1.5rem; height: 1.5rem; }

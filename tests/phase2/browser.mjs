@@ -130,7 +130,7 @@ const shown = (page, sel) => page.evaluate((s) => { const e = document.querySele
   await page.screenshot({ path: `${SHOTS}/desktop-dashboard.png` });
   await page.click('#nav-builder .nxl-link');
   await page.waitForURL(BASE + '/builder');
-  await page.waitForSelector('#builder-empty');
+  await page.waitForSelector('#builder-head');
   ok((await page.title()).startsWith('Builder'), 'HTMX navigation: /builder pushed, title "' + (await page.title()) + '"');
   await page.screenshot({ path: `${SHOTS}/desktop-builder-stub.png` });
   await page.goBack();
