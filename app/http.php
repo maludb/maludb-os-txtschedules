@@ -221,13 +221,6 @@ function render_screen(string $title, string $pageHtml, array $layout = []): voi
     echo view('layout.php', array_merge(['title' => $title, 'content' => $pageHtml], $layout));
 }
 
-/** A screen that a later slice builds: the shell shows where it will be. */
-function render_module_stub(string $title, string $screen, string $what): void
-{
-    log_screen_view(db(), $screen);
-    render_screen($title, view('shared/stub.php', ['title' => $title, 'what' => $what, 'screen' => $screen]), ['activeNav' => $screen, 'screen' => $screen]);
-}
-
 function require_post(): void
 {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {

@@ -1,6 +1,6 @@
 {
     "generated_from": "docs/business-os-action-manifest.md",
-    "generated_at": "2026-09-29T17:26:00+00:00",
+    "generated_at": "2026-09-29T19:14:25+00:00",
     "screens": {
         "dashboard": {
             "screen": "dashboard",
@@ -447,7 +447,7 @@
             "params": [
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "time-off-types": {
@@ -2626,7 +2626,7 @@
             "approval": null,
             "log_event": "settings.update",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "day_part_save": {
             "action": "day_part_save",
@@ -2681,7 +2681,7 @@
             "approval": null,
             "log_event": "day_part.save",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "day_part_archive": {
             "action": "day_part_archive",
@@ -2700,7 +2700,7 @@
             "approval": null,
             "log_event": "day_part.archive",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "rule_save": {
             "action": "rule_save",
@@ -2737,7 +2737,7 @@
             "approval": null,
             "log_event": "rule.update",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "rule_preset_apply": {
             "action": "rule_preset_apply",
@@ -2762,7 +2762,7 @@
             "approval": null,
             "log_event": "rule.preset",
             "who": "admin",
-            "built": false
+            "built": true
         }
     }
 }

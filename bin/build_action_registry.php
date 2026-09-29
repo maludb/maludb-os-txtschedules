@@ -160,7 +160,7 @@ function split_screen_description(string $cell): array
 function is_stub(string $controllerPath): bool
 {
     $source = @file_get_contents($controllerPath);
-    return $source !== false && str_contains($source, 'render_module_stub(');
+    return $source !== false && (str_contains($source, 'render_module_stub(') || str_contains($source, 'render_nav_stub('));       // the placeholder helpers are gone (slice 7); a controller that named one would be a stub
 }
 
 /** The controller answering a screen's canonical URL, or null when nothing does. */
