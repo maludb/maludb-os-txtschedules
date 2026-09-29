@@ -294,6 +294,48 @@ The owner's nine decisions are §9 (D1–D9). The four questions Phase 0 left op
 
 ## 13. State
 
+**Phase 3, slice 1 — shifts and the marketplace: built and proven, 2026-09-29** (`docs/build-specs/shifts-marketplace.md`; proofs in `tests/phase3/slice1/`,
+run by `tests/phase3/slice1/run.sh` on a scratch database `txtschedules_dev3`, against `php -S` and against a real Apache with the rendered deploy vhost
+(`TS_APP=apache`) — 317 checks: schema 6 · world 3 · see 25 · trade 30 · race 15 · refuse 29 · approval 36 · giveswap 27 · choose 24 · coverage 30 ·
+agents 14 · zones 8 · browser 70; plus the Phase 0 schema proof 129 of 129 and the claim race 4 of 4 on the new schema; Phase 2's 212 still pass).
+**Built:** nine screens (`dashboard` filled, `my-schedule` week strip + list, `team-schedule`, `shift-view`, `marketplace` with its three tabs and the
+`#marketplace-results` region, `exchange-view`, `approvals`, `coverage`, `my-requests`); thirteen handlers under `html/exchanges/` (`offer give swap open
+coverage claim withdraw choose accept refuse approve decline cancel`), each `require_post` + login + CSRF + the right at the RECORD's site + one transaction +
+`log_activity` with the site + `emit_action_status` + `saved_go`; `app/features/{shifts,exchanges}/` queries, presenters and `respond.php`; the outbox rows a step
+queues (`notify()`; the sender is slice 6); the menu badge on Approvals; the JSON branch of every screen (whitelist presenters, no pay); the action registry
+(69 actions, 15 built). 42 screens, 26 built. Sent nothing: the outbox only queues.
+**Decisions taken** (the spec left these open or contradicted the schema; the conservative reading each time):
+1. **db/015 (the only schema change, additive):** `ts_exchange_check_taker()` now refuses an overlap with the taker's own scheduled shift ("That overlaps your
+   shift on Friday.") — db/010 caught two shifts at once only when a trade was APPLIED, so a claim could wait with a manager and fail there, and the
+   marketplace had no sentence to show. A swap's own swapped-away shift does not count. Live database: apply the file by hand (`deploy/ROOT_STEPS.sh`).
+2. **The reasons are the database's words**, not the spec's paraphrase: "On approved time off then." (the `time_off` rule's message), "Does not work this
+   position here.", "Less than 10 hours between shifts." A food-handler card is a SOFT rule by the generic preset, so it never disables the button: the card says
+   "A manager will look at this one: Certification: Food handler missing."
+3. **A create's `location` is the new exchange** (`/exchanges/{id}`), not the shift (`saved_go("/shifts/$id")` in the spec was ambiguous with "ends in the record id");
+   the shift page shows the live trade and its Withdraw too. A finished action lands with `?notice=<key>` (a whitelist: `notice_words()`), never request text.
+4. **Handlers derive the site from the record** through one base-table read (`shift_site_id()`, `exchange_site_id()`); a site the person does not hold is
+   "Shift not found." / "That trade is no longer available." (the same sentence as a missing record, JSON and HTML alike). So Marco (staff at Airport, main
+   Downtown) cannot see an Airport offer (view) but a forced POST reaches the database and is 422 "You can pick up shifts only at your main restaurant."; the
+   disabled-button screen is shown to whoever CAN see the offer without it being their main restaurant — an approver (the owner).
+5. **Nobody decides a trade they are part of** (approve, decline, choose: 403 "You cannot decide a trade you are part of."), and a trade one is part of is not
+   in one's own inbox. A shift lead's same-day rule: the EARLIEST shift of the trade starts today or tomorrow in the restaurant's zone, and the restaurant lets
+   shift leads (`shift_lead_approves_same_day`); a lead therefore reaches `/approvals` (menu right `requests.approve|market.approve_day`; Phase 2's gates matrix
+   changed for that one row: `/approvals` is now 200 for a shift lead).
+6. **"Decline leaves the shift open"** = the shift does not move and the trade is `declined` (db/010 never re-lists it); an open shift stays unassigned.
+7. **Outbox:** "two outbox rows" = two PEOPLE told (holder and taker), one row per channel each (email and text both on by default, D12) = four rows; a person's
+   `notification_prefs.kinds` can turn a kind off. Other invitees of a coverage request are told "The shift is taken" when one wins. The taker is told even
+   though they acted (the spec's table).
+8. **Colleagues for a give or swap** are those whose MAIN restaurant is the shift's, on the schedule, holding its position (`mcp_members` + `mcp_staff_positions`; staff
+   cannot read `mcp_staff`); enforced server-side too. A swap is chosen in two GET steps on the shift page (`?swap_with=`), so it works without JavaScript.
+9. **A position's colour is an SVG `fill`** (the data is the restaurant's own, a checked `#rrggbb`), not a `style=` attribute; all new CSS is in `app-overrides.css`.
+10. **The marketplace's "Up for grabs" leaves out** my own offers and trades I already claimed (they are in My requests and My claims). A trade's history shows the
+    rows `mcp_activity_log` lets the caller see (their own; a builder's, all) — every `exchange.*` row carries `after.shift_id` so a shift's history finds them.
+11. **Time off and the `time_off_requests` fixture** needed the database owner (the application role cannot write it until slice 3): the proofs use `admin_sql()` on the scratch database only.
+12. **Handlers order the gates** `require_post` → `require_login` → `verify_csrf`, so an anonymous POST is 401 (JSON) or the launcher, not a bare 403.
+**Not proved here:** `coverage_request` pausing for an agent in the kernel's approvals (Phase 4); the sender of the outbox, expiry (`ts_exchanges_expire()` + `exchange.expire`) and
+the 30-second refresh over a full 30 seconds (the trigger is asserted and the event-driven refetch proved) are slice 6. The installer's plan (2026-09-29) shows txtschedules
+already applied on the kernel (application 56): two steps left, both the owner's (`app_roles` read, the registry refresh — 15 built actions).
+
 **Phase 2 — sign-on, the mirror, the shell: built and proven, 2026-09-28** (`docs/build-specs/sso-shell.md`; proofs in
 `tests/phase2/`, run by `tests/phase2/run.sh`, on a scratch database — never the installed one). What exists: the
 kit wired to the shell; `/sso` and `/sso/logout`; the mirror (members, sites = restaurants, `member_site_roles` from the claims

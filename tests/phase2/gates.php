@@ -15,7 +15,7 @@ $matrix = [
     '/requests' => 'staff lead manager admin', '/availability' => 'staff lead manager admin', '/time-off' => 'staff lead manager admin',
     '/announcements/' => 'staff lead manager admin', '/certifications/mine' => 'staff lead manager admin', '/settings/' => 'staff lead manager admin',
     '/coverage' => 'lead manager admin',
-    '/approvals' => 'manager admin', '/builder' => 'manager admin', '/templates/' => 'manager admin', '/staff/' => 'manager admin', '/positions/' => 'manager admin',
+    '/approvals' => 'lead manager admin', '/builder' => 'manager admin', '/templates/' => 'manager admin', '/staff/' => 'manager admin', '/positions/' => 'manager admin',
     '/certifications/' => 'manager admin', '/forecast' => 'manager admin', '/budget' => 'manager admin', '/reports/' => 'manager admin',
     '/site/' => 'admin', '/rules/' => 'admin',
 ];

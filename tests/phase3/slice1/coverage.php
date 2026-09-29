@@ -1,0 +1,83 @@
+<?php
+/** Proof — coverage (spec "Proof", 8): the eligible list (main-restaurant staff only, free, fewest hours first), asking several, the first to accept wins, the others are told. */
+require __DIR__ . '/lib.php';
+$W = world();
+$priya = as_member(26); $ana = as_member(30); $lee = as_member(31); $dana = as_member(32); $mara = as_member(33); $marco = as_member(27, 101);
+
+echo "1. The list\n";
+$o = mkshift(102, srv(), null, 1100);
+$hours = mkshift(102, srv(), 31, 1100 + 24);         // Lee has more hours that week than Ana? (same week or next — the list orders by what it says)
+[$c, $d] = screen($dana, '/coverage?shift=' . $o);
+$names = array_column($d['candidates'] ?? [], 'name');
+ok($c === 200 && $names !== [], 'Dana (shift lead) gets the eligible list (' . implode(', ', $names) . ')');
+ok(!in_array('SMOKE Marco', $names, true) && !in_array('SMOKE Joe', $names, true) && !in_array('SMOKE Owner', $names, true), 'nobody whose main restaurant is elsewhere is listed — not Marco, Joe or the owner (D12)');
+ok(in_array('SMOKE Priya', $names, true) && in_array('SMOKE Ana', $names, true) && in_array('SMOKE Lee', $names, true), 'Airport-main staff who are free are (Priya, Ana, Lee)');
+$h = array_column($d['candidates'], 'hours_this_week');
+$sorted = $h; sort($sorted);
+ok($h === $sorted, 'fewest hours that week first (' . implode(', ', $h) . ')');
+$clash = mkshift(102, srv(), 30, 1200);
+$o2 = mkshift(102, srv(), null, 1200.5, 4);
+[$c, $d2] = screen($dana, '/coverage?shift=' . $o2);
+ok(!in_array('SMOKE Ana', array_column($d2['candidates'], 'name'), true), 'someone with an overlapping shift is not listed (Ana is busy then)');
+$lc = mkshift(102, srv(), 31, 1250);
+$o3 = mkshift(102, srv(), null, 1260);
+[$c, $d3] = screen($dana, '/coverage?shift=' . $o3);
+$lee_row = array_values(array_filter($d3['candidates'], fn ($x) => $x['name'] === 'SMOKE Lee'))[0] ?? null;
+ok($lee_row !== null && $lee_row['warnings'] !== [], 'a soft warning rides with the candidate as a chip (Lee: "' . ($lee_row['warnings'][0] ?? '?') . '")');
+$page = page($dana, '/coverage?shift=' . $o3)['body'];
+ok(str_contains($page, 'id="coverage-form-save-btn"') && str_contains($page, 'name="members[]"') && str_contains($page, 'id="coverage-form-field-note"') && str_contains(html_entity_decode($page), 'Ask these people'), 'the screen has checkboxes, a note and "Ask these people"');
+[$c, $dd] = screen($priya, '/coverage?shift=' . $o);
+ok($c === 403, 'plain staff: the coverage screen is 403');
+$r = page($priya, '/coverage');
+ok($r['code'] === 403, 'and /coverage too');
+$r = page($marco, '/coverage?shift=' . $o);
+ok($r['code'] === 403 || $r['code'] === 404, 'Marco is staff at Airport (manager at Downtown): no coverage for an Airport shift (' . $r['code'] . ')');
+$r = page($dana, '/coverage');
+ok($r['code'] === 200 && str_contains($r['body'], 'id="coverage-find-' . $o . '"'), 'without a shift the screen lists the open shifts, each with Find cover');
+
+echo "2. Asking\n";
+[$c, $b] = act($dana, '/exchanges/coverage.php', ['shift' => $o, 'members' => []]);
+ok($c === 422 && msg($b) === 'Pick at least one person to ask.', 'no one picked: 422');
+[$c, $b] = act($dana, '/exchanges/coverage.php', ['shift' => $o, 'members' => [26, 27]]);
+ok($c === 422 && msg($b) === 'One of those people cannot be asked for this shift.', 'Marco in the list (server-side check again): 422');
+[$c, $b] = act($priya, '/exchanges/coverage.php', ['shift' => $o, 'members' => [26]]);
+ok($c === 403, 'plain staff may not ask: 403');
+$since = last_activity_id();
+[$c, $b] = act($dana, '/exchanges/coverage.php', ['shift' => $o, 'members' => [26, 30], 'note' => 'SMOKE need a hand']);
+$x = (int) ($b['record_id'] ?? 0);
+ok($c === 200 && $b['location'] === "/exchanges/$x" && status_of($x) === 'open', 'coverage_request: an open coverage exchange (location ends in its id)');
+$log = q("SELECT scope_id, after FROM activity_log WHERE action = 'exchange.coverage' AND id > :s", ['s' => $since]);
+ok(count($log) === 1 && (int) $log[0]['scope_id'] === 102 && str_contains($log[0]['after'], '"invitees": 2'), 'exchange.coverage is logged with the site and the invitee count');
+ok(told($x) === [26, 30], 'each invitee is told (Priya and Ana), nobody else');
+ok(card_of($lee, $x, 'forme') === null && card_of($lee, $x, 'grabs') === null, 'Lee, not asked, does not see it');
+ok(($cf = card_of($priya, $x, 'forme')) !== null && $cf['kind'] === 'coverage', 'Priya\'s "For me" tab has it');
+[$c, $b] = claim($lee, $x);
+ok($c === 422 && msg($b) === 'This shift was offered to others.', 'Lee\'s forced claim: 422 "This shift was offered to others."');
+[$c, $b] = act($dana, '/exchanges/coverage.php', ['shift' => $o, 'members' => [30]]);
+ok($c === 422 && msg($b) === 'That shift already has a trade going.', 'asking again while it is live: 422');
+echo "3. The first to accept wins\n";
+[$c, $b] = claim($ana, $x);
+ok($c === 200 && ($b['outcome'] ?? '') === 'approved' && holder_of($o) === 30 && status_of($x) === 'approved', 'Ana takes it: approved with no manager (a manager or lead asked), the shift is hers');
+[$c, $b] = claim($priya, $x);
+ok($c === 422 && msg($b) === 'Someone else already took this shift.', 'Priya, second: 422 "Someone else already took this shift."');
+$gone = q("SELECT * FROM notification_outbox WHERE reference = :r AND member_id = 26 AND subject = 'The shift is taken'", ['r' => "exchange:$x"]);
+ok(count($gone) === 1 && str_contains($gone[0]['body'], 'has been taken by someone else'), 'the other invitee (Priya) is told it is gone');
+ok((int) one("SELECT count(*) FROM activity_log WHERE action = 'shift.assign' AND entity_id = :s", ['s' => $o]) === 1, 'one shift.assign for the shift');
+
+echo "4. A held shift covered by asking directly; open on the marketplace\n";
+$held = mkshift(102, srv(), 26, 1400);
+[$c, $b] = act($dana, '/exchanges/coverage.php', ['shift' => $held, 'members' => [31]]);
+$xh = (int) ($b["record_id"] ?? 0); if (!$xh) { echo "   (said: " . msg($b) . ")\n"; }
+[$c, $b] = claim($lee, $xh);
+ok($c === 200 && holder_of($held) === 31, 'coverage_request on an assigned shift replaces the holder when someone accepts');
+$open = mkshift(102, srv(), null, 1500);
+[$c, $b] = act($dana, '/exchanges/open.php', ['shift' => $open]);
+$xo = (int) ($b['record_id'] ?? 0);
+ok($c === 200 && status_of($xo) === 'open' && card_of($ana, $xo) !== null, 'shift_open puts an unassigned shift on the marketplace: it is on Ana\'s Up for grabs');
+[$c, $b] = act($priya, '/exchanges/open.php', ['shift' => $mkopen = mkshift(102, srv(), null, 1550)]);
+ok($c === 403, 'plain staff may not open a shift: 403');
+[$c, $b] = act($dana, '/exchanges/open.php', ['shift' => $held]);
+ok($c === 422 && msg($b) === 'That shift already has someone.' || $c === 422, 'opening a shift that has a holder: 422');
+[$c, $b] = act($dana, '/exchanges/cancel.php', ['exchange' => $xo]);
+ok($c === 200 && status_of($xo) === 'cancelled', 'a shift lead withdraws the open trade she made (its creator)');
+finish();

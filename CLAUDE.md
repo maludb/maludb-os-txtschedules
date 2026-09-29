@@ -75,9 +75,12 @@ screens, the agents, the decisions, the state), then — once Phase 1 exists —
   proven** (sign-on, the mirror, the sites, the switcher, the phone-first shell, the directory sync, health, the ingest bridge with
   the site, the action-token/run-token gate; **212 proof checks** in `tests/phase2/`, run by `tests/phase2/run.sh` on a scratch
   database, against `php -S` and a real Apache with the rendered deploy vhost). `maludb-os.json` lists only what exists (the
-  two MCP servers come back in Phase 4, the notifications worker in slice 6). Next: the owner's `apply` (drop
-  `subello_txtschedules` first so the installer creates it), then Phase 3 slice 1 (shifts and the marketplace). The record:
+  two MCP servers come back in Phase 4, the notifications worker in slice 6).  The record:
   `docs/txtschedules-design.md` §13.
+- **Phase 3 slice 1 — shifts and the marketplace (2026-09-29) built and proven** (`docs/build-specs/shifts-marketplace.md`, the exemplar): nine screens, thirteen
+  handlers in `html/exchanges/`, `app/features/{shifts,exchanges}/`, **db/015** (overlap refused when a shift is taken — apply by hand on the installed database,
+  `deploy/ROOT_STEPS.sh`), **317 checks** in `tests/phase3/slice1/` (`run.sh`, scratch database `txtschedules_dev3`, `php -S` and Apache). Decisions: design §13.
+  The application is already applied on the kernel (application 56). Next: slice 2 (the week builder).
 - **The proofs never touch the installed application**: `tests/setup_dev.sh` makes `txtschedules_dev` and puts its environment
   in `$TS_DEV_ENV` (real environment variables, read ahead of `config/.env`); **never put a `config/.env` here before the
   installer's `apply`** — it would keep the scratch keys and skip the fresh role passwords.

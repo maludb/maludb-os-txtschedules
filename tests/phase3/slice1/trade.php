@@ -1,0 +1,70 @@
+<?php
+/** Proof — Offer → take (spec "Proof", 2): the marketplace by main restaurant (D4), one claim, one shift.assign, the outbox, the banner, history. */
+require __DIR__ . '/lib.php';
+$W = world();
+$priya = as_member(26); $ana = as_member(30); $marco = as_member(27, 101); $lee = as_member(31);
+$since = last_activity_id();
+
+echo "1. Priya offers her shift\n";
+[$c, $b] = act($priya, '/exchanges/offer.php', ['shift' => $W['p1'], 'note' => 'SMOKE family thing']);
+$x = (int) preg_replace('~.*/~', '', $b['location'] ?? '');
+ok($c === 200 && ($b['ok'] ?? false) && $x > 0 && $b['location'] === "/exchanges/$x" && ($b['record_id'] ?? 0) === $x, 'shift_offer answers ok; its location ends in the new exchange id (/exchanges/' . $x . ') and record_id says so');
+ok((string) one('SELECT status FROM exchanges WHERE id = :i', ['i' => $x]) === 'open' && (string) one('SELECT kind FROM exchanges WHERE id = :i', ['i' => $x]) === 'offer', 'the exchange is an open offer');
+$row = q("SELECT * FROM activity_log WHERE action = 'exchange.offer' AND id > :s", ['s' => $since]);
+ok(count($row) === 1 && (int) $row[0]['scope_id'] === 102 && (int) $row[0]['actor_member_id'] === 26 && $row[0]['source'] === 'web', 'one exchange.offer row, carrying the site (102), the actor and source web');
+ok(str_contains((string) $row[0]['after'], '"shift_id"') && !preg_match('/wage|rate|cost/i', (string) $row[0]['after']), 'its payload names the shift and no pay');
+ok(outbox($x) === [], 'an offer that merely goes on the marketplace tells nobody (the marketplace is the notice)');
+[$c, $b] = act($priya, '/exchanges/offer.php', ['shift' => $W['p1']]);
+ok($c === 422 && msg($b) === 'That shift already has a trade going.', 'offering it again while it is live: 422 "' . msg($b) . '"');
+
+echo "2. Who sees it (D4 — the main restaurant's staff only)\n";
+[$c, $d] = screen($ana, '/marketplace');
+ok($c === 200 && in_array($x, array_column($d['exchanges'], 'exchange_id'), true), 'it is on Ana\'s marketplace (main Airport)');
+$card = array_values(array_filter($d['exchanges'], fn ($e) => $e['exchange_id'] === $x))[0];
+[$c, $dm] = screen($marco, '/marketplace?site=102');
+ok(!in_array($x, array_column($dm['exchanges'] ?? [], 'exchange_id'), true), 'and NOT on Marco\'s (main Downtown), though he is staff at Airport');
+$r = page($marco, "/exchanges/$x");
+ok($r['code'] === 404 && str_contains($r['body'], 'That trade is no longer available.'), 'Marco\'s direct URL to the exchange: 404 "That trade is no longer available."');
+[$c, $dp] = screen($priya, '/marketplace');
+ok(!in_array($x, array_column($dp['exchanges'], 'exchange_id'), true), 'her own offer is not in her own "Up for grabs"');
+ok($card['may_take'] === false, 'Ana\'s own shift overlaps it — the card is disabled: ' . ($card['reason'] ?? '?'));
+ok(str_starts_with((string) $card['reason'], 'That overlaps your shift on '), '"That overlaps your shift on <weekday>." (db/015)');
+
+echo "3. Lee takes it\n";
+$since = last_activity_id();
+[$c, $dl] = screen($lee, '/marketplace');
+$lc = array_values(array_filter($dl['exchanges'], fn ($e) => $e['exchange_id'] === $x))[0] ?? null;
+ok($lc !== null && $lc['may_take'] === true, 'Lee (main Airport, free) may take it: the card has its one button');
+$r = page($lee, '/marketplace');
+ok(str_contains($r['body'], 'id="exchange-card-' . $x . '-take-btn"') && !str_contains($r['body'], 'exchange-card-' . $x . '-why'), 'the rendered card has Take it and no "why not" line');
+[$c, $b] = act($lee, '/exchanges/claim.php', ['exchange' => $x]);
+ok($c === 200 && ($b['outcome'] ?? '') === 'approved', 'shift_pickup: approved at once (no warning, no manager needed)');
+ok((int) one('SELECT assignee_member_id FROM shifts WHERE id = :s', ['s' => $W['p1']]) === 31, 'the shift is Lee\'s now and no longer Priya\'s');
+$claims = q("SELECT * FROM activity_log WHERE action = 'exchange.claim' AND id > :s", ['s' => $since]);
+$assign = q("SELECT * FROM activity_log WHERE action = 'shift.assign' AND id > :s", ['s' => $since]);
+ok(count($claims) === 1 && (int) $claims[0]['scope_id'] === 102 && str_contains((string) $claims[0]['after'], 'approved'), 'exactly one exchange.claim row, carrying the site and the outcome');
+ok(count($assign) === 1 && (int) $assign[0]['scope_id'] === 102 && (int) $assign[0]['entity_id'] === $W['p1'] && str_contains((string) $assign[0]['after'], '"via": "exchange"') && str_contains((string) $assign[0]['before'], 'Priya'), 'exactly one shift.assign row for the shift (before Priya, after Lee, via exchange), with the site');
+ok(told($x) === [26, 31], 'the outbox told exactly two people — the holder and the taker (' . implode(',', told($x)) . ')');
+$rows = outbox($x);
+ok(count($rows) === 4 && count(array_filter($rows, fn ($r) => $r['channel'] === 'email')) === 2 && count(array_filter($rows, fn ($r) => $r['channel'] === 'sms')) === 2, 'two people × both channels (D12: email and text on by default) = four queued rows');
+ok(!preg_match('/wage|\$|\d{3}-\d{3}|@example/', implode(' ', array_column($rows, 'body'))), 'a notice carries the facts and a link — no pay, phone or email');
+ok(str_contains(implode(' ', array_column($rows, 'body')), '/exchanges/' . $x), 'and a link');
+ok(array_unique(array_column($rows, 'status')) === ['queued'], 'nothing was sent (queued only)');
+[$c, $ds] = screen($lee, '/my-schedule?view=list');
+ok(in_array($W['p1'], array_column($ds['shifts'], 'shift_id'), true), 'it is on Lee\'s schedule');
+[$c, $dp] = screen($priya, '/my-schedule?view=list');
+ok(!in_array($W['p1'], array_column($dp['shifts'], 'shift_id'), true), 'and off Priya\'s');
+
+echo "4. The banner, the history\n";
+$r = req('POST', '/exchanges/offer.php', ['jar' => $priya, 'form' => ['shift' => $W['p2'], 'csrf_token' => page_csrf($priya)]]);
+ok($r['code'] === 302 && preg_match('~^/exchanges/\d+$~', $r['location']), 'a plain form post is redirected to the trade (302 ' . $r['location'] . ')');
+$xo = (int) preg_replace('~.*/~', '', $r['location']);
+q("UPDATE exchanges SET status = 'cancelled' WHERE id = :i", ['i' => $xo]);
+$r = page($lee, '/marketplace?notice=claim_approved');
+ok(str_contains($r['body'], 'id="notice-banner"') && str_contains(html_entity_decode($r['body'], ENT_QUOTES), 'It\'s yours — added to your schedule.'), 'the marketplace shows the banner "It\'s yours — added to your schedule."');
+$r = page($lee, '/shifts/' . $W['p1']);
+ok($r['code'] === 200 && str_contains($r['body'], 'SMOKE Lee took it — no approval needed'), 'the shift\'s history says, in words: "SMOKE Lee took it — no approval needed"');
+ok(str_contains($r['body'], 'It moved to SMOKE Lee by a trade'), 'and "It moved to SMOKE Lee by a trade"');
+$ex = page($priya, "/exchanges/$x");
+ok($ex['code'] === 200 && str_contains($ex['body'], 'SMOKE Priya offered it'), 'the trade\'s own page (Priya\'s) tells her part of the story');
+finish();
