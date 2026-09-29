@@ -1,6 +1,6 @@
 {
     "generated_from": "docs/business-os-action-manifest.md",
-    "generated_at": "2026-09-28T22:49:42+00:00",
+    "generated_at": "2026-09-29T13:11:30+00:00",
     "screens": {
         "dashboard": {
             "screen": "dashboard",
@@ -8,7 +8,7 @@
             "section": "Home and settings",
             "when": "their home: the next shift with who else is on, the week, what waits for them, announcements",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "settings": {
@@ -19,7 +19,7 @@
             "params": [
                 "tab"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "tokens": {
@@ -28,7 +28,7 @@
             "section": "Home and settings",
             "when": "their own access tokens for the two MCP servers",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "activity": {
@@ -42,7 +42,7 @@
                 "entity_id",
                 "period"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "my-schedule": {
@@ -54,7 +54,7 @@
                 "week",
                 "view"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "team-schedule": {
@@ -68,7 +68,7 @@
                 "day",
                 "position"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "shift-view": {
@@ -77,7 +77,7 @@
             "section": "Shifts and the marketplace",
             "when": "one shift: when and where, who is on with them, its trade if any, its history, offer or swap or give it",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "marketplace": {
@@ -89,7 +89,7 @@
                 "site",
                 "kind"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "exchange-view": {
@@ -98,7 +98,7 @@
             "section": "Shifts and the marketplace",
             "when": "one trade: the shift, the claims, the warnings, and to decide it",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "approvals": {
@@ -110,7 +110,7 @@
                 "site",
                 "kind"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "coverage": {
@@ -121,7 +121,7 @@
             "params": [
                 "shift"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "my-requests": {
@@ -132,7 +132,7 @@
             "params": [
                 "state"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "builder": {
@@ -146,7 +146,7 @@
                 "view",
                 "position"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "day-view": {
@@ -192,7 +192,7 @@
             "params": [
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "template-view": {
@@ -213,7 +213,7 @@
                 "member",
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "time-off": {
@@ -228,7 +228,7 @@
                 "from",
                 "to"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "time-off-add": {
@@ -275,7 +275,7 @@
                 "q",
                 "position"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "staff-view": {
@@ -304,7 +304,7 @@
             "params": [
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "position-add": {
@@ -337,7 +337,7 @@
                 "state",
                 "position"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "certification-kind-add": {
@@ -366,7 +366,7 @@
             "section": "People and positions",
             "when": "their own certifications on the phone — see them and add one and correct one",
             "params": [],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "forecast": {
@@ -378,7 +378,7 @@
                 "site",
                 "week"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "budget": {
@@ -390,7 +390,7 @@
                 "site",
                 "week"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "announcements-list": {
@@ -401,7 +401,7 @@
             "params": [
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "announcement-add": {
@@ -424,7 +424,7 @@
             "params": [
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "day-parts": {
@@ -457,7 +457,7 @@
             "params": [
                 "site"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "reports": {
@@ -472,7 +472,7 @@
                 "to",
                 "format"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         }
     },
@@ -549,7 +549,7 @@
             "approval": null,
             "log_event": "token.mint",
             "who": "own",
-            "built": false
+            "built": true
         },
         "token_revoke": {
             "action": "token_revoke",
@@ -568,7 +568,7 @@
             "approval": null,
             "log_event": "token.revoke",
             "who": "own",
-            "built": false
+            "built": true
         },
         "shift_offer": {
             "action": "shift_offer",
@@ -593,7 +593,7 @@
             "approval": null,
             "log_event": "exchange.offer",
             "who": "staff (the holder)",
-            "built": false
+            "built": true
         },
         "shift_give": {
             "action": "shift_give",
@@ -624,7 +624,7 @@
             "approval": null,
             "log_event": "exchange.give",
             "who": "staff (the holder)",
-            "built": false
+            "built": true
         },
         "shift_swap": {
             "action": "shift_swap",
@@ -661,7 +661,7 @@
             "approval": null,
             "log_event": "exchange.swap",
             "who": "staff (the holder)",
-            "built": false
+            "built": true
         },
         "shift_open": {
             "action": "shift_open",
@@ -686,7 +686,7 @@
             "approval": null,
             "log_event": "exchange.open",
             "who": "lead",
-            "built": false
+            "built": true
         },
         "coverage_request": {
             "action": "coverage_request",
@@ -717,7 +717,7 @@
             "approval": "external_send",
             "log_event": "exchange.coverage",
             "who": "lead",
-            "built": false
+            "built": true
         },
         "shift_pickup": {
             "action": "shift_pickup",
@@ -736,7 +736,7 @@
             "approval": null,
             "log_event": "exchange.claim",
             "who": "staff (main restaurant)",
-            "built": false
+            "built": true
         },
         "claim_withdraw": {
             "action": "claim_withdraw",
@@ -755,7 +755,7 @@
             "approval": null,
             "log_event": "exchange.withdraw",
             "who": "own (the claimant)",
-            "built": false
+            "built": true
         },
         "exchange_choose": {
             "action": "exchange_choose",
@@ -780,7 +780,7 @@
             "approval": "other",
             "log_event": "exchange.choose",
             "who": "approve",
-            "built": false
+            "built": true
         },
         "exchange_accept": {
             "action": "exchange_accept",
@@ -799,7 +799,7 @@
             "approval": null,
             "log_event": "exchange.accept",
             "who": "own (the named colleague)",
-            "built": false
+            "built": true
         },
         "exchange_refuse": {
             "action": "exchange_refuse",
@@ -818,7 +818,7 @@
             "approval": null,
             "log_event": "exchange.refuse",
             "who": "own (the named colleague)",
-            "built": false
+            "built": true
         },
         "exchange_approve": {
             "action": "exchange_approve",
@@ -843,7 +843,7 @@
             "approval": "other",
             "log_event": "exchange.approve",
             "who": "approve",
-            "built": false
+            "built": true
         },
         "exchange_decline": {
             "action": "exchange_decline",
@@ -868,7 +868,7 @@
             "approval": null,
             "log_event": "exchange.decline",
             "who": "approve",
-            "built": false
+            "built": true
         },
         "exchange_cancel": {
             "action": "exchange_cancel",
@@ -887,7 +887,7 @@
             "approval": null,
             "log_event": "exchange.cancel",
             "who": "own (who made it)",
-            "built": false
+            "built": true
         },
         "week_create": {
             "action": "week_create",

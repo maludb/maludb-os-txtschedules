@@ -23,14 +23,22 @@ if ($roleBadge === '' && is_super_admin()) { $roleBadge = 'Super-admin'; }
 $zones = array_unique(array_column(held_sites(), 'timezone'));
 $zoneName = ($site !== null && count($zones) > 1)
     ? (new DateTimeImmutable('now', new DateTimeZone((string) $site['timezone'])))->format('T') : '';
-$navlink = function (string $id, string $url, string $icon, string $label) use ($activeNav): string {
+$badges = [];
+if ($site !== null && ($m['member_kind'] ?? '') === 'human') {
+    require_once APP_ROOT . '/app/features/exchanges/queries.php';
+    $n = count_approvals(db(), (int) $site['scope_id'], (int) ($m['id'] ?? 0));
+    if ($n > 0) { $badges['approvals'] = $n; }
+}
+$navlink = function (string $id, string $url, string $icon, string $label) use ($activeNav, $badges): string {
     $active = $activeNav === $id ? ' active' : '';
     return '<li class="nxl-item" id="nav-' . e($id) . '">'
         . '<a class="nxl-link' . $active . '" href="' . e($url) . '"'
         . ' hx-get="' . e($url) . '" hx-target="#page-content" hx-swap="innerHTML"'
         . ' hx-push-url="' . e($url) . '">'
         . '<span class="nxl-micon"><i class="' . e($icon) . '"></i></span>'
-        . '<span class="nxl-mtext">' . e($label) . '</span></a></li>';
+        . '<span class="nxl-mtext">' . e($label) . '</span>'
+        . (isset($badges[$id]) ? '<span class="badge bg-danger ms-auto" id="nav-' . e($id) . '-count">' . (int) $badges[$id] . '</span>' : '')
+        . '</a></li>';
 };
 ?>
 <!DOCTYPE html>
@@ -68,7 +76,7 @@ $navlink = function (string $id, string $url, string $icon, string $label) use (
                 <ul class="nxl-navbar">
                     <?= $navlink('dashboard', '/', 'feather-home', 'Home') ?>
                     <?php foreach (nav_groups() as $groupLabel => $items): ?>
-                        <?php $shown = array_filter($items, static fn (array $i): bool => has_right($i[4])); if ($shown === []) { continue; } ?>
+                        <?php $shown = array_filter($items, static fn (array $i): bool => nav_has_right($i[4])); if ($shown === []) { continue; } ?>
                         <li class="nxl-item nxl-caption"><label><?= e($groupLabel) ?></label></li>
                         <?php foreach ($shown as $item) { echo $navlink($item[0], $item[1], $item[2], $item[3]); } ?>
                     <?php endforeach; ?>
@@ -204,6 +212,7 @@ $navlink = function (string $id, string $url, string $icon, string $label) use (
             if (!pc) return;
             var xt = e.detail && e.detail.xhr ? e.detail.xhr.getResponseHeader('HX-Title') : null;
             if (xt) { document.title = decodeURIComponent(xt); }
+            if (e.detail && e.detail.target && e.detail.target.id === 'flash') { window.scrollTo({ top: 0, behavior: 'smooth' }); }
             var xhr = e.detail && e.detail.xhr;
             if (xhr && xhr.getResponseHeader('X-Screen') !== null) {
                 pc.dataset.screen = xhr.getResponseHeader('X-Screen') || '';

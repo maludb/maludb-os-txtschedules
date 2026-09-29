@@ -12,18 +12,18 @@ function nav_groups(): array
 {
     return [
         'Schedule' => [
-            ['my-schedule', '/my-schedule', 'feather-calendar', 'My schedule', 'schedule.view_own', false, 'Your own shifts by week or as a list, with who else is on. Shifts and the marketplace (slice 1) fill this.'],
-            ['team-schedule', '/team-schedule', 'feather-users', 'Team schedule', 'schedule.view_own', false, 'The published week for your restaurant by day and position. Shifts and the marketplace (slice 1) fill this.'],
-            ['marketplace', '/marketplace', 'feather-repeat', 'Marketplace', 'market.trade', false, 'Shifts that are up for offer, open or given to you, and whether you may take each. Shifts and the marketplace (slice 1) fill this.'],
-            ['my-requests', '/requests', 'feather-inbox', 'My requests', 'schedule.view_own', false, 'Your requests and trades and what became of them. Shifts and the marketplace (slice 1) fill this.'],
+            ['my-schedule', '/my-schedule', 'feather-calendar', 'My schedule', 'schedule.view_own', true, ''],
+            ['team-schedule', '/team-schedule', 'feather-users', 'Team schedule', 'schedule.view_own', true, ''],
+            ['marketplace', '/marketplace', 'feather-repeat', 'Marketplace', 'market.trade', true, ''],
+            ['my-requests', '/requests', 'feather-inbox', 'My requests', 'schedule.view_own', true, ''],
             ['availability', '/availability', 'feather-clock', 'Availability', 'availability.edit', false, 'When you can work each week. Availability and time off (slice 3) fill this.'],
             ['time-off', '/time-off', 'feather-sun', 'Time off', 'availability.edit', false, 'Time off you have asked for, your balances, and who is off. Availability and time off (slice 3) fill this.'],
             ['announcements-list', '/announcements/', 'feather-volume-2', 'Announcements', 'schedule.view_own', false, 'What managers have posted for your restaurant. Announcements and notifications (slice 6) fill this.'],
         ],
         'Manage' => [
             ['builder', '/builder', 'feather-grid', 'Builder', 'schedule.build', false, 'The week as a grid: staff and positions down, days across, hours, labor against the budget and the warnings. The week builder (slice 2) fills this.'],
-            ['approvals', '/approvals', 'feather-check-circle', 'Approvals', 'requests.approve', false, 'Trades, time off and availability waiting for a manager. Shifts and the marketplace (slice 1) and availability and time off (slice 3) fill this.'],
-            ['coverage', '/coverage', 'feather-life-buoy', 'Coverage', 'coverage.fill', false, 'Who could take a gap, fewest hours first, and ask one or several. Shifts and the marketplace (slice 1) fill this.'],
+            ['approvals', '/approvals', 'feather-check-circle', 'Approvals', 'requests.approve|market.approve_day', true, ''],
+            ['coverage', '/coverage', 'feather-life-buoy', 'Coverage', 'coverage.fill', true, ''],
             ['templates-list', '/templates/', 'feather-copy', 'Templates', 'schedule.build', false, 'Saved weeks to start a new week from. The week builder (slice 2) fills this.'],
             ['staff-list', '/staff/', 'feather-user-check', 'Staff', 'schedule.build', false, 'The people who work here, with position and main restaurant. People and positions (slice 4) fill this.'],
             ['positions-list', '/positions/', 'feather-tag', 'Positions', 'schedule.build', false, 'The restaurant\'s positions and their default rates. People and positions (slice 4) fill this.'],
@@ -68,6 +68,17 @@ function nav_item(string $id): ?array
     return null;
 }
 
+/** A menu right may name several joined by "|": any one of them opens the item (a shift lead reaches Approvals for same-day trades). */
+function nav_has_right(string $spec): bool
+{
+    foreach (explode('|', $spec) as $right) {
+        if (has_right($right)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /** A screen a later slice builds: 403 without its right at the current site, else the shell with an empty state. */
 function render_nav_stub(string $id): void
 {
@@ -79,4 +90,52 @@ function render_nav_stub(string $id): void
     require_human();
     require_right($item[4]);
     render_module_stub($item[3], $id, $item[6]);
+}
+
+/** A link that navigates by HTMX into #page-content and still works as a plain link (progressive enhancement). $html is already escaped. */
+function hx_link(string $url, string $html, string $class = '', string $extra = ''): string
+{
+    return '<a href="' . e($url) . '"' . ($class !== '' ? ' class="' . e($class) . '"' : '') . ($extra !== '' ? ' ' . $extra : '')
+        . ' hx-get="' . e($url) . '" hx-target="#page-content" hx-swap="innerHTML" hx-push-url="' . e($url) . '">' . $html . '</a>';
+}
+
+/** A path a page may send a person back to: local, no scheme, no protocol-relative — else null. */
+function safe_local_path(?string $path): ?string
+{
+    if ($path === null || $path === '' || $path[0] !== '/' || str_starts_with($path, '//') || str_contains($path, '\\') || preg_match('/[\x00-\x1f]/', $path)) {
+        return null;
+    }
+    return $path;
+}
+
+/** "Back to …" from the ?back= a link carried (click-around rule): [url, label] or null. */
+function back_link(): ?array
+{
+    $back = safe_local_path($_GET['back'] ?? null);
+    if ($back === null) {
+        return null;
+    }
+    $path = parse_url($back, PHP_URL_PATH) ?: '/';
+    $labels = ['/' => 'Home', '/my-schedule' => 'My schedule', '/team-schedule' => 'Team schedule', '/marketplace' => 'Marketplace',
+               '/approvals' => 'Approvals', '/requests' => 'My requests', '/coverage' => 'Coverage'];
+    foreach ($labels as $p => $label) {
+        if ($path === $p) {
+            return [$back, $label];
+        }
+    }
+    if (preg_match('#^/(shifts|exchanges)/\d+$#', $path)) {
+        return [$back, str_starts_with($path, '/shifts') ? 'the shift' : 'the trade'];
+    }
+    return null;
+}
+
+/** The URL of this same page, for a ?back= (path and query as requested). */
+function here_url(): string
+{
+    return (string) ($_SERVER['REQUEST_URI'] ?? '/');
+}
+
+function with_back(string $url, string $here): string
+{
+    return $url . (str_contains($url, '?') ? '&' : '?') . 'back=' . rawurlencode($here);
 }

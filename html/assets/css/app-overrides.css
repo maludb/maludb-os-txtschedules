@@ -182,3 +182,29 @@ html.app-skin-dark .app-tabbar { background: #1b2431; border-top-color: rgba(255
 /* The header names the restaurant; on a phone it shares the row with the hamburger and the avatar. */
 .site-name { min-width: 0; max-width: 46vw; }
 @media (min-width: 992px) { .site-name { max-width: 30rem; } }
+
+/* ==========================================================================
+   txtSchedules slice 1 (2026-09-29) — shifts and the marketplace. Cards for named things, touch targets of 44 px,
+   the week's day chips (they scroll inside their card, never the page), a position's colour as an SVG swatch (data, not a style attribute).
+   ========================================================================== */
+.btn-touch, .form-select.btn-touch, .form-control.btn-touch { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.form-select.btn-touch, .form-control.btn-touch { display: block; }
+label.btn-touch { display: flex; }
+summary.btn { list-style: none; cursor: pointer; }
+summary.btn::-webkit-details-marker { display: none; }
+.min-w-0 { min-width: 0; }
+.pos-bar { flex: 0 0 6px; width: 6px; min-height: 44px; align-self: stretch; border-radius: 3px; overflow: hidden; }
+.pos-dot { flex: 0 0 10px; }
+.shift-card, .exchange-card { border-radius: .75rem; }
+.shift-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+.week-chips { scrollbar-width: thin; }
+.week-chip { flex: 1 0 42px; min-width: 42px; min-height: 56px; padding: 6px 2px; color: var(--bs-secondary-color, #6c757d); text-decoration: none; border: 1px solid transparent; position: relative; }
+.week-chip.works { color: var(--bs-body-color, #212529); background: rgba(52,84,209,.08); }
+.week-chip.is-today { border-color: var(--bs-primary, #3454d1); }
+.week-chip.selected { background: var(--bs-primary, #3454d1); color: #fff; }
+.week-chip .chip-dot { display: block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin: 2px auto 0; }
+.open-row { border-style: dashed; border-width: 1px; }
+.team-group .list-group-item { min-height: 44px; }
+.week-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; }
+@media (min-width: 992px) { .week-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+.week-chips { gap: 2px !important; }

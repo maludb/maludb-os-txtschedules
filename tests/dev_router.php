@@ -14,6 +14,9 @@ $map = ['/sso' => '/sso.php', '/sso/logout' => '/sso/logout.php', '/api/v1/healt
 $rel = rtrim($path, '/') ?: '/';
 if (isset($map[$rel])) { $target = $map[$rel]; }
 elseif ($rel === '/') { $target = '/index.php'; }
+elseif (preg_match('#^/(.+)/new$#', $rel, $m) && is_file($root . '/' . $m[1] . '/form.php')) { $target = '/' . $m[1] . '/form.php'; }
+elseif (preg_match('#^/(.+)/([0-9]+)/edit$#', $rel, $m) && is_file($root . '/' . $m[1] . '/form.php')) { $target = '/' . $m[1] . '/form.php'; $_GET['id'] = $m[2]; $_REQUEST['id'] = $m[2]; }
+elseif (preg_match('#^/(.+)/([0-9]+)$#', $rel, $m) && is_file($root . '/' . $m[1] . '/view.php')) { $target = '/' . $m[1] . '/view.php'; $_GET['id'] = $m[2]; $_REQUEST['id'] = $m[2]; }
 elseif (is_file($root . $rel . '.php')) { $target = $rel . '.php'; }
 elseif (is_file($root . $rel . '/index.php')) { $target = $rel . '/index.php'; }
 else { http_response_code(404); echo 'Not found'; return true; }

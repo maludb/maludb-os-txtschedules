@@ -25,8 +25,9 @@ $when = static fn (?string $utc, string $fmt = 'D M j, g:i A'): string => e(form
                                 <div class="fs-12 text-muted">When your manager publishes a week, your next shift and who is on with you appear here.</div></div>
                         </div>
                     <?php else: ?>
-                        <div class="fw-bold fs-5" id="home-next-shift-when"><?= $when($next['starts_at']) ?> – <?= $when($next['ends_at'], 'g:i A') ?></div>
-                        <div class="text-muted"><?= e($next['position_name']) ?></div>
+                        <?= hx_link(with_back('/shifts/' . (int) $next['shift_id'], '/'), '<div class="fw-bold fs-5" id="home-next-shift-when">' . e(shift_when($next['starts_at'], $next['ends_at'], $next['timezone'], $zone)) . '</div>', 'text-dark text-decoration-none', 'id="home-next-shift-link"') ?>
+                        <div class="text-muted" id="home-next-shift-position"><?= e($next['position_name']) ?> · <?= e($next['site_name']) ?></div>
+                        <?php if (($next['others'] ?? []) !== []): ?><div class="fs-12 mt-1" id="home-next-shift-others">Working with <?= e(shift_names($next['others'], 4)) ?></div><?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -40,7 +41,7 @@ $when = static fn (?string $utc, string $fmt = 'D M j, g:i A'): string => e(form
                     <?php else: ?>
                         <ul class="list-unstyled mb-0">
                             <?php foreach ($waiting as $i => $w): ?>
-                                <li id="home-waiting-<?= (int) $i ?>"><?= $link($w['href'], e($w['text'])) ?> <span class="fs-12 text-muted"><?= $when($w['when']) ?></span></li>
+                                <li id="home-waiting-<?= (int) $i ?>"><?= $link($w['href'], e($w['text'])) ?><?php if ($w['when'] !== null): ?> <span class="fs-12 text-muted"><?= $when($w['when']) ?></span><?php endif; ?></li>
                             <?php endforeach; ?>
                         </ul>
                     <?php endif; ?>
@@ -56,7 +57,7 @@ $when = static fn (?string $utc, string $fmt = 'D M j, g:i A'): string => e(form
                     <?php else: ?>
                         <ul class="list-unstyled mb-0">
                             <?php foreach ($week as $s): ?>
-                                <li id="home-week-shift-<?= (int) $s['shift_id'] ?>"><span class="fw-semibold"><?= $when($s['starts_at'], 'D M j') ?></span> <?= $when($s['starts_at'], 'g:i A') ?> – <?= $when($s['ends_at'], 'g:i A') ?> <span class="text-muted">· <?= e($s['position_name']) ?></span></li>
+                                <li id="home-week-shift-<?= (int) $s['shift_id'] ?>" class="mb-1"><?= hx_link(with_back('/shifts/' . (int) $s['shift_id'], '/'), '<span class="fw-semibold">' . e(shift_when($s['starts_at'], $s['ends_at'], $s['timezone'], $zone)) . '</span> <span class="text-muted">· ' . e($s['position_name']) . '</span>', 'text-dark') ?></li>
                             <?php endforeach; ?>
                         </ul>
                     <?php endif; ?>
