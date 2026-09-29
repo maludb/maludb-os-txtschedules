@@ -12,6 +12,7 @@ require_once dirname(__DIR__) . '/app/features/exchanges/queries.php';
 require_once dirname(__DIR__) . '/app/features/exchanges/present.php';
 require_once dirname(__DIR__) . '/app/features/weeks/queries.php';
 require_once dirname(__DIR__) . '/app/features/weeks/present.php';
+require_once dirname(__DIR__) . '/app/features/labor/present.php';
 require_login();
 require_human();
 $pdo = db();

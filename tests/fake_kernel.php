@@ -6,6 +6,8 @@
  *   GET  /api/v1/directory/changes.php  → state.feed (os.directory-changes/1); ?since= answers state.incremental when set, else an empty change
  *   POST /api/v1/runs/facts.php {token} → state.facts[<run id>] (the run token's third part), else {valid: false}
  *   POST /api/v1/agents/chat.php        → state.chat (a canned reply), echoing the acting member and the bearer it saw
+ *   POST /api/v1/apps/read.php          → K7, as the state says (state.read: mode ok | list | no_connection | provider_failed | garbage | negative | string | not_shared; rows; locations = the sites Reservations serves);
+ *                                         every request body is appended to "<state file>.reads" (one JSON line each) so a proof can see exactly what was asked
  * Every call needs Authorization: Bearer $OS_APPLICATION_TOKEN (else 401), like the real one. Never a real kernel.
  */
 $state = json_decode((string) @file_get_contents((string) getenv('FAKE_KERNEL_STATE')), true) ?: [];
@@ -30,5 +32,22 @@ switch ($path) {
         if (isset($state['chat_status'])) { $out(['error' => ['code' => 'not_found', 'message' => 'No expert for this application.']], (int) $state['chat_status']); }
         $out(($state['chat'] ?? ['run_id' => 1, 'status' => 'succeeded', 'finished' => true, 'reply' => 'Hello from the fake expert', 'actions' => []])
             + ['seen_acting_member' => $_SERVER['HTTP_X_ACTING_MEMBER'] ?? null, 'seen_agent' => $_GET['agent'] ?? null, 'seen_utterance' => $input['utterance'] ?? null]);
+    case '/api/v1/apps/read.php':
+        file_put_contents((string) getenv('FAKE_KERNEL_STATE') . '.reads', json_encode(['body' => $input, 'method' => $_SERVER['REQUEST_METHOD']]) . "\n", FILE_APPEND);
+        $r = $state['read'] ?? ['mode' => 'no_connection'];
+        $mode = $r['mode'] ?? 'no_connection';
+        if (($input['provider'] ?? '') !== 'reservations' || ($input['tool'] ?? '') !== 'covers_by_service') { $mode = 'not_shared'; }
+        elseif (isset($r['locations']) && !in_array((int) ($input['location_id'] ?? 0), array_map('intval', $r['locations']), true)) { $mode = 'not_at_location'; }
+        switch ($mode) {
+            case 'ok':              $out(['result' => ['schema' => 'reservations.covers-by-service/1', 'restaurant' => 'SMOKE Reservations', 'from' => $input['arguments']['from'] ?? null, 'to' => $input['arguments']['to'] ?? null, 'rows' => $r['rows'] ?? []], 'provider' => 'reservations', 'tool' => 'covers_by_service']);
+            case 'negative':        $out(['result' => ['rows' => [['date' => $input['arguments']['from'] ?? '', 'service' => 'Dinner', 'reservations' => 1, 'covers' => -3]]]]);
+            case 'string':          $out(['result' => 'nonsense']);
+            case 'list':            $out(['result' => [['date' => $input['arguments']['from'] ?? '', 'service' => 'Dinner', 'reservations' => 2, 'covers' => 8]]]);
+            case 'garbage':         $out(['result' => ['rows' => [['date' => 'tomorrow', 'service' => 5]]]]);
+            case 'provider_failed': $out(['error' => ['code' => 'provider_failed', 'message' => 'The provider did not answer.']], 502);
+            case 'not_shared':      $out(['error' => ['code' => 'not_shared', 'message' => 'That tool is not shared.']], 403);
+            case 'not_at_location': $out(['error' => ['code' => 'not_at_location', 'message' => 'Both applications must serve that location.']], 403);
+            default:                $out(['error' => ['code' => 'no_connection', 'message' => 'No approved connection.']], 403);
+        }
 }
 $out(['error' => ['code' => 'not_found', 'message' => 'No such internal endpoint.']], 404);

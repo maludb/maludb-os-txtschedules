@@ -105,6 +105,10 @@ $hidden = static function (array $args): string { $h = ''; foreach ($args as $k 
                     </form>
                 <?php endif; ?>
             </div>
+            <div class="d-flex gap-2 flex-wrap mt-2" id="builder-labor-links">
+                <?= hx_link(forecast_url($siteId, $ws), '<i class="feather-trending-up me-1"></i>Forecast and staffing', 'btn btn-light btn-touch flex-fill', 'id="builder-to-forecast"') ?>
+                <?php if ($canLabor): ?><?= hx_link(budget_url($siteId, $ws), '<i class="feather-dollar-sign me-1"></i>Budget', 'btn btn-light btn-touch flex-fill', 'id="builder-to-budget"') ?><?php endif; ?>
+            </div>
         </div>
     </div>
 

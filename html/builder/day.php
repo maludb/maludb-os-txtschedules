@@ -9,6 +9,7 @@ require_once dirname(__DIR__, 2) . '/app/features/shifts/queries.php';
 require_once dirname(__DIR__, 2) . '/app/features/shifts/present.php';
 require_once dirname(__DIR__, 2) . '/app/features/weeks/queries.php';
 require_once dirname(__DIR__, 2) . '/app/features/weeks/present.php';
+require_once dirname(__DIR__, 2) . '/app/features/labor/present.php';
 require_login();
 require_human();
 $pdo = db();

@@ -15,7 +15,7 @@ $screens = ['staff-list', 'staff-view', 'staff-edit', 'positions-list', 'positio
 $bad = [];
 foreach ($screens as $s) { $r = $reg['screens'][$s] ?? null; if ($r === null || $r['built'] !== true) { $bad[] = $s; } }
 ok($bad === [], 'all ten screens are built in the registry' . ($bad ? ' — ' . implode(', ', $bad) : ''));
-ok(count(array_filter($reg['actions'], fn ($a) => $a['built'])) === 54, 'the registry now counts 54 of 69 actions built (43 + 11)');
+ok(count(array_filter($reg['actions'], fn ($a) => $a['built'])) >= 54, 'the registry counts at least 54 of 69 actions built (43 + 11 at slice 4; later slices add more)');
 $params = fn (string $a): array => array_column($reg['actions'][$a]['params'], 'name');
 ok($params('wage_update') === ['member', 'position', 'rate'] && in_array('positions', $params('staff_save'), true) && in_array('certifications', $params('position_save'), true), 'the manifest\'s parameters reach the registry (member, position, rate; positions; certifications)');
 foreach ([['/staff/', $mara], ['/positions/', $mara], ['/certifications/', $mara], ['/certifications/mine', $priya], ['/staff/', $owner]] as [$p, $jar]) {

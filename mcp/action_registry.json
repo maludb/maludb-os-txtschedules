@@ -1,6 +1,6 @@
 {
     "generated_from": "docs/business-os-action-manifest.md",
-    "generated_at": "2026-09-29T15:43:44+00:00",
+    "generated_at": "2026-09-29T16:33:44+00:00",
     "screens": {
         "dashboard": {
             "screen": "dashboard",
@@ -2270,7 +2270,7 @@
             "approval": null,
             "log_event": "budget.update",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "forecast_save": {
             "action": "forecast_save",
@@ -2307,7 +2307,7 @@
             "approval": null,
             "log_event": "forecast.update",
             "who": "build",
-            "built": false
+            "built": true
         },
         "forecast_copy": {
             "action": "forecast_copy",
@@ -2338,7 +2338,7 @@
             "approval": null,
             "log_event": "forecast.copy",
             "who": "build",
-            "built": false
+            "built": true
         },
         "forecast_fill": {
             "action": "forecast_fill",
@@ -2369,7 +2369,7 @@
             "approval": null,
             "log_event": "forecast.fill",
             "who": "build",
-            "built": false
+            "built": true
         },
         "ratio_save": {
             "action": "ratio_save",
@@ -2406,7 +2406,7 @@
             "approval": null,
             "log_event": "ratio.update",
             "who": "admin",
-            "built": false
+            "built": true
         },
         "announcement_post": {
             "action": "announcement_post",

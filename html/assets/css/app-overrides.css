@@ -255,3 +255,14 @@ html.app-skin-dark .bar-svg .bar-track { fill: #2a3548; }
 html.app-skin-dark .day-bar .bar-track { fill: #1f2a3c; }
 .template-day { border-left: 3px solid var(--bs-primary, #3454d1); }
 .form-check-input.btn-touch-check { width: 1.5rem; height: 1.5rem; }
+
+/* ==========================================================================
+   txtSchedules slice 5 (2026-09-29) — labor and forecast. The forecast grid scrolls inside its card (the visible scrollbar above); a cell is a number box at least 44 px tall with
+   its source under it; the needs table reads like the builder's grid.
+   ========================================================================== */
+.forecast-grid, .forecast-needs { min-width: 860px; table-layout: fixed; }
+.forecast-grid th.grid-name, .forecast-needs th.grid-name { width: 150px; min-width: 150px; position: sticky; left: 0; z-index: 1; background: var(--bs-body-bg, #fff); vertical-align: middle; font-size: 13px; }
+.forecast-grid th.grid-day, .forecast-needs th.grid-day { text-align: center; font-size: 12px; text-transform: uppercase; }
+.forecast-grid th.grid-day.is-today { color: var(--bs-primary, #3454d1); }
+.forecast-grid td.forecast-cell { padding: 6px; vertical-align: top; }
+.forecast-needs td { text-align: center; vertical-align: middle; }

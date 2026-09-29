@@ -28,8 +28,8 @@ function nav_groups(): array
             ['staff-list', '/staff/', 'feather-user-check', 'Staff', 'schedule.build', true, ''],
             ['positions-list', '/positions/', 'feather-tag', 'Positions', 'schedule.build', true, ''],
             ['certifications', '/certifications/', 'feather-award', 'Certifications', 'schedule.build', true, ''],
-            ['forecast', '/forecast', 'feather-trending-up', 'Forecast', 'schedule.build', false, 'Covers expected per day-part and the staffing they call for. Labor and forecast (slice 5) fill this.'],
-            ['budget', '/budget', 'feather-dollar-sign', 'Budget', 'labor.view', false, 'The weekly labor budget against what is scheduled. Labor and forecast (slice 5) fill this.'],
+            ['forecast', '/forecast', 'feather-trending-up', 'Forecast', 'schedule.build', true, ''],
+            ['budget', '/budget', 'feather-dollar-sign', 'Budget', 'labor.view', true, ''],
             ['reports', '/reports/', 'feather-bar-chart-2', 'Reports', 'schedule.build', false, 'Hours, labor against budget, open shifts, trades, overtime and overrides. Settings, rules and reports (slice 7) fill this.'],
         ],
         'Restaurant' => [
@@ -119,7 +119,7 @@ function back_link(): ?array
     $labels = ['/' => 'Home', '/my-schedule' => 'My schedule', '/team-schedule' => 'Team schedule', '/marketplace' => 'Marketplace',
                '/approvals' => 'Approvals', '/requests' => 'My requests', '/coverage' => 'Coverage', '/builder' => 'Builder', '/builder/day' => 'Day view',
                '/templates/' => 'Templates', '/availability' => 'Availability', '/time-off' => 'Time off', '/time-off/balances' => 'Balances', '/site/time-off' => 'Time-off types',
-               '/staff/' => 'Staff', '/positions/' => 'Positions', '/certifications/' => 'Certifications', '/certifications/mine' => 'My certifications'];
+               '/staff/' => 'Staff', '/positions/' => 'Positions', '/certifications/' => 'Certifications', '/certifications/mine' => 'My certifications', '/forecast' => 'Forecast', '/budget' => 'Budget'];
     foreach ($labels as $p => $label) {
         if ($path === $p) {
             return [$back, $label];
