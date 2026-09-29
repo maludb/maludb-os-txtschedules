@@ -1,6 +1,6 @@
 {
     "generated_from": "docs/business-os-action-manifest.md",
-    "generated_at": "2026-09-29T16:33:44+00:00",
+    "generated_at": "2026-09-29T17:26:00+00:00",
     "screens": {
         "dashboard": {
             "screen": "dashboard",
@@ -425,7 +425,7 @@
                 "site",
                 "audience"
             ],
-            "built": false,
+            "built": true,
             "stub": false
         },
         "site-settings": {
@@ -524,7 +524,7 @@
             "approval": null,
             "log_event": "prefs.save",
             "who": "own",
-            "built": false
+            "built": true
         },
         "calendar_feed_rotate": {
             "action": "calendar_feed_rotate",
@@ -536,7 +536,7 @@
             "approval": null,
             "log_event": "calendar_feed.rotate",
             "who": "own",
-            "built": false
+            "built": true
         },
         "token_mint": {
             "action": "token_mint",
@@ -2461,7 +2461,7 @@
             "approval": "external_send",
             "log_event": "announcement.post",
             "who": "announce",
-            "built": false
+            "built": true
         },
         "announcement_remove": {
             "action": "announcement_remove",
@@ -2480,7 +2480,7 @@
             "approval": null,
             "log_event": "announcement.remove",
             "who": "announce or admin",
-            "built": false
+            "built": true
         },
         "announcement_read": {
             "action": "announcement_read",
@@ -2499,7 +2499,7 @@
             "approval": null,
             "log_event": "announcement.read",
             "who": "own",
-            "built": false
+            "built": true
         },
         "site_settings_save": {
             "action": "site_settings_save",

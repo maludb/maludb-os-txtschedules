@@ -1,0 +1,53 @@
+<?php
+/**
+ * Proof — expiry (spec "Proof: Expiry"): an offer nobody took expires when its time comes — status expired, the shift stays with its holder, the holder is told ONCE (by both channels they have on);
+ * a give nobody answered, an open shift and a coverage request expire the same way; a trade someone took is not expired; the log has `exchange.expire` with the site.
+ */
+require __DIR__ . '/lib.php';
+$W = reset6();
+$srv = $W['aSrv'];
+$mine = fn (float $h): int => mkshift(102, $srv, 26, $h, 4, ['note' => 'SMOKE s6 expiry ' . run_id()]);
+$priya = as_member(26); $mara = as_member(33); $dana = as_member(32); $ana = as_member(30);
+echo "1. An offer nobody took\n";
+$sa = $mine(210); $sb = $mine(230); $sc = $mine(250); $sd = $mine(270); $se = $mine(290);
+$x = offer($priya, $sa);
+ok($x > 0 && status_of($x) === 'open', 'Priya offers a shift: open');
+admin_sql("UPDATE exchanges SET expires_at = now() - interval '1 minute' WHERE id = $x");
+$r = worker();
+ok(status_of($x) === 'expired' && holder_of($sa) === 26, 'the worker expires it; the shift stays with Priya');
+$rows = box("exchange:$x");
+ok(count(array_filter($rows, fn ($y) => str_starts_with((string) $y['dedupe_key'], "expire:$x:26:"))) === 2 && array_unique(array_column($rows, 'member_id')) === [26] && array_column($rows, 'status') === ['sent', 'sent'], 'Priya is told, once per channel, and both went');
+ok(str_contains($rows[0]['body'], 'Nobody took your offered shift') && str_contains($rows[0]['body'], 'The shift stays yours.') && str_contains($rows[0]['body'], "/exchanges/$x"), 'in words: "Nobody took your offered shift … The shift stays yours." with a link: ' . $rows[0]['body']);
+$lg = q("SELECT scope_id, source, actor_member_id, after FROM activity_log WHERE action = 'exchange.expire' AND entity_id = :i", ['i' => $x]);
+ok(count($lg) === 1 && (int) $lg[0]['scope_id'] === 102 && $lg[0]['source'] === 'cron' && $lg[0]['actor_member_id'] === null, 'logged exchange.expire once, with the site, source cron');
+worker(); worker();
+ok(count(box("exchange:$x")) === 2 && (int) one("SELECT count(*) FROM activity_log WHERE action = 'exchange.expire' AND entity_id = :i", ['i' => $x]) === 1, 'more passes tell nobody again and log nothing again');
+ok(count(array_filter(sms_log(26), fn ($t) => str_contains($t['reference'], "exchange:$x"))) === 1, 'the kernel was asked to text it once');
+echo "2. A live one is not expired\n";
+$y = offer($priya, $sb);
+worker();
+ok(status_of($y) === 'open' && box("exchange:$y") === [], 'an offer with time left stays open and tells nobody');
+echo "3. Give, open shift, coverage\n";
+$g = act($priya, '/exchanges/give.php', ['shift' => $sc, 'colleague' => 31]);
+$xg = (int) ($g[1]['record_id'] ?? 0);
+admin_sql("UPDATE exchanges SET expires_at = now() - interval '1 minute' WHERE id = $xg");
+worker();
+$rows = array_values(array_filter(box("exchange:$xg"), fn ($r) => str_starts_with((string) $r['dedupe_key'], 'expire:')));
+ok(status_of($xg) === 'expired' && count($rows) >= 2 && (int) $rows[0]['member_id'] === 26 && str_contains($rows[0]['body'], 'ran out without an answer') && str_contains($rows[0]['body'], 'Your give request to SMOKE'), 'a give nobody answered (' . $g[0] . ' ' . msg($g[1]) . '): expired, Priya told "…request to <first name> ran out without an answer"');
+[$c, $b] = act($dana, '/exchanges/coverage.php', ['shift' => $W['o1'], 'invitees' => [30, 31]]);
+$xc = (int) one("SELECT id FROM exchanges WHERE shift_id = :s ORDER BY id DESC LIMIT 1", ['s' => $W['o1']]);
+$st = status_of($xc);
+admin_sql("UPDATE exchanges SET expires_at = now() - interval '1 minute' WHERE id = $xc");
+$before = count(box("exchange:$xc"));
+worker();
+$rows = array_values(array_filter(box("exchange:$xc"), fn ($r) => str_starts_with((string) $r['dedupe_key'], 'expire:')));
+ok($xc > 0 && status_of($xc) === 'expired' && holder_of($W['o1']) === null && count($rows) === 2 && (int) $rows[0]['member_id'] === 32 && str_contains($rows[0]['body'], 'Nobody took the open shift'), 'a coverage request nobody answered (was ' . $st . '): expired, the shift is still open, the person who asked (Dana) is told');
+echo "4. A trade someone took is not touched\n";
+$z2 = offer($priya, $se);
+[$c] = claim($ana, $z2);
+$st2 = status_of($z2);
+admin_sql("UPDATE exchanges SET expires_at = now() - interval '1 minute' WHERE id = $z2");
+worker();
+ok(status_of($z2) === $st2 && $st2 !== 'expired', 'a trade already taken (' . $st2 . ') is not expired when its old time passes');
+admin_sql("DELETE FROM notification_outbox");
+finish();

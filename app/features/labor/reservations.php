@@ -67,7 +67,7 @@ function fetch_reservation_covers(int $locationId, string $from, string $to): ar
  * are skipped unless $replaceManual. Only days the answer names are touched (a day with no bookings is left alone). Answers
  * ['written' => cells written, 'unchanged' => already that number, 'skipped' => typed cells left alone, 'unmapped' => [[service, covers, days]], 'refusal' => ?code, 'first_id' => ?int, 'cells' => [[date, day_part, covers]]].
  */
-function fill_forecast(PDO $pdo, int $siteId, string $weekStart, bool $replaceManual, int $by, ?array $answer = null): array
+function fill_forecast(PDO $pdo, int $siteId, string $weekStart, bool $replaceManual, ?int $by, ?array $answer = null, ?array $dayParts = null): array
 {
     $out = ['written' => 0, 'unchanged' => 0, 'skipped' => 0, 'unmapped' => [], 'refusal' => null, 'first_id' => null, 'cells' => []];
     $to = (new DateTimeImmutable($weekStart, new DateTimeZone('UTC')))->modify('+6 days')->format('Y-m-d');
@@ -80,7 +80,7 @@ function fill_forecast(PDO $pdo, int $siteId, string $weekStart, bool $replaceMa
         return $out;
     }
     $byService = [];
-    foreach (find_day_parts($pdo, $siteId) as $d) {
+    foreach ($dayParts ?? find_day_parts($pdo, $siteId) as $d) {
         if ($d['service_name'] !== null && trim($d['service_name']) !== '') {
             $byService[mb_strtolower(trim($d['service_name']))] ??= $d;
         }

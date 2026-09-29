@@ -14,7 +14,7 @@ ok($bad === [], 'all five actions are built and their endpoint files exist under
 $bad = [];
 foreach (['forecast', 'budget'] as $s) { $r = $reg['screens'][$s] ?? null; if ($r === null || $r['built'] !== true) { $bad[] = $s; } }
 ok($bad === [], 'both screens are built in the registry');
-ok(count(array_filter($reg['actions'], fn ($a) => $a['built'])) === 59, 'the registry now counts 59 of 69 actions built (54 + 5)');
+ok(count(array_filter($reg['actions'], fn ($a) => $a['built'])) >= 59, 'the registry counts at least 59 of 69 actions built (54 + 5; later slices add more)');
 $params = fn (string $a): array => array_column($reg['actions'][$a]['params'], 'name');
 ok($params('forecast_save') === ['site', 'on_date', 'day_part', 'expected_covers'] && in_array('replace_manual', $params('forecast_fill'), true) && $params('ratio_save') === ['site', 'position', 'covers_per_staff', 'min_staff'] && in_array('budget_amount', $params('budget_save'), true), 'the manifest\'s parameters reach the registry');
 foreach ([['/forecast', $mara], ['/forecast', $pat], ['/budget', $mara], ['/budget', $owner]] as [$p, $jar]) {

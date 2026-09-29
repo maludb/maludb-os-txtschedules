@@ -28,3 +28,24 @@ set -euo pipefail
 # 59 of 69 actions built) is the same one step the installer's plan already lists. "Fill from Reservations" answers "Reservations is not connected" until a super-admin approves the connection in the
 # operating system (`php /var/www/bin/app_connection.php list` then `approve` — the kernel's, not ours); nothing else is needed on this side (OS_INTERNAL_URL and OS_APPLICATION_TOKEN are already in config/.env).
 # tests/setup_dev.sh no longer changes the cluster roles' passwords when config/.env exists (it reads them), so a proof run cannot take the installed application's database login away.
+
+# Phase 3 slice 6 (2026-09-29) — announcements and notifications. NO migration (db/015 is still the last), no port, no vhost line (the calendar feed's rewrite,
+# /api/v1/calendar/{token}.ics, has been in the vhost since Phase 2). Three things are the owner's, all as root (nothing here has been run):
+#
+# 1. The notifications worker — bin/notifications.php, one pass a minute: expires offers, queues shift reminders and certification warnings, sends the outbox (email through MaluMail,
+#    texts through the kernel's K6), and once a day fills each restaurant's next 14 days of covers from Reservations. The installer renders both units from deploy/ ({{APP_DIR}}); to install
+#    them by hand instead:
+#      sed "s#{{APP_DIR}}#/srv/apps/txtschedules#g" /srv/apps/txtschedules/deploy/txtschedules-notifications.service > /etc/systemd/system/txtschedules-notifications.service
+#      install -m 644 /srv/apps/txtschedules/deploy/txtschedules-notifications.timer /etc/systemd/system/txtschedules-notifications.timer
+#      systemctl daemon-reload && systemctl enable --now txtschedules-notifications.timer
+#      systemctl status txtschedules-notifications.timer; journalctl -u txtschedules-notifications -n 5     # the report is one JSON line a pass
+#
+# 2. The mail key. Email goes out through MaluMail; config/.env needs, from the business's MaluMail account (a verified sending domain and an API key, shown once in its portal):
+#      MALUMAIL_API_KEY=mm_…        MAIL_FROM=noreply@<the verified domain>        MAIL_FROM_NAME="txtSchedules"
+#    Until they are set the worker leaves every email QUEUED (nothing is lost, no attempt is counted) and sends the texts; the moment they are set the emails go at the next pass.
+#
+# 3. The text sender. Texts go only through the kernel: a super-admin sets the business's notification number in the operating system (`php /var/www/bin/notify_endpoint_set.php …`, K6). Until
+#    then the kernel answers no_sender, every text is skipped with that word and the person is emailed — nothing else is needed on this side (no Twilio key lives here, ever).
+#
+# After the owner's deploy the registry refresh (mcp/action_registry.json, 64 of 69 actions built) is the same one step the installer's plan already lists. The Reservations connection
+# (slice 5's note) also decides whether the daily 14-day fill finds anything: until a super-admin approves it, the worker logs a `forecast.fill` row saying so, once a day per restaurant.

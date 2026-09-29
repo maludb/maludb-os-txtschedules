@@ -119,7 +119,7 @@ $rows = json_decode($r['body'], true)['data']['rows'] ?? [];
 ok($r['code'] === 200 && $rows !== [] && $rows[0]['actor']['member_id'] === 26 && !str_contains($r['headers'], 'Set-Cookie'), 'a person\'s action token acts as that member for one request (200, her rows, no Set-Cookie)');
 $r = req('GET', '/activity', ['headers' => ['Accept: application/json', 'X-Action-Token: ' . $person(26, -5)]]);
 ok($r['code'] === 401, 'an expired action token: 401');
-$r = req('GET', '/activity', ['headers' => ['Accept: application/json', 'X-Action-Token: ' . substr($person(26), 0, -1) . '0']]);
+$r = req('GET', '/activity', ['headers' => ['Accept: application/json', 'X-Action-Token: ' . (function (string $t): string { return substr($t, 0, -1) . ($t[-1] === '0' ? '1' : '0'); })($person(26))]]);   // always a different last character (a signature ending in 0 made the old test a coin toss)
 ok($r['code'] === 401, 'a tampered action token: 401');
 $since = last_activity_id();
 $r = req('GET', '/activity', ['headers' => ['Accept: application/json', 'X-Action-Token: ' . $person(4242)]]);

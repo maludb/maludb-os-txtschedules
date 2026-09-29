@@ -18,7 +18,7 @@ function nav_groups(): array
             ['my-requests', '/requests', 'feather-inbox', 'My requests', 'schedule.view_own', true, ''],
             ['availability', '/availability', 'feather-clock', 'Availability', 'availability.edit', true, ''],
             ['time-off', '/time-off', 'feather-sun', 'Time off', 'availability.edit', true, ''],
-            ['announcements-list', '/announcements/', 'feather-volume-2', 'Announcements', 'schedule.view_own', false, 'What managers have posted for your restaurant. Announcements and notifications (slice 6) fill this.'],
+            ['announcements-list', '/announcements/', 'feather-volume-2', 'Announcements', 'schedule.view_own', true, ''],
         ],
         'Manage' => [
             ['builder', '/builder', 'feather-grid', 'Builder', 'schedule.build', true, ''],
@@ -38,7 +38,7 @@ function nav_groups(): array
         ],
         'Me' => [
             ['my-certifications', '/certifications/mine', 'feather-award', 'My certifications', 'schedule.view_own', true, ''],
-            ['settings', '/settings/', 'feather-sliders', 'My settings', 'schedule.view_own', false, 'How you are told (email and text), which events, and your calendar link. Announcements and notifications (slice 6) fill this.'],
+            ['settings', '/settings/', 'feather-sliders', 'My settings', 'schedule.view_own', true, ''],
             ['tokens', '/settings/tokens/', 'feather-key', 'Tokens', 'schedule.view_own', true, ''],
             ['activity', '/activity', 'feather-activity', 'Activity', 'schedule.view_own', true, ''],
         ],
@@ -119,7 +119,7 @@ function back_link(): ?array
     $labels = ['/' => 'Home', '/my-schedule' => 'My schedule', '/team-schedule' => 'Team schedule', '/marketplace' => 'Marketplace',
                '/approvals' => 'Approvals', '/requests' => 'My requests', '/coverage' => 'Coverage', '/builder' => 'Builder', '/builder/day' => 'Day view',
                '/templates/' => 'Templates', '/availability' => 'Availability', '/time-off' => 'Time off', '/time-off/balances' => 'Balances', '/site/time-off' => 'Time-off types',
-               '/staff/' => 'Staff', '/positions/' => 'Positions', '/certifications/' => 'Certifications', '/certifications/mine' => 'My certifications', '/forecast' => 'Forecast', '/budget' => 'Budget'];
+               '/staff/' => 'Staff', '/positions/' => 'Positions', '/certifications/' => 'Certifications', '/certifications/mine' => 'My certifications', '/forecast' => 'Forecast', '/budget' => 'Budget', '/announcements/' => 'Announcements', '/settings/' => 'My settings'];
     foreach ($labels as $p => $label) {
         if ($path === $p) {
             return [$back, $label];

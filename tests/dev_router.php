@@ -10,6 +10,7 @@ if ($path !== '/' && is_file($root . $path)) {
     if (str_ends_with($path, '.webmanifest')) { header('Content-Type: application/manifest+json'); readfile($root . $path); return true; }
     return false;                                             // a static file or a real .php file
 }
+if (preg_match('#^/api/v1/calendar/([a-f0-9]{48})\.ics$#', $path, $m)) { $_GET['token'] = $m[1]; $_REQUEST['token'] = $m[1]; $_SERVER['SCRIPT_NAME'] = '/api/v1/calendar.php'; $_SERVER['SCRIPT_FILENAME'] = $root . '/api/v1/calendar.php'; chdir($root . '/api/v1'); require $root . '/api/v1/calendar.php'; return true; }
 $map = ['/sso' => '/sso.php', '/sso/logout' => '/sso/logout.php', '/api/v1/health' => '/api/v1/health.php'];
 $rel = rtrim($path, '/') ?: '/';
 if (isset($map[$rel])) { $target = $map[$rel]; }

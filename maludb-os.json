@@ -56,7 +56,9 @@
     "deploy/txtschedules-activity-ingest.service",
     "deploy/txtschedules-activity-ingest.timer",
     "deploy/txtschedules-directory-sync.service",
-    "deploy/txtschedules-directory-sync.timer"
+    "deploy/txtschedules-directory-sync.timer",
+    "deploy/txtschedules-notifications.service",
+    "deploy/txtschedules-notifications.timer"
   ],
   "endpoints": [
     {
@@ -70,6 +72,13 @@
       "name": "Health",
       "kind": "http_api",
       "path": "/api/v1/health",
+      "auth_kind": "none",
+      "agent_reachable": false
+    },
+    {
+      "name": "Calendar feed",
+      "kind": "http_api",
+      "path": "/api/v1/calendar/{token}.ics",
       "auth_kind": "none",
       "agent_reachable": false
     }

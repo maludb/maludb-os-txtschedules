@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/notify/queue.php';       // notify(): the one place a notice is queued (slice 6)
+
 /**
  * What every exchange handler shares: the database's refusal in its own words, the right to decide a trade, the
  * outbox rows a step queues, and the log rows a move writes. A handler is: gate at the record's site → one transaction
@@ -108,25 +110,6 @@ function exchange_decide_refusal(array $x, int $memberId): ?string
     return 'You may not approve requests here.';
 }
 
-/** Queue a notice for one person, on the channels they chose (email and text both on unless they turned one off; the sender is slice 6). One row a channel. */
-function notify(PDO $pdo, int $memberId, int $siteId, string $kind, string $subject, string $body, ?string $reference = null, ?string $dedupe = null): void
-{
-    $st = $pdo->prepare('SELECT by_email, by_sms, kinds FROM notification_prefs WHERE member_id = :m');
-    $st->execute(['m' => $memberId]);
-    $p = $st->fetch();
-    $email = $p === false ? true : (bool) $p['by_email'];
-    $sms = $p === false ? true : (bool) $p['by_sms'];
-    if ($p !== false && !str_contains((string) $p['kinds'], $kind)) {
-        return;                                                     // the person turned this kind off
-    }
-    $ins = $pdo->prepare('INSERT INTO notification_outbox (member_id, scope_id, channel, kind, subject, body, reference, dedupe_key)
-                          VALUES (:m, :s, :c, :k, :sub, :b, :r, :d) ON CONFLICT DO NOTHING');
-    foreach (array_filter(['email' => $email, 'sms' => $sms]) as $channel => $_) {
-        $ins->execute(['m' => $memberId, 's' => $siteId, 'c' => $channel, 'k' => $kind, 'sub' => $channel === 'email' ? $subject : null,
-                       'b' => mb_substr($body, 0, 3900), 'r' => $reference, 'd' => $dedupe === null ? null : $dedupe . ':' . $channel]);
-    }
-}
-
 /** The facts a notice carries — day, time, restaurant, position, a link — never pay, phone or email. */
 function exchange_facts(array $st, bool $swap = false): string
 {
@@ -157,7 +140,7 @@ function exchange_notify(PDO $pdo, string $event, array $st, int $actor, array $
     switch ($event) {
         case 'asked':          // a give or a swap: the named colleague
             $swap = $st['kind'] === 'swap' ? ' for ' . exchange_facts($st, true) : '';
-            $send($taker, 'exchange', 'A colleague asked you to take a shift', ($st['from_name'] ?? 'A colleague') . ' asked you to ' . ($st['kind'] === 'swap' ? 'swap' : 'take') . ': ' . $facts . $swap . $link);
+            $send($taker, 'exchange', 'A colleague asked you to take a shift', first_name($st['from_name'] ?? null, 'A colleague') . ' asked you to ' . ($st['kind'] === 'swap' ? 'swap' : 'take') . ': ' . $facts . $swap . $link);
             break;
         case 'coverage':       // each invitee
             foreach ($extra['invitees'] ?? [] as $m) {
@@ -165,20 +148,20 @@ function exchange_notify(PDO $pdo, string $event, array $st, int $actor, array $
             }
             break;
         case 'taken':          // a claim that went straight through: the holder and the taker
-            $send($holder, 'exchange', ($st['to_name'] ?? 'Someone') . ' took your shift', ($st['to_name'] ?? 'Someone') . ' took your shift: ' . $facts . $link);
+            $send($holder, 'exchange', first_name($st['to_name'] ?? null, 'Someone') . ' took your shift', first_name($st['to_name'] ?? null, 'Someone') . ' took your shift: ' . $facts . $link);
             $send($taker, 'exchange', 'The shift is yours', 'The shift is yours: ' . $facts . $link);
             break;
         case 'needs_manager':  // the approvers, and the taker
             foreach ($extra['approvers'] ?? [] as $m) {
-                $send((int) $m, 'exchange', 'A trade waits for you', ($st['to_name'] ?? 'Someone') . ' wants a shift and a manager must look: ' . $facts . $link);
+                $send((int) $m, 'exchange', 'A trade waits for you', first_name($st['to_name'] ?? null, 'Someone') . ' wants a shift and a manager must look: ' . $facts . $link);
             }
             $send($taker, 'exchange', 'Sent to a manager', 'Your request was sent to a manager: ' . $facts . $link);
             break;
         case 'accepted':
-            $send($holder, 'exchange', ($st['to_name'] ?? 'A colleague') . ' accepted', ($st['to_name'] ?? 'A colleague') . ' accepted the trade: ' . $facts . $link);
+            $send($holder, 'exchange', first_name($st['to_name'] ?? null, 'A colleague') . ' accepted', first_name($st['to_name'] ?? null, 'A colleague') . ' accepted the trade: ' . $facts . $link);
             break;
         case 'refused':
-            $send($holder, 'exchange', ($st['to_name'] ?? 'A colleague') . ' refused', ($st['to_name'] ?? 'A colleague') . ' turned the trade down: ' . $facts . $link);
+            $send($holder, 'exchange', first_name($st['to_name'] ?? null, 'A colleague') . ' refused', first_name($st['to_name'] ?? null, 'A colleague') . ' turned the trade down: ' . $facts . $link);
             break;
         case 'decided':        // approved / declined / chosen: the holder and the taker
             $word = $extra['word'] ?? 'decided';

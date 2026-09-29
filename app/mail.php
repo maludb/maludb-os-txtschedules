@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 /**
  * Send one email via MaluMail (malumail-send). Returns the decoded API response; throws on
- * transport errors and non-2xx. Nothing in Phase 2 sends mail — the helper is here for the
- * features that will (the kernel sends invitations, not HR).
+ * transport errors and non-2xx. The notifications worker (slice 6) is the only caller. MALUMAIL_API_URL overrides
+ * the address (the proofs point it at a stub; production leaves it out).
  */
 function malumail_send(array $mail): array
 {
@@ -12,7 +12,7 @@ function malumail_send(array $mail): array
     if ($key === '') {
         throw new RuntimeException('MALUMAIL_API_KEY is not configured.');
     }
-    $ch = curl_init('https://api.malumail.com/v1/send');
+    $ch = curl_init(rtrim((string) env('MALUMAIL_API_URL', 'https://api.malumail.com'), '/') . '/v1/send');
     curl_setopt_array($ch, [
         CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 30,
         CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $key, 'Content-Type: application/json'],

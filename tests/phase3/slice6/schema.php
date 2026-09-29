@@ -1,0 +1,31 @@
+<?php
+/** Proof — schema: nothing was migrated (db/015 is still the last file), and what the slice stands on is enforced by the database: the outbox's unique dedupe key, its kinds and statuses, an announcement's audience rules, one read a person, one feed a person, and the privileges. */
+require __DIR__ . '/lib.php';
+$W = reset6();
+$root = dirname(__DIR__, 3);
+$files = glob($root . '/db/0*.sql'); sort($files);
+ok(basename(end($files)) === '015_exchange_overlap.sql', 'no migration in this slice: db/015 is still the last file');
+$ins = fn (string $sql) => admin_sql($sql);
+$exp = fn (string $sql): string => trim(admin_sql($sql));
+ok(str_contains($exp("INSERT INTO notification_outbox (member_id, channel, kind, body, dedupe_key) VALUES (26, 'email', 'reminder', 'x', 'k1'), (26, 'email', 'reminder', 'x', 'k1')"), 'duplicate key'), 'the outbox refuses a second row with the same dedupe key');
+ok(str_contains($exp("INSERT INTO notification_outbox (member_id, channel, kind, body) VALUES (26, 'push', 'reminder', 'x')"), 'violates check'), 'a channel other than email or sms is refused');
+ok(str_contains($exp("INSERT INTO notification_outbox (member_id, channel, kind, body) VALUES (26, 'sms', 'gossip', 'x')"), 'violates check'), 'a kind that is not one of the six is refused');
+ok(str_contains($exp("INSERT INTO notification_outbox (member_id, channel, kind, body) VALUES (26, 'sms', 'reminder', '')"), 'violates check'), 'an empty body is refused');
+ok(str_contains($exp("INSERT INTO announcements (scope_id, title, body, audience) VALUES (102, 't', 'b', 'position')"), 'violates check'), 'a position announcement without a position is refused');
+ok(str_contains($exp("INSERT INTO announcements (scope_id, title, body, audience) VALUES (102, 't', 'b', 'people')"), 'violates check'), 'an announcement to named people without anyone is refused');
+ok(str_contains($exp("INSERT INTO announcements (scope_id, title, body, audience) VALUES (102, repeat('x', 121), 'b', 'site')"), 'violates check'), 'a title over 120 characters is refused');
+ok(str_contains($exp("INSERT INTO announcements (scope_id, title, body) VALUES (102, 't', repeat('x', 4001))"), 'violates check'), 'a body over 4,000 characters is refused');
+$id = (int) $exp("INSERT INTO announcements (scope_id, title, body) VALUES (102, 'SMOKE s', 'b') RETURNING id");
+$exp("INSERT INTO announcement_reads (announcement_id, member_id) VALUES ($id, 26)");
+ok(str_contains($exp("INSERT INTO announcement_reads (announcement_id, member_id) VALUES ($id, 26)"), 'duplicate key'), 'a person reads an announcement once');
+$exp("INSERT INTO calendar_feeds (member_id, token_hash) VALUES (26, 'h1')");
+ok(str_contains($exp("INSERT INTO calendar_feeds (member_id, token_hash) VALUES (26, 'h2')"), 'duplicate key'), 'a person has one calendar feed (a new link replaces it)');
+ok(str_contains($exp("INSERT INTO calendar_feeds (member_id, token_hash) VALUES (27, 'h1')"), 'duplicate key'), 'and no two feeds share a token hash');
+$db = need('DB_NAME');
+$priv = fn (string $t, string $p): bool => $exp("SELECT has_table_privilege('txtschedules_rw', 'public.$t', '$p')") === 't';
+ok($priv('notification_outbox', 'UPDATE') && !$priv('notification_outbox', 'DELETE') && !$priv('announcements', 'DELETE') && !$priv('announcement_reads', 'UPDATE') && $priv('announcement_reads', 'INSERT'), 'privileges: the outbox and announcements are never deleted, a read is inserted and never changed');
+ok($exp("SELECT has_table_privilege('txtschedules_records_ro', 'public.notification_outbox', 'SELECT')") !== 't' && $exp("SELECT has_table_privilege('txtschedules_records_ro', 'public.mcp_announcements', 'SELECT')") === 't', 'the records role reads the announcements view and never the outbox');
+$cols = $exp("SELECT string_agg(column_name, ',') FROM information_schema.columns WHERE table_name IN ('notification_outbox', 'notification_prefs', 'calendar_feeds', 'announcements', 'announcement_reads') AND (column_name ILIKE '%phone%' OR (column_name ILIKE '%email%' AND column_name <> 'by_email') OR column_name ILIKE '%wage%' OR column_name ILIKE '%token' OR column_name ILIKE '%secret%')");
+ok($cols === '', 'none of the five tables has a column for a phone number, an email address, a wage or a clear token (' . ($cols ?: 'none') . ')');
+admin_sql("DELETE FROM notification_outbox WHERE dedupe_key = 'k1'; DELETE FROM calendar_feeds; DELETE FROM announcements WHERE title = 'SMOKE s'");
+finish();

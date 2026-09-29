@@ -1,0 +1,80 @@
+<?php
+/**
+ * Proof — how I am told (screen `settings`, action `prefs_save`): the defaults (both channels, every kind, the restaurant's lead time), saving and partial saving, the words of every refusal, the note about a
+ * phone that is not verified in the operating system (learned from the kernel's own refusal — this application never sees a number), and that a person's choices are their own.
+ */
+require __DIR__ . '/lib.php';
+$W = reset6();
+$priya = as_member(26); $ana = as_member(30); $lee = as_member(31); $joe = as_member(34);
+$srv = $W['aSrv'];
+echo "1. The defaults\n";
+[$c, $d] = screen($ana, '/settings/');
+ok($c === 200 && $d['notify']['by_email'] === true && $d['notify']['by_sms'] === true && count($d['notify']['kinds']) === 6 && $d['notify']['reminder_minutes'] === null && $d['notify']['restaurant_default_minutes'] === 120, 'a person with no row: email on, text on, six kinds, the restaurant\'s 2 hours');
+$html = req('GET', '/settings/', ['jar' => $ana])['body'];
+ok(str_contains($html, 'id="prefs-field-email" checked') && str_contains($html, 'id="prefs-field-sms" checked') && substr_count($html, 'name="kinds[]" value=') === 7 && str_contains($html, 'Restaurant\'s usual (2 hours)'), 'the page shows both toggles on, six event toggles and "Whatever the restaurant uses (2 hours)"');
+ok(str_contains($html, 'id="prefs-text-hint"') && str_contains($html, 'https://app.example.invalid/settings/channels') && !str_contains($html, 'id="prefs-text-note"'), 'the hint about the phone points to the operating system\'s channels page; no warning yet');
+ok(str_contains($html, 'id="settings-tab-calendar"') && str_contains($html, 'href="/settings/tokens/"'), 'the tabs: how I am told, my calendar link, tokens');
+ok((int) one('SELECT count(*) FROM notification_prefs WHERE member_id = 30') === 0, 'viewing it saves nothing');
+echo "2. Saving\n";
+$since = last_activity_id();
+[$c, $b] = act($ana, '/settings/prefs.php', ['by_email' => 'yes', 'by_sms' => 'no', 'kinds' => ['reminder', 'announcement'], 'reminder_minutes' => '240']);
+$row = q('SELECT by_email, by_sms, kinds, reminder_minutes FROM notification_prefs WHERE member_id = 30')[0] ?? [];
+ok($c === 200 && $row['by_email'] === true && $row['by_sms'] === false && $row['kinds'] === '{reminder,announcement}' && (int) $row['reminder_minutes'] === 240 && ($b['record_id'] ?? 0) === 30, 'prefs_save: 200, saved (email on, text off, two kinds, 4 hours), record_id');
+$lg = q("SELECT before, after, scope_id FROM activity_log WHERE action = 'prefs.save' AND id > :s", ['s' => $since]);
+$bf = json_decode($lg[0]['before'] ?? '{}', true); $af = json_decode($lg[0]['after'] ?? '{}', true);
+ok(count($lg) === 1 && $bf['by_sms'] === true && $af['by_sms'] === false && $af['kinds'] === ['reminder', 'announcement'] && $af['reminder_minutes'] === 240 && count($bf['kinds']) === 6, 'logged prefs.save with before and after (channels, kinds, lead time)');
+[$c, $b] = act($ana, '/settings/prefs.php', ['by_sms' => 'yes']);
+$row = q('SELECT by_email, by_sms, kinds, reminder_minutes FROM notification_prefs WHERE member_id = 30')[0];
+ok($c === 200 && $row['by_sms'] === true && $row['by_email'] === true && $row['kinds'] === '{reminder,announcement}' && (int) $row['reminder_minutes'] === 240, 'a partial save changes only what was sent: the rest stays');
+[$c, $b] = act($ana, '/settings/prefs.php', ['reminder_minutes' => '']);
+ok($c === 200 && one('SELECT reminder_minutes FROM notification_prefs WHERE member_id = 30') === null, 'an empty lead time means the restaurant\'s');
+[$c, $b] = act($ana, '/settings/prefs.php', ['by_email' => 'no', 'by_sms' => 'no', 'kinds' => ['']]);
+$row = q('SELECT by_email, by_sms, kinds FROM notification_prefs WHERE member_id = 30')[0];
+ok($c === 200 && $row['by_email'] === false && $row['by_sms'] === false && $row['kinds'] === '{}', 'both channels off and no events is allowed: that person is told nothing');
+[, $d] = screen($ana, '/settings/');
+ok($d['notify']['by_email'] === false && $d['notify']['kinds'] === [], 'and the screen shows it');
+$tok = csrf_of(req('GET', '/', ['jar' => $lee])['body']);
+$r = req('POST', '/settings/prefs.php', ['jar' => $lee, 'form' => ['by_sms' => 'no', 'kinds' => ['reminder', ''], 'reminder_minutes' => '90', 'csrf_token' => $tok, 'return_to' => '/settings/?tab=notify']]);
+ok($r['code'] === 302 && str_contains($r['location'], '/settings/?tab=notify&notice=pf_saved#prefs'), 'from the browser: 302 back to the settings, with the banner key');
+$html = req('GET', $r['location'], ['jar' => $lee])['body'];
+ok(str_contains($html, 'Saved — this is how you will be told.') && str_contains($html, '<option value="90" selected>90 minutes</option>'), 'the banner shows and an unusual lead time (90 minutes) is kept as a choice');
+$html = req('GET', '/settings/', ['jar' => $lee])['body'];
+ok(!str_contains($html, 'id="prefs-field-sms" checked') && str_contains($html, 'id="prefs-field-kind-reminder" checked') && !str_contains($html, 'id="prefs-field-kind-exchange" checked'), 'and the form remembers: text off, only reminders on');
+echo "3. Refusals\n";
+$before = json_encode(q('SELECT * FROM notification_prefs ORDER BY member_id'));
+foreach ([[['reminder_minutes' => '2881'], 'from 0 to 2,880'], [['reminder_minutes' => '-5'], 'from 0 to 2,880'], [['reminder_minutes' => 'soon'], 'from 0 to 2,880'], [['kinds' => ['reminder', 'gossip']], 'Unknown event: gossip']] as [$f, $needle]) {
+    [$c, $b] = act($priya, '/settings/prefs.php', $f);
+    ok($c === 422 && str_contains(msg($b), $needle), "422: " . msg($b));
+}
+ok(json_encode(q('SELECT * FROM notification_prefs ORDER BY member_id')) === $before, 'nothing was saved by any of them');
+ok(req('POST', '/settings/prefs.php', ['jar' => $priya, 'headers' => JSONH, 'form' => ['by_sms' => 'no']])['code'] === 403, 'no CSRF token: 403');
+ok(req('POST', '/settings/prefs.php', ['headers' => JSONH, 'form' => ['by_sms' => 'no']])['code'] === 401 && req('GET', '/settings/prefs.php', ['jar' => $priya])['code'] === 405, 'anonymous 401; a GET 405');
+echo "4. A choice is one's own\n";
+act($joe, '/settings/prefs.php', ['by_sms' => 'no', 'member' => 26, 'member_id' => 26]);
+ok((int) one('SELECT count(*) FROM notification_prefs WHERE member_id = 26') === 0 && one('SELECT by_sms FROM notification_prefs WHERE member_id = 34') === false, 'Joe naming Priya changes Joe\'s own choices and never Priya\'s');
+echo "5. The phone note comes from the kernel's own refusal\n";
+act($priya, '/settings/prefs.php', ['by_sms' => 'yes', 'by_email' => 'yes', 'kinds' => ['reminder'], 'reminder_minutes' => '2880']);
+$s1 = shift_in(102, $srv, 26, 6, 2);
+ksms(['mode' => 'no_verified_phone']);
+worker();
+$html = req('GET', '/settings/', ['jar' => $priya])['body'];
+ok(str_contains($html, 'Texts need a phone number verified in the operating system.') && str_contains($html, 'href="https://app.example.invalid/settings/channels"'), '"Texts need a phone number verified in the operating system" with a link to /settings/channels on the launcher name');
+[, $d] = screen($priya, '/settings/');
+ok($d['notify']['text_note'] === 'no_verified_phone' && !str_contains(json_encode($d), '+1555'), 'the JSON carries the reason code and no number');
+$s2 = shift_in(102, $srv, 26, 9, 2);
+ksms(['mode' => 'opted_out']); worker();
+ok(str_contains(req('GET', '/settings/', ['jar' => $priya])['body'], 'You turned texts off'), 'opted_out: "You turned texts off (or replied STOP)…"');
+$s3 = shift_in(102, $srv, 26, 12, 2);
+ksms(['mode' => 'no_sender']); worker();
+ok(str_contains(req('GET', '/settings/', ['jar' => $priya])['body'], 'has not set up texting yet'), 'no_sender: "This business has not set up texting yet, so you are emailed."');
+$s4 = shift_in(102, $srv, 26, 15, 2);
+ksms(['mode' => 'ok']); worker();
+$html = req('GET', '/settings/', ['jar' => $priya])['body'];
+ok(!str_contains($html, 'id="prefs-text-note"') && str_contains($html, 'id="prefs-text-hint"'), 'a text that goes through clears the note');
+echo "6. An inactive person is not told\n";
+admin_sql("UPDATE members SET status = 'inactive' WHERE id = 31");
+$mara = as_member(33);
+[$c, $b] = act($mara, '/announcements/save.php', ['site' => 102, 'title' => 'SMOKE inactive', 'body' => 'x', 'audience' => 'site']);
+ok($c === 200 && count(array_filter(box('announcement:' . $b['record_id']), fn ($r) => (int) $r['member_id'] === 31)) === 0, 'an announcement queues nothing for a deactivated person');
+admin_sql("UPDATE members SET status = 'active' WHERE id = 31; DELETE FROM notification_outbox; DELETE FROM notification_prefs");
+finish();
