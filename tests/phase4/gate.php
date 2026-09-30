@@ -4,7 +4,7 @@
  * token -> every tool; an agent's RUN token -> exactly the tools the kernel's run-facts call grants on THIS endpoint (fail closed: facts that say invalid,
  * facts for another application, a kernel that cannot be reached, an endpoint the agent was not granted); an agent the directory has not admitted is
  * admitted at first contact only when the kernel vouches for it; an evaluation run may read; the kernel's own token reaches app_roles and time_off_taken only,
- * and a person or an agent never sees time_off_taken. Servers: records :8194, activity :8195, records-with-a-dead-kernel :8196.
+ * and a person or an agent never sees time_off_taken. Servers: records :8194, activity :8195, records-with-a-dead-kernel :8197.
  */
 require __DIR__ . '/lib.php';
 reset_p4();
@@ -68,7 +68,7 @@ $r = $run(); facts($r, 951, ['Records MCP' => ['who_is_on' => []]], ['is_agent' 
 ok(count(mcp_tools(REC, run_token(951, $r)) ?? []) === 31, 'facts that say is_agent false are a person: never filtered (a person is never filtered)');
 $r = $run(); facts($r, 951, ['Records MCP' => ['who_is_on' => []]]);
 $t = run_token(951, $r);
-ok(mcp_tools(REC_DEAD, $t) === [], 'the kernel cannot be reached (:8196, dead URL): an admitted agent is offered nothing');
+ok(mcp_tools(REC_DEAD, $t) === [], 'the kernel cannot be reached (:8197, dead URL): an admitted agent is offered nothing');
 $c = mcp_tool(REC_DEAD, $t, 'who_is_on', ['site_id' => 102]);
 ok($c['error'], 'and cannot call');
 ok(count(mcp_tools(REC_DEAD, person_token(33)) ?? []) === 31, 'while a person\'s own token still works with no kernel');
@@ -114,7 +114,7 @@ ok(!mcp_tool(REC, $k, 'app_roles', [])['error'], 'the kernel\'s token calling ap
 ok(mcp_tools(REC, kernel_token('hr')) === null, 'a kernel token for another application (hr) -> 401');
 ok(mcp_tools(REC, kernel_token('txtschedules', -5)) === null, 'an expired kernel token -> 401');
 $bad = kernel_token(); ok(mcp_tools(REC, substr($bad, 0, -1) . (substr($bad, -1) === '0' ? '1' : '0')) === null, 'a kernel token with a bad signature -> 401');
-ok(mcp_tools(REC_DEAD, kernel_token()) === ['app_roles', 'time_off_taken'], 'the kernel\'s token needs no kernel round-trip (:8196)');
+ok(mcp_tools(REC_DEAD, kernel_token()) === ['app_roles', 'time_off_taken'], 'the kernel\'s token needs no kernel round-trip (:8197)');
 $c = mcp_tool(REC, person_token(33), 'app_roles', []);
 ok(!$c['error'] && ($c['data']['schema'] ?? '') === 'os.app-roles/1', 'any person may call app_roles (the catalogue is about no one)');
 $r = $run(); facts($r, 951, ['Records MCP' => ['app_roles' => []]]);

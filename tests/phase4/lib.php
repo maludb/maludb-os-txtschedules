@@ -2,14 +2,14 @@
 /**
  * Helpers for the Phase 4 proofs (docs/txtschedules-mcp-tool-surface.md; design §10, §13). Run through tests/phase4/run.sh: a fresh SCRATCH database
  * (never the installed one), the application on :8191, a fake kernel on :8192 (run-facts, K6, K7), and the TWO MCP SERVERS on :8194 (records) and :8195
- * (activity) — plus a third records server on :8196 whose kernel URL is dead (the gate must fail closed). Everything a proof makes is named "SMOKE …".
+ * (activity) — plus a third records server on :8197 whose kernel URL is dead (the gate must fail closed). Everything a proof makes is named "SMOKE …".
  * Builds on Phase 3's helpers (the cast, the world, reset7()).
  */
 require dirname(__DIR__) . '/phase3/slice7/lib.php';
 
 const REC = 8194;
 const ACT = 8195;
-const REC_DEAD = 8196;
+const REC_DEAD = 8197;
 
 /** The world, as slice 7 leaves it, with this run's own leftovers gone. */
 function reset_p4(): array

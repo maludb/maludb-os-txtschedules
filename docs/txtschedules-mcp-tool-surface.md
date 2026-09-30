@@ -1,5 +1,7 @@
 # txtSchedules — MCP tool surface
 
+> **BUILT 2026-09-30 (Phase 4)** — `mcp/records_server.py` (31 tools, plus the kernel-only `time_off_taken`), `mcp/activity_server.py` (6), modules `mcp/ts_{people,schedule,requests,labor}.py`; proofs `tests/phase4/` (805 checks). Where the build differs from the text below, the section "As built" at the end says how and why (design §13, *Phase 4 decisions*).
+
 2026-09-28 · the read tools every question in `docs/txtschedules-design.md` §5 is answered by. Writes are never
 here: they are the action tools the kernel's Actions MCP builds from `docs/txtschedules-action-manifest.md`.
 
@@ -168,3 +170,33 @@ other, each checking the caller's right inside because it reads base tables as i
 (lead), `ts_check_assignment` (own, or build/lead), `ts_week_warnings` (build) and `ts_staffing_needs` (build) — db/011
 and db/014, each proven for who may and may not ask (`db/proof/phase0_proof.sql`, 93 checks). `ts_effective_rate` is
 **not** granted to the records role: the views inline the same `COALESCE(wage_override, default_wage_rate)`.
+
+
+## As built (Phase 4, 2026-09-30)
+
+**The tools are exactly the ones above** — 31 on the records server (30 + `app_roles`), 6 on the activity server — and one more, `time_off_taken`, that only the kernel's own token
+can list or call. What changed in the detail, and why:
+
+- **Argument shape.** Every tool takes one `params` object (FastMCP's Pydantic model, as Projects); the kernel's Actions MCP already calls `find_*` tools that way. A share
+  is called by the kernel with its arguments flat (`from`, `to`, `scope_id`): `server_common` wraps them for `time_off_taken` (the one tool with `KERNEL_ONLY`).
+- **Resolve mode.** The kernel's entity resolver (`mcp/application_actions.py`) sends **only `q`** and reads a **plain list** of rows carrying the id. The surface's "entity
+  resolution" table therefore holds only because these tools answer a list when given `q` alone (their other shape is unchanged when a site or another filter is given):
+  `week_schedule` (no `site_id`, `q`: shifts of the next four weeks — `shift_id`, `label` — or, for a date alone, weeks — `week_id`), `site_settings` (no `site_id`: time-off types
+  `type_id` and day-parts `day_part_id`), `site_rules` (no `site_id`: rules), `time_off` (`q` alone: requests `request_id` and blackout dates `blackout_id`), `marketplace`
+  (`q` with no status: every live exchange), `availability`, `certifications`, `certification_kinds`, `find_templates`, `announcements`. Names match at the **start of a word**
+  (`Ana` is not `Dana`). `kind` is deliberately not resolved (availability_submit's `kind` is a word), nor the repeated params (`members`, `positions`, `certifications`).
+- **The invitees and the ledger** had no view: `db/016` adds `mcp_time_off_ledger` (own rows, or `requests.approve` at the site) and `mcp_exchange_invitees` (one's own invitation, or
+  `requests.approve` / `coverage.fill`), so `time_off_balances(ledger)` and `marketplace(mine)` can answer.
+- **The activity role reads `mcp_activity_log` only** (db/013's grant): the tools take names from the view's `actor_name`; they need no other view.
+- **`marketplace` answers "may the caller take it and why not"** from the caller's own facts (own shift, main restaurant, the restaurant's pick-up switch, the position, the cutoff,
+  approved time off, an overlap) and the rules engine's **hard** warnings through `ts_check_assignment()`; `ts_exchange_check_taker()` is not `SECURITY DEFINER` and is not exposed.
+- **`records_search` / `activity_search`** refuse `set_config`, `current_setting`, `mcp_admit_agent`, `ts_time_off_taken`, `mcp_resolve_token`, `pg_*`, `dblink`, large-object calls
+  (a SELECT could otherwise call them), as well as writes and a second statement; 5 s, 200 rows.
+- **`time_off_taken(from, to, scope_id)`** answers `txtschedules.time-off-taken/1`: `people[]` keyed by the kernel's member id, each with `total_hours`, `total_days` and `requests[]`
+  (`type`, `type_name`, `paid`, `starts_local`, `ends_local`, `starts_utc`, `ends_utc`, `timezone`, `hours`, `days`) — seventeen fields in all; approved requests touching the period
+  at that one restaurant, humans only. It reads `ts_time_off_taken(scope, from, to)` (db/016, `SECURITY DEFINER`, answers **nobody who is acting**: `app.member_id` set = no rows).
+  Bad input fails as a **tool error** (the kernel reports `provider_failed` with the words), never as an answer.
+- **The gate** (`mcp/server_common.py`): a person's `mcp_` token or the command bar's action token → every tool, rows decided by the views; an agent's run token → exactly the tools the
+  kernel's run-facts call names on this endpoint ('Records MCP' / 'Activity MCP'), nothing when the kernel says invalid, has no endpoint here, or cannot be reached; an agent the
+  directory has not admitted is admitted at first contact only when the kernel vouches for it (`mcp_admit_agent`, db/016; never a human, never an unknown id); an evaluation reads; the
+  kernel's own token reaches `app_roles` and `time_off_taken` only.
