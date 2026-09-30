@@ -31,7 +31,7 @@ case "${1:-}" in
 import sys
 root, out = sys.argv[1], sys.argv[2]
 v = open(root + '/deploy/apache-txtschedules.conf').read()
-for k, val in {'APP_FQDN': 'txtschedules.subello.com', 'APP_DIR': root, 'APP_INTERNAL_PORT': '8196'}.items():
+for k, val in {'APP_FQDN': 'txtschedules.subello.com', 'APP_DIR': root, 'APP_INTERNAL_PORT': '8196', 'MCP_RECORDS_PORT': '8194', 'MCP_ACTIVITY_PORT': '8195'}.items():
     v = v.replace('{{%s}}' % k, val)
 assert '{{' not in v, 'unfilled placeholder in the vhost template'
 v = v.replace('<VirtualHost *:80>', '<VirtualHost *:8191>')

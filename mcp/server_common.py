@@ -22,8 +22,10 @@ import db
 
 log = logging.getLogger("txtschedules_mcp")
 
-# What the kernel's own token may reach (kernel db/145): the roles catalogue, nothing with rows in it.
-KERNEL_TOOLS = {"app_roles"}
+# What the kernel's own token may reach: the roles catalogue (kernel db/145) and the tools shares[] declares (K7). Nothing else.
+KERNEL_TOOLS = {"app_roles", "time_off_taken"}
+# ...and the share is the KERNEL's alone: a person or an agent never lists or calls it (D11 — facts about people cross only to HR).
+KERNEL_ONLY = {"time_off_taken"}
 
 # run id -> (facts, fetched_at). A run's grants do not change while it runs; a short TTL bounds a mistake.
 _facts_cache: dict[int, tuple[dict, float]] = {}
@@ -81,13 +83,18 @@ def install_grants(mcp: FastMCP, endpoint_name: str) -> None:
         if db.request_is_kernel.get():
             return [t for t in tools if t.name in KERNEL_TOOLS]
         g = await granted()
+        tools = [t for t in tools if t.name not in KERNEL_ONLY]
         return tools if g is None else [t for t in tools if t.name in g]
 
     async def call_tool(name: str, arguments: dict[str, Any]):
         if db.request_is_kernel.get():
             if name not in KERNEL_TOOLS:
                 raise ToolError(f"The kernel's token reaches {', '.join(sorted(KERNEL_TOOLS))} only.")
+            if name in KERNEL_ONLY and "params" not in arguments:
+                arguments = {"params": arguments}      # the kernel sends a share's arguments flat (from, to, scope_id)
             return await mcp.call_tool(name, arguments)
+        if name in KERNEL_ONLY:
+            raise ToolError(f"'{name}' is for the Business OS kernel's own token only.")
         g = await granted()
         if g is not None and name not in g:
             raise ToolError(f"'{name}' is not among the tools this agent was granted on {endpoint_name}.")

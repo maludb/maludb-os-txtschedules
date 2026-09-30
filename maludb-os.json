@@ -6,7 +6,7 @@
   "business_area": "Operations",
   "category": "calendar",
   "icon": "feather-calendar",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "criticality": "high",
   "vhost": {
     "label": "txtschedules",
@@ -53,6 +53,8 @@
     ]
   },
   "services": [
+    "deploy/txtschedules-records-mcp.service",
+    "deploy/txtschedules-activity-mcp.service",
     "deploy/txtschedules-activity-ingest.service",
     "deploy/txtschedules-activity-ingest.timer",
     "deploy/txtschedules-directory-sync.service",
@@ -61,6 +63,24 @@
     "deploy/txtschedules-notifications.timer"
   ],
   "endpoints": [
+    {
+      "name": "Records MCP",
+      "kind": "mcp",
+      "path": "/mcp/records",
+      "port_env": "MCP_RECORDS_PORT",
+      "auth_kind": "bearer",
+      "agent_reachable": true,
+      "mcp_surface_version": "1.0"
+    },
+    {
+      "name": "Activity MCP",
+      "kind": "mcp",
+      "path": "/mcp/activity",
+      "port_env": "MCP_ACTIVITY_PORT",
+      "auth_kind": "bearer",
+      "agent_reachable": true,
+      "mcp_surface_version": "1.0"
+    },
     {
       "name": "Web UI",
       "kind": "ui",

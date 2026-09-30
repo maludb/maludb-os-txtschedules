@@ -35,7 +35,7 @@ request_token: contextvars.ContextVar[str] = contextvars.ContextVar("token", def
 
 _ENV_KEYS = ("DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "MCP_RECORDS_DB_USER", "MCP_RECORDS_DB_PASSWORD",
              "MCP_ACTIVITY_DB_USER", "MCP_ACTIVITY_DB_PASSWORD", "ACTION_TOKEN_KEY", "ACTIONS_RELAY_KEY", "APP_KEY",
-             "OS_INTERNAL_URL", "OS_APPLICATION_TOKEN", "MALUDB_API_URL", "MALUDB_API_TOKEN")
+             "OS_INTERNAL_URL", "OS_APPLICATION_TOKEN", "MALUDB_API_URL", "MALUDB_API_TOKEN", "MCP_RECORDS_PORT", "MCP_ACTIVITY_PORT")
 
 
 def load_env() -> dict[str, str]:
@@ -184,7 +184,7 @@ async def resolve_token(pool: asyncpg.Pool, raw_token: str) -> tuple[int, str] |
             # the read role sees the directory through mcp_members only, and only as an admitted member
             async with con.transaction():
                 await con.execute("SELECT set_config('app.member_id', $1, true)", str(mid))
-                role = await con.fetchval("SELECT business_role FROM mcp_members WHERE member_id = $1", mid)
+                role = await con.fetchval("SELECT member_kind FROM mcp_members WHERE member_id = $1", mid)   # mcp_members carries no business_role
         if role:
             return mid, str(role)
     return None
@@ -218,6 +218,9 @@ async def fetch_scoped(pool: asyncpg.Pool, sql: str, *params, member_id: int | N
             return [dict(r) for r in rows]
 
 
+SEARCH_DENY = ("set_config", "current_setting", "mcp_admit_agent", "ts_time_off_taken", "mcp_resolve_token", "pg_", "dblink", "lo_import", "lo_export")
+
+
 async def run_search(pool: asyncpg.Pool, sql: str, row_cap: int = 200) -> str:
     """Guarded arbitrary read: a single SELECT, statement_timeout + row cap, RLS-scoped.
     Safe by construction — the read role can only see the mcp_* views."""
@@ -231,6 +234,11 @@ async def run_search(pool: asyncpg.Pool, sql: str, row_cap: int = 200) -> str:
     padded = f" {low} "
     if any(f in padded for f in forbidden):
         return json.dumps({"error": "Only read queries are allowed."})
+    # The read role can call a few functions from a SELECT. None of these is a way to read or to act: set_config could
+    # impersonate another member for the views, the others are the kernel's door, an admission, a token lookup.
+    for banned in SEARCH_DENY:
+        if banned in low:
+            return json.dumps({"error": f"'{banned}' is not available in records_search / activity_search — use the views and the named tools."})
     mid = request_member_id.get()
     rol = request_role.get()
     async with pool.acquire() as con:
