@@ -180,13 +180,12 @@ async def resolve_token(pool: asyncpg.Pool, raw_token: str) -> tuple[int, str] |
         return int(row["member_id"]), str(row["member_role"])
     mid = verify_action_token(raw_token)
     if mid is not None:
+        # The mirror must already know AND admit the member (an unknown id is refused, never created). mcp_member_kind() answers only
+        # for an active member with a capability — an agent the directory has not admitted yet falls to the servers' first-contact path.
         async with pool.acquire() as con:
-            # the read role sees the directory through mcp_members only, and only as an admitted member
-            async with con.transaction():
-                await con.execute("SELECT set_config('app.member_id', $1, true)", str(mid))
-                role = await con.fetchval("SELECT member_kind FROM mcp_members WHERE member_id = $1", mid)   # mcp_members carries no business_role
-        if role:
-            return mid, str(role)
+            kind = await con.fetchval("SELECT mcp_member_kind($1)", mid)
+        if kind:
+            return mid, str(kind)
     return None
 
 

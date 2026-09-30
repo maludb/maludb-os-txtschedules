@@ -10,6 +10,7 @@ from __future__ import annotations
 import datetime
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.exceptions import ToolError
 from pydantic import Field
 
 import db
@@ -75,13 +76,14 @@ async def time_off_taken(params: TimeOffTakenIn) -> str:
     super-admin-approved connection. Approved time off per person for a period at ONE restaurant, keyed by the KERNEL's member
     id: per request the type (key and name, paid or not), start, end (the restaurant's local time and UTC), hours, days counted.
     Never a reason, a note, a balance or a pay rate; only people at that restaurant. Nobody else may call it."""
+    # A share fails as a TOOL ERROR (not an answer): the kernel reports it to the consumer as provider_failed, with these words.
     if not db.request_is_kernel.get():
-        return err("time_off_taken is for the Business OS kernel's own token only.")
+        raise ToolError("time_off_taken is for the Business OS kernel's own token only.")
     f, t = _iso_date(params.from_), _iso_date(params.to)
-    if f is None or t is None or t < f:
-        return err("from and to are YYYY-MM-DD dates, from not after to.")
+    if f is None or t is None or t < f or len(params.from_) != 10 or len(params.to) != 10:
+        raise ToolError("from and to are YYYY-MM-DD dates, from not after to.")
     if (t - f).days > 366:
-        return err("Ask for at most 366 days at a time.")
+        raise ToolError("Ask for at most 366 days at a time.")
     rows = await fetch("SELECT member_id, type_key, type_name, paid, starts_at, ends_at, hours, days, timezone FROM ts_time_off_taken($1, $2, $3)", params.scope_id, f, t)
     people: dict[int, dict] = {}
     for r in rows:

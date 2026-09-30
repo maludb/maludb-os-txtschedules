@@ -3,6 +3,9 @@
 --   * mcp_admit_agent()    — the mirror learns of an agent only through the directory; a run the kernel vouches for is admitted at its
 --                            first contact (Projects' db/012). It touches nothing but the capability of an active AGENT row that has none.
 --                            What an agent may then SEE is still decided by member_site_roles (no site role = no site).
+--   * mcp_member_kind()   — who a signed action or run token speaks for, ONLY when that member is active and admitted (capability set):
+--                            the servers use it to decide 'known' vs 'first contact' (the read roles see mcp_members for the caller
+--                            even before admission, so the view cannot tell).
 --   * ts_time_off_taken()  — the `time_off_taken` share (D5, D11): approved time off per person at ONE restaurant for a period, for HR
 --                            through the kernel. Callable only when NO member is acting (the kernel-token path sets none): a person
 --                            or an agent — who always have app.member_id set — get nothing. Never a reason, a note, a balance or a rate.
@@ -21,6 +24,13 @@ BEGIN
 END$$;
 REVOKE ALL ON FUNCTION mcp_admit_agent(bigint) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION mcp_admit_agent(bigint) TO txtschedules_records_ro, txtschedules_activity_ro, txtschedules_rw;
+
+CREATE OR REPLACE FUNCTION mcp_member_kind(p_member_id bigint) RETURNS text
+    LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT member_kind FROM members WHERE id = p_member_id AND status = 'active' AND capability IS NOT NULL;
+$$;
+REVOKE ALL ON FUNCTION mcp_member_kind(bigint) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION mcp_member_kind(bigint) TO txtschedules_records_ro, txtschedules_activity_ro, txtschedules_rw;
 
 -- Approved, non-cancelled time off touching [p_from, p_to] (dates in the restaurant's zone), one row per request, people only
 -- (humans). `days` = the calendar days the request touches in the restaurant's zone. `member_id` is the KERNEL's member id

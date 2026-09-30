@@ -1,0 +1,149 @@
+{
+  "schema": "maludb-os.registry/1",
+  "app_key": "txtschedules",
+  "name": "txtSchedules",
+  "note": "The installer (bin/app_install.php, step 'registry') writes mcp/registries/txtschedules.json in the kernel from this file's `resolve` block plus mcp/action_registry.json. Each resolve tool answers a plain LIST of rows carrying id_field and label_field when it is given `q` alone (docs/txtschedules-design.md section 13, Phase 4 decisions). `kind` is deliberately not resolved: availability_submit's kind is a word (available), and certification_add takes a kind by name itself; repeated params (members, positions, certifications) are ids or names the handler reads.",
+  "resolve": {
+    "site": {
+      "tool": "find_sites",
+      "query_param": "q",
+      "id_field": "site_id",
+      "label_field": "name",
+      "params": [
+        "site",
+        "main_site"
+      ]
+    },
+    "position": {
+      "tool": "find_positions",
+      "query_param": "q",
+      "id_field": "position_id",
+      "label_field": "name",
+      "params": [
+        "position"
+      ]
+    },
+    "member": {
+      "tool": "find_staff",
+      "query_param": "q",
+      "id_field": "member_id",
+      "label_field": "display_name",
+      "params": [
+        "member",
+        "colleague",
+        "assignee"
+      ]
+    },
+    "shift": {
+      "tool": "week_schedule",
+      "query_param": "q",
+      "id_field": "shift_id",
+      "label_field": "label",
+      "params": [
+        "shift",
+        "swap_shift"
+      ]
+    },
+    "exchange": {
+      "tool": "marketplace",
+      "query_param": "q",
+      "id_field": "exchange_id",
+      "label_field": "label",
+      "params": [
+        "exchange"
+      ]
+    },
+    "week": {
+      "tool": "week_schedule",
+      "query_param": "q",
+      "id_field": "week_id",
+      "label_field": "label",
+      "params": [
+        "week",
+        "from_week",
+        "to_week"
+      ]
+    },
+    "template": {
+      "tool": "find_templates",
+      "query_param": "q",
+      "id_field": "template_id",
+      "label_field": "name",
+      "params": [
+        "template"
+      ]
+    },
+    "time_off_type": {
+      "tool": "site_settings",
+      "query_param": "q",
+      "id_field": "type_id",
+      "label_field": "name",
+      "params": [
+        "time_off_type"
+      ]
+    },
+    "day_part": {
+      "tool": "site_settings",
+      "query_param": "q",
+      "id_field": "day_part_id",
+      "label_field": "name",
+      "params": [
+        "day_part"
+      ]
+    },
+    "availability": {
+      "tool": "availability",
+      "query_param": "q",
+      "id_field": "availability_id",
+      "label_field": "label",
+      "params": [
+        "availability"
+      ]
+    },
+    "blackout": {
+      "tool": "time_off",
+      "query_param": "q",
+      "id_field": "blackout_id",
+      "label_field": "label",
+      "params": [
+        "blackout"
+      ]
+    },
+    "request": {
+      "tool": "time_off",
+      "query_param": "q",
+      "id_field": "request_id",
+      "label_field": "label",
+      "params": [
+        "request"
+      ]
+    },
+    "rule": {
+      "tool": "site_rules",
+      "query_param": "q",
+      "id_field": "rule_key",
+      "label_field": "name",
+      "params": [
+        "rule"
+      ]
+    },
+    "announcement": {
+      "tool": "announcements",
+      "query_param": "q",
+      "id_field": "announcement_id",
+      "label_field": "title",
+      "params": [
+        "announcement"
+      ]
+    },
+    "certification": {
+      "tool": "certifications",
+      "query_param": "q",
+      "id_field": "certification_id",
+      "label_field": "label",
+      "params": [
+        "certification"
+      ]
+    }
+  }
+}
