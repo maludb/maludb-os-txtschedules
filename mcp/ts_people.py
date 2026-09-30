@@ -6,6 +6,8 @@ filters a wage after the fact; nothing selects an email or a phone that is not t
 """
 from __future__ import annotations
 
+import re
+
 from pydantic import Field
 
 import db
@@ -81,8 +83,8 @@ def register(mcp, fetch) -> None:
         the user said it. Returns names, main restaurant and positions — never an email, a phone or a pay rate.
         People who are agents are not listed."""
         w, a = ["m.member_kind = 'human'"], []
-        if params.q:
-            a.append(f"%{params.q[:100]}%"); w.append(f"m.display_name ILIKE ${len(a)}")
+        for word in (params.q or "").split():
+            a.append("\\m" + re.escape(word[:40])); w.append(f"m.display_name ~* ${len(a)}")      # each word matches at the start of a word: "Ana" is not "Dana"
         if params.site_id:
             a.append(params.site_id); w.append(f"${len(a)} = ANY (m.site_ids)")
         if params.position_id:
@@ -175,7 +177,7 @@ def register(mcp, fetch) -> None:
         if params.site_id:
             a.append(params.site_id); w += f" AND c.site_id = ${len(a)}"
         for word in (params.q or "").split():
-            a.append(f"%{word[:40]}%"); w += f" AND (m.display_name ILIKE ${len(a)} OR c.kind_name ILIKE ${len(a)})"
+            a.append("\\m" + re.escape(word[:40])); w += f" AND (m.display_name ~* ${len(a)} OR c.kind_name ~* ${len(a)})"
         a.append(params.limit)
         rows = await fetch(f"""SELECT c.certification_id, c.member_id, m.display_name AS member_name, c.site_id, c.kind_id, c.kind_name AS kind, c.issued_on, c.expires_on, c.expired, c.due_soon, c.verified, c.verified_at,
                    COALESCE(m.display_name, 'Someone') || ' ' || c.kind_name || ' — ' || COALESCE(to_char(c.expires_on, 'YYYY-MM-DD'), 'no expiry') AS label

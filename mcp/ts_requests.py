@@ -6,6 +6,7 @@ note only to them and to those who decide it (the view). Never a pay rate.
 from __future__ import annotations
 
 import datetime
+import re
 
 from pydantic import Field
 
@@ -59,7 +60,7 @@ async def _resolve(fetch, q: str, limit: int) -> str:
     if not (words and all(_iso_date(x) and len(x) == 10 for x in words)):
         w, a = ["q.status IN ('pending', 'approved')"], []
         for word in words:
-            a.append(f"%{word[:40]}%"); w.append(f"(q.member_name ILIKE ${len(a)} OR q.type_name ILIKE ${len(a)})")
+            a.append("\\m" + re.escape(word[:40])); w.append(f"(q.member_name ~* ${len(a)} OR q.type_name ~* ${len(a)})")
         a.append(limit)
         rows += await fetch(f"""SELECT q.request_id, q.member_id, q.member_name, q.site_id, q.type_name, q.status, q.hours,
                    q.member_name || ' ' || lower(q.type_name) || ' ' || to_char(q.starts_at AT TIME ZONE COALESCE(st.timezone, 'UTC'), 'Mon DD') AS label
@@ -95,7 +96,8 @@ def register(mcp, fetch) -> None:
             a.append(params.member_id or me); w.append(f"v.member_id = ${len(a)}")
         for word in (params.q or "").split():
             a.append(f"%{word[:40]}%"); n = len(a)
-            w.append(f"(m.display_name ILIKE ${n} OR v.kind ILIKE ${n} OR (ARRAY['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'])[v.weekday + 1] ILIKE ${n})")
+            a.append("\\m" + re.escape(word[:40])); k = len(a)
+            w.append(f"(m.display_name ~* ${k} OR v.kind ILIKE ${n} OR (ARRAY['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'])[v.weekday + 1] ILIKE ${n})")
         if params.site_id:
             a.append(params.site_id); w.append(f"(v.site_id = ${len(a)} OR v.site_id IS NULL)")
         if params.weekday is not None and not params.at:
@@ -139,7 +141,7 @@ def register(mcp, fetch) -> None:
         if t:
             a.append(t); w.append(f"(q.starts_at AT TIME ZONE COALESCE(st.timezone, 'UTC'))::date <= ${len(a)}")
         for word in (params.q or "").split():
-            a.append(f"%{word[:40]}%"); w.append(f"(q.member_name ILIKE ${len(a)} OR q.type_name ILIKE ${len(a)})")
+            a.append("\\m" + re.escape(word[:40])); w.append(f"(q.member_name ~* ${len(a)} OR q.type_name ~* ${len(a)})")
         a.append(params.limit)
         rows = await fetch(f"""SELECT q.request_id, q.member_id, q.member_name, q.site_id, q.type_id, q.type_name,
                    {local('q.starts_at')} AS starts_local, {local('q.ends_at')} AS ends_local, COALESCE(st.timezone, 'UTC') AS timezone, q.starts_at AS starts_utc, q.ends_at AS ends_utc,

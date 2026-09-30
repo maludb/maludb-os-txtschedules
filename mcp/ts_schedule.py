@@ -136,9 +136,9 @@ def _q_filters(words: list[str], a: list, w: list[str]) -> None:
         if re.fullmatch(r"\d{4}-\d{2}-\d{2}", word):
             a.append(word); w.append(f"to_char(s.starts_at AT TIME ZONE COALESCE(st.timezone, 'UTC'), 'YYYY-MM-DD') = ${len(a)}")
             continue
-        a.append(f"%{word[:40]}%")
-        n = len(a)
-        w.append(f"(COALESCE(s.assignee_name, 'open') ILIKE ${n} OR s.position_name ILIKE ${n} "
+        a.append(f"%{word[:40]}%"); n = len(a)
+        a.append("\\m" + re.escape(word[:40])); m = len(a)          # a NAME matches at the start of a word: "Ana" is not "Dana"
+        w.append(f"(COALESCE(s.assignee_name, 'open') ~* ${m} OR s.position_name ~* ${m} "
                  f"OR to_char(s.starts_at AT TIME ZONE COALESCE(st.timezone, 'UTC'), 'FMDay') ILIKE ${n} OR to_char(s.starts_at AT TIME ZONE COALESCE(st.timezone, 'UTC'), 'FMMonth') ILIKE ${n})")
 
 
@@ -195,6 +195,8 @@ def register(mcp, fetch) -> None:
                     return err("at is 'now', HH:MM, or YYYY-MM-DDTHH:MM.")
                 cond = "s.starts_at <= $4 AND s.ends_at > $4"
                 a.append(moment)
+        if moment is not None:
+            cond += " AND $2::date IS NOT NULL AND $3::text IS NOT NULL"     # every parameter must be used in the statement (asyncpg types them from it)
         if params.position_id:
             a.append(params.position_id); cond += f" AND s.position_id = ${len(a)}"
         rows = await fetch(f"""SELECT {shift_cols()} FROM mcp_shifts s JOIN mcp_sites st ON st.site_id = s.site_id
@@ -348,7 +350,7 @@ def register(mcp, fetch) -> None:
         else:
             w.append("x.status = 'open'")
         if params.q:
-            a.append(f"%{params.q[:100]}%"); w.append(f"(COALESCE(x.from_name, '') ILIKE ${len(a)} OR p.name ILIKE ${len(a)})")
+            a.append("\\m" + re.escape(params.q[:100])); w.append(f"(COALESCE(x.from_name, '') ~* ${len(a)} OR p.name ~* ${len(a)})")
         if params.mine:
             a.append(me)
             n = len(a)

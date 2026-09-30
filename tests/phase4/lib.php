@@ -18,6 +18,7 @@ function reset_p4(): array
     admin_sql("UPDATE shifts SET status = 'cancelled', cancelled_at = now() WHERE note LIKE 'SMOKE p4 %' AND status = 'scheduled';
                DELETE FROM time_off_requests WHERE note LIKE 'SMOKE p4%';
                DELETE FROM blackout_dates WHERE reason LIKE 'SMOKE p4%';");
+    admin_sql("INSERT INTO members (id, member_kind, display_name, email, business_role, status, capability, roles) VALUES (29, 'human', 'SMOKE Nobody', 'nobody@example.invalid', 'user', 'active', 'write', '{}') ON CONFLICT (id) DO NOTHING; DELETE FROM member_site_roles WHERE member_id = 29");   // no restaurant at all
     as_planner();                                  // Pat (35): builds at Airport, no labor.view — makes the member
     return $W;
 }
