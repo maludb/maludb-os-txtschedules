@@ -4,7 +4,7 @@ require __DIR__ . '/lib.php';
 $rw = 'txtschedules_rw'; $ro = 'txtschedules_records_ro';
 $priv = fn (string $role, string $obj, string $p) => (bool) one('SELECT has_table_privilege(:r, :o, :p)', ['r' => $role, 'o' => $obj, 'p' => $p]);
 $fn = fn (string $role, string $sig) => (bool) one('SELECT has_function_privilege(:r, :f, \'EXECUTE\')', ['r' => $role, 'f' => $sig]);
-ok(count(glob(dirname(__DIR__, 3) . '/db/0*.sql')) === 15 && !file_exists(dirname(__DIR__, 3) . '/db/016_week_builder.sql'), 'the schema has fifteen migrations: slice 2 added none (everything it needs was in db/008, 009, 013, 014)');
+ok(count(glob(dirname(__DIR__, 3) . '/db/0*.sql')) === 16 && !file_exists(dirname(__DIR__, 3) . '/db/017_week_builder.sql'), 'the schema has sixteen migrations (Phase 4 added db/016): slice 2 added none (everything it needs was in db/008, 009, 013, 014)');
 $missing = [];
 foreach (['schedule_weeks' => ['SELECT', 'INSERT', 'UPDATE'], 'shifts' => ['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'schedule_templates' => ['SELECT', 'INSERT', 'UPDATE'], 'template_shifts' => ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
           'rule_overrides' => ['SELECT', 'INSERT'], 'notification_outbox' => ['SELECT', 'INSERT'], 'exchanges' => ['SELECT', 'UPDATE']] as $t => $ps) {

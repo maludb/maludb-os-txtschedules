@@ -32,7 +32,7 @@ ok(str_contains($svc, 'ExecStart=/usr/bin/php {{APP_DIR}}/bin/notifications.php'
 $rs = (string) file_get_contents($root . '/deploy/ROOT_STEPS.sh');
 ok(str_contains($rs, 'txtschedules-notifications.timer') && str_contains($rs, 'MALUMAIL_API_KEY'), 'deploy/ROOT_STEPS.sh names the timer and the mail key');
 $files = glob($root . '/db/0*.sql'); sort($files);
-ok(basename(end($files)) === '015_exchange_overlap.sql', 'no migration');
+ok(in_array(basename(end($files)), ['015_exchange_overlap.sql', '016_mcp_servers.sql'], true), 'no migration');
 $manifestEp = array_column($mf['endpoints'], 'path');
 ok(in_array('/api/v1/calendar/{token}.ics', $manifestEp, true), 'the calendar feed is listed among the endpoints');
 $mine = array_filter(explode("\n", trim((string) shell_exec('cd ' . escapeshellarg($root) . ' && ls app/features/notify/*.php app/features/announcements/*.php app/features/calendar/*.php app/views/announcements/*.php app/views/settings/*.php app/views/settings/partials/*.php app/views/emails/*.php html/announcements/*.php html/settings/*.php html/api/v1/calendar.php bin/notifications.php'))));

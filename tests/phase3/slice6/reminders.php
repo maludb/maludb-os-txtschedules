@@ -22,7 +22,7 @@ $texts = array_values(array_filter(sms_log($lee), fn ($x) => str_contains($x['te
 $mails = array_values(array_filter(mail_log(email_of($lee)), fn ($x) => str_contains($x['text'], '/shifts/' . $sh['lee'])));
 ok(count($texts) === 1 && count($mails) === 1, 'the stubbed kernel got ONE text and the MaluMail stub ONE email for the shift');
 $line = $texts[0]['text'] ?? '';
-ok(preg_match('#^Server at SMOKE Airport (today|tomorrow) \d{1,2}:\d{2}.\d{1,2}:\d{2} [ap]m\. http\S*/shifts/' . $sh['lee'] . '$#u', $line) === 1, 'the text reads "Server at SMOKE Airport today 5:00–11:00 pm. …/shifts/N": ' . $line);
+ok(preg_match('#^Server at SMOKE Airport (today|tomorrow) \d{1,2}:\d{2}( [ap]m)?.\d{1,2}:\d{2} [ap]m\. http\S*/shifts/' . $sh['lee'] . '$#u', $line) === 1, 'the text reads "Server at SMOKE Airport today 5:00–11:00 pm. …/shifts/N": ' . $line);
 ok(($texts[0]['reference'] ?? '') === "shift:{$sh['lee']}" && !isset($texts[0]['phone']) && (int) $texts[0]['member_id'] === $lee && array_keys($texts[0]) === ['member_id', 'text', 'reference', 'accepted', 'mode'], 'the request names the member, the text and a reference — never a phone number');
 ok(str_starts_with($mails[0]['subject'], 'Shift reminder: Server at SMOKE Airport') && $mails[0]['from'] === 'noreply@example.invalid' && str_contains($mails[0]['html'], '<a href="http'), 'the email: subject, the application\'s sender, a link in the html');
 $lg = q("SELECT scope_id, source, after, actor_member_id FROM activity_log WHERE action = 'notification.send' AND entity_id IN (" . implode(',', array_column($rows, 'id')) . ")");

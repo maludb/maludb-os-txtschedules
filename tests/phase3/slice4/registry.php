@@ -31,10 +31,10 @@ $granted = [];
 foreach ($mf['agents'] as $a) { foreach ($a['tool_grants']['Actions MCP'] ?? [] as $t) { $granted[$t] = true; } }
 $unknown = array_values(array_filter(array_keys($granted), fn ($t) => !isset($reg['actions'][$t])));
 ok($unknown === [], 'every Actions MCP tool an agent is granted exists in the registry' . ($unknown ? ' — ' . implode(', ', $unknown) : ''));
-$own = ['app/features/positions/queries.php', 'app/features/staff/queries.php', 'app/features/staff/present.php', 'app/views/positions/partials/card.php', 'html/positions/index.php', 'html/staff/wage.php'];
+$own = ['app/features/positions/queries.php', 'app/features/staff/queries.php', 'app/features/staff/present.php', 'app/views/positions/partials/card.php', 'html/positions/index.php', 'html/staff/wage.php', 'mcp/ts_people.py'];
 $found = array_filter(explode("\n", trim((string) shell_exec('cd ' . escapeshellarg($root) . ' && grep -rlE "wage_rate|wage_override|default_wage" app html bin mcp --include=*.php --include=*.py'))));
 sort($own); $found = array_values($found); sort($found);
-ok($found === $own, 'only six files name a wage column — the two query files, the presenter, the position card, the positions screen and wage.php: ' . implode(', ', $found));
+ok($found === $own, 'only these seven files name a wage column — the two query files, the presenter, the position card, the positions screen and wage.php: ' . implode(', ', $found));
 $src = shell_exec('grep -rnE "UPDATE +staff_positions +SET +wage_override|UPDATE +positions +SET +default_wage" ' . escapeshellarg($root . '/app') . ' ' . escapeshellarg($root . '/html') . ' 2>/dev/null');
 ok(substr_count((string) $src, "\n") === 2, 'exactly two statements write a rate: set_wage_override() and set_position_rate()');
 $code = (string) file_get_contents($root . '/app/features/staff/queries.php');

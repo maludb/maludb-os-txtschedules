@@ -1,10 +1,10 @@
 <?php
-/** Proof — schema: nothing was migrated (db/015 is still the last file), and what the slice stands on is enforced by the database itself, under the handlers' own checks: the settings' ranges, a rule's severity, a day-part's key, an override's reason, and the privileges. */
+/** Proof — schema: nothing was migrated (db/015 (or Phase 4: db/016) is the last file), and what the slice stands on is enforced by the database itself, under the handlers' own checks: the settings' ranges, a rule's severity, a day-part's key, an override's reason, and the privileges. */
 require __DIR__ . '/lib.php';
 $W = reset7();
 $root = dirname(__DIR__, 3);
 $files = glob($root . '/db/0*.sql'); sort($files);
-ok(basename(end($files)) === '015_exchange_overlap.sql', 'no migration in this slice: db/015 is still the last file');
+ok(in_array(basename(end($files)), ['015_exchange_overlap.sql', '016_mcp_servers.sql'], true), 'no migration in this slice: db/015 (or Phase 4: db/016) is the last file');
 $exp = fn (string $sql): string => trim(admin_sql($sql));
 foreach ([["UPDATE site_settings SET time_off_day_hours = 0 WHERE scope_id = 102", 'time_off_day_hours'], ["UPDATE site_settings SET time_off_day_hours = 24.5 WHERE scope_id = 102", 'time_off_day_hours'], ["UPDATE site_settings SET cutoff_minutes = -1 WHERE scope_id = 102", 'cutoff'],
           ["UPDATE site_settings SET reminder_minutes_before = 2881 WHERE scope_id = 102", 'reminder'], ["UPDATE site_settings SET overtime_weekly_hours = 0 WHERE scope_id = 102", 'overtime'], ["UPDATE site_settings SET overtime_multiplier = 0.5 WHERE scope_id = 102", 'overtime_multiplier'],

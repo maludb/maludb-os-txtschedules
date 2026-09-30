@@ -126,7 +126,7 @@ screens, the agents, the decisions, the state), then — once Phase 1 exists —
   servers :8194/:8195/:8197, `TS_APP=apache` also proves the vhost proxy): phase 0 schema 129 · schema/roles' reach 19 · gate 60 · kernel contract 43 (`app_roles` judged by the kernel's own `validate_application_roles()`, the share called by its own
   `mcp_call_tool_as_kernel()`) · tools schedule 126 (**"who is on Friday" answered**) · tools requests 121 · activity 55 · wages 41 · hook 59 (the kernel's own `application_actions.register()` against a stubbed approval hook: the 13 pausing
   actions ask the hook first and never reach their handler when it pauses/records/errs; the other 56 never ask) · registration 152 = **805**; live health `database: ok`. Owed to the owner: all of `deploy/ROOT_STEPS.sh` (now with 1b and 3b); the LIVE
-  pause of an agent's publish is Phase 5's. Next: Phase 5 (the installer's `apply`, DNS, sites and grants, the end-to-end proof).
+  pause of an agent's publish is Phase 5's. Regression the same day, one run at a time, all green: phase 2 (7 proofs) and slices 1-7 (earlier proofs updated for what Phase 4 legitimately changes: db/016 is the last migration; `mcp/ts_people.py` names wage columns; a clock-dependent reminder-text regex). Next: Phase 5 (the installer's `apply`, DNS, sites and grants, the end-to-end proof).
 - **The proofs never touch the installed application**: `tests/setup_dev.sh` makes `txtschedules_dev` and puts its environment
   in `$TS_DEV_ENV` (real environment variables, read ahead of `config/.env`); **never put a `config/.env` here before the
   installer's `apply`** — it would keep the scratch keys and skip the fresh role passwords.

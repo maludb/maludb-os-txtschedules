@@ -1,10 +1,10 @@
 <?php
-/** Proof — schema: nothing was migrated (db/015 is still the last file), and what the slice stands on is enforced by the database: the outbox's unique dedupe key, its kinds and statuses, an announcement's audience rules, one read a person, one feed a person, and the privileges. */
+/** Proof — schema: nothing was migrated (db/015 (or Phase 4: db/016) is the last file), and what the slice stands on is enforced by the database: the outbox's unique dedupe key, its kinds and statuses, an announcement's audience rules, one read a person, one feed a person, and the privileges. */
 require __DIR__ . '/lib.php';
 $W = reset6();
 $root = dirname(__DIR__, 3);
 $files = glob($root . '/db/0*.sql'); sort($files);
-ok(basename(end($files)) === '015_exchange_overlap.sql', 'no migration in this slice: db/015 is still the last file');
+ok(in_array(basename(end($files)), ['015_exchange_overlap.sql', '016_mcp_servers.sql'], true), 'no migration in this slice: db/015 (or Phase 4: db/016) is the last file');
 $ins = fn (string $sql) => admin_sql($sql);
 $exp = fn (string $sql): string => trim(admin_sql($sql));
 ok(str_contains($exp("INSERT INTO notification_outbox (member_id, channel, kind, body, dedupe_key) VALUES (26, 'email', 'reminder', 'x', 'k1'), (26, 'email', 'reminder', 'x', 'k1')"), 'duplicate key'), 'the outbox refuses a second row with the same dedupe key');

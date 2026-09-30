@@ -52,7 +52,7 @@ if ($kernel) {
     ok(count($kernel['registry']['actions'] ?? []) === 69 && count(array_filter($kernel['registry']['actions'] ?? [], fn ($a) => $a['built'])) < 69, 'and the kernel\'s copy is still the older one (' . count(array_filter($kernel['registry']['actions'] ?? [], fn ($a) => $a['built'])) . ' built) — untouched by this slice');
 }
 $files = glob($root . '/db/0*.sql'); sort($files);
-ok(basename(end($files)) === '015_exchange_overlap.sql', 'no migration');
+ok(in_array(basename(end($files)), ['015_exchange_overlap.sql', '016_mcp_servers.sql'], true), 'no migration');
 $rs = (string) file_get_contents($root . '/deploy/ROOT_STEPS.sh');
 ok(str_contains($rs, 'Phase 3 (slice 7)') && str_contains($rs, 'apply') && str_contains($rs, '015_exchange_overlap.sql') && str_contains($rs, 'txtschedules-notifications.timer') && str_contains($rs, 'MALUMAIL_API_KEY') && str_contains($rs, 'notify_endpoint_set.php') && str_contains($rs, 'app_connection.php') && str_contains($rs, 'certstudy-actions-mcp'), 'deploy/ROOT_STEPS.sh names the migration, the timer, the mail key, the text sender, the Reservations connection and the actions-MCP restart');
 $mine = array_filter(explode("\n", trim((string) shell_exec('cd ' . escapeshellarg($root) . ' && ls app/features/site/*.php app/features/rules/*.php app/features/reports/*.php app/views/site/*.php app/views/site/partials/*.php app/views/rules/*.php app/views/reports/*.php html/site/*.php html/rules/*.php html/reports/*.php'))));

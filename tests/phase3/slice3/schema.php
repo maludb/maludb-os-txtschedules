@@ -4,7 +4,7 @@ require __DIR__ . '/lib.php';
 $W = reset3();
 $root = dirname(__DIR__, 3);
 $files = glob($root . '/db/0*.sql'); sort($files);
-ok(basename(end($files)) === '015_exchange_overlap.sql', 'slice 3 added no migration: db/015 is still the last');
+ok(in_array(basename(end($files)), ['015_exchange_overlap.sql', '016_mcp_servers.sql'], true), 'slice 3 added no migration: db/015 (or Phase 4: db/016) is the last');
 foreach (['ts_time_off_post', 'ts_time_off_decide', 'ts_time_off_cancel', 'ts_time_off_hours', 'ts_time_off_request_check', 'ts_time_off_request_hours'] as $f) { ok((int) one('SELECT count(*) FROM pg_proc WHERE proname = :f', ['f' => $f]) === 1, "$f exists"); }
 foreach (['mcp_availability', 'mcp_time_off_types', 'mcp_time_off_balances', 'mcp_time_off_requests', 'mcp_blackout_dates'] as $v) { ok((int) one("SELECT count(*) FROM pg_class WHERE relname = :v AND relkind = 'v' AND reloptions::text LIKE '%security_barrier=true%'", ['v' => $v]) === 1, "$v is a security-barrier view"); }
 $vac = typ(102, 'vacation'); $nod = typ(102, 'unpaid');

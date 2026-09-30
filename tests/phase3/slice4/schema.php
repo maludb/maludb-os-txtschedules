@@ -4,7 +4,7 @@ require __DIR__ . '/lib.php';
 $W = reset4();
 $root = dirname(__DIR__, 3);
 $files = glob($root . '/db/0*.sql'); sort($files);
-ok(basename(end($files)) === '015_exchange_overlap.sql', 'slice 4 added no migration: db/015 is still the last');
+ok(in_array(basename(end($files)), ['015_exchange_overlap.sql', '016_mcp_servers.sql'], true), 'slice 4 added no migration: db/015 (or Phase 4: db/016) is the last');
 foreach (['ts_effective_rate', 'ts_ensure_staff_profile', 'ts_position_cert_same_site', 'ts_assignment_warnings'] as $f) { ok((int) one('SELECT count(*) FROM pg_proc WHERE proname = :f', ['f' => $f]) === 1, "$f exists"); }
 foreach (['mcp_positions', 'mcp_staff', 'mcp_staff_positions', 'mcp_certification_kinds', 'mcp_certifications', 'mcp_certifications_due', 'mcp_members'] as $v) { ok((int) one("SELECT count(*) FROM pg_class WHERE relname = :v AND relkind = 'v' AND reloptions::text LIKE '%security_barrier=true%'", ['v' => $v]) === 1, "$v is a security-barrier view"); }
 $srv = $W['aSrv'];
