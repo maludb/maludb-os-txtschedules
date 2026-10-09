@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 const require = createRequire('/var/www/web/node_modules/');
 const { chromium } = require('playwright');
-const BASE = 'http://127.0.0.1:8191';
+const BASE = process.env.TS_BASE || 'http://127.0.0.1:8191';
 const SHOTS = process.env.SHOTS || '/tmp/txtschedules-shots-p3s2';
 const KEY = process.env.ACTION_TOKEN_KEY;
 const prep = JSON.parse(execFileSync('php', [new URL('./browser_prep.php', import.meta.url).pathname], { encoding: 'utf8', env: process.env }));
@@ -22,6 +22,13 @@ const psql = (sql) => execFileSync('php', ['-r', `require '${new URL('./lib.php'
 const rows = (sql) => JSON.parse(psql(sql));
 let failed = 0, passed = 0;
 const ok = (c, l) => { if (c) passed++; else failed++; console.log((c ? '  ok   ' : '  FAIL ') + l); };
+// The record picker (2026-10-09): "Who" is a searchable modal, not a select — open it, search the name, Enter picks the first match (the change reaches the form, so the live check runs).
+async function pickPerson(page, id, name) {
+  await page.click(`#${id}-open`); await page.waitForSelector('#record-picker.show');
+  await page.fill('#record-picker-search', name);
+  await page.waitForFunction((n) => document.querySelector('#record-picker .record-picker-row')?.dataset.label === n, name);
+  await page.keyboard.press('Enter'); await page.waitForSelector('#record-picker', { state: 'hidden' });
+}
 const browser = await chromium.launch({ ignoreDefaultArgs: ['--hide-scrollbars'] });     // a real (classic) scrollbar, as a person has it
 const PHONE = { width: 375, height: 740 }, DESK = { width: 1280, height: 800 };
 async function session(member, scope, viewport, opts = {}) {
@@ -98,16 +105,16 @@ console.log('375 x 740 — Mara (manager)');
   await page.click('#builder-phone-add');
   await page.waitForSelector('#shift-form');
   await widthOK(page, 'the shift form', 375); await touch(page, 'the shift form');
-  await page.selectOption('#shift-form-field-assignee', '30');
+  await pickPerson(page, 'shift-form-field-assignee', 'SMOKE Ana');
   await page.waitForSelector('#shift-form-check-clear');
   ok(await page.locator('#shift-form-check-clear').isVisible(), 'the live check: choosing a person says "No rule is broken."');
   await page.selectOption('#shift-form-field-position', String(rows(`SELECT id FROM positions WHERE scope_id = 102 AND name = 'Bar'`)[0].id));
-  await page.selectOption('#shift-form-field-assignee', '26');
+  await pickPerson(page, 'shift-form-field-assignee', 'SMOKE Priya');
   await page.waitForSelector('#shift-form-check-hard-0', { timeout: 5000 });
   ok((await page.locator('#shift-form-check-hard-0').innerText()).includes('Does not work this position here.') && await page.locator('#shift-form-save-btn').isDisabled(), 'Priya on Bar: the hard sentence is listed and Save is disabled');
   await shot(page, 'phone-shift-form-hard');
   await page.selectOption('#shift-form-field-position', String(rows(`SELECT id FROM positions WHERE scope_id = 102 AND name = 'Server'`)[0].id));
-  await page.selectOption('#shift-form-field-assignee', '30');
+  await pickPerson(page, 'shift-form-field-assignee', 'SMOKE Ana');
   await page.fill('#shift-form-field-note', 'SMOKE from the phone');
   await page.waitForSelector('#shift-form-check-clear');
   ok(await page.locator('#shift-form-save-btn').isEnabled(), 'fixed: Save is enabled again');
@@ -117,7 +124,7 @@ console.log('375 x 740 — Mara (manager)');
   ok(created && Number(created.assignee_member_id) === 30 && page.url().endsWith('/shifts/' + created.id), 'saved: the page landed on /shifts/{id} of the new shift');
   // a soft warning asks for the reason on the form
   await go(page, `/shifts/new?site=102&date=${new Date(new Date(I.b1 + 'T12:00:00Z').getTime() + 3 * 86400000).toISOString().slice(0, 10)}`);
-  await page.selectOption('#shift-form-field-assignee', '26');
+  await pickPerson(page, 'shift-form-field-assignee', 'SMOKE Priya');
   await page.fill('#shift-form-field-date', new Date(new Date(I.b1 + 'T12:00:00Z').getTime() + 2 * 86400000).toISOString().slice(0, 10));
   await page.fill('#shift-form-field-starts', '06:00');
   await page.fill('#shift-form-field-ends', '11:00');

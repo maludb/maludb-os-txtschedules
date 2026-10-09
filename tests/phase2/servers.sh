@@ -9,9 +9,10 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 ENVF=${TS_DEV_ENV:-/tmp/txtschedules-dev.env}
 STATE=${TS_DEV_STATE:-/tmp/txtschedules-dev-state}
 mkdir -p "$STATE"
+PA=${TS_PORT:-8191}; PK=$((PA+1)); PM=$((PA+2))           # TS_PORT moves all three (tests/picker/run.sh runs on 8396-8398 beside another session's proofs)
 stop() {
   for f in "$STATE"/*.pid; do [ -e "$f" ] && kill "$(cat "$f")" 2>/dev/null || true; rm -f "$f"; done
-  pkill -f 'php -S 127.0.0.1:819[123]' 2>/dev/null || true       # the built-in server's forked workers outlive their parent
+  for pt in $PA $PK $PM; do pkill -f "php -S 127.0.0.1:$pt " 2>/dev/null || true; done       # the built-in server's forked workers outlive their parent
   [ -f "$STATE/apache/main.conf" ] && apache2 -f "$STATE/apache/main.conf" -k stop 2>/dev/null || true
   sleep 0.3
 }
@@ -23,8 +24,8 @@ case "${1:-}" in
     export FAKE_KERNEL_STATE="$STATE/kernel.json" FAKE_MALUDB_LOG="$STATE/maludb.log"
     : > "$FAKE_MALUDB_LOG"
     php -r '$f=json_decode(file_get_contents($argv[1]),true); file_put_contents($argv[2], json_encode(["scopes"=>$f["feed"]["scopes"],"feed"=>$f["feed"]]));' "$ROOT/bin/dev_directory.json" "$FAKE_KERNEL_STATE"
-    php -S 127.0.0.1:8192 "$ROOT/tests/fake_kernel.php" >"$STATE/kernel.log" 2>&1 & echo $! > "$STATE/kernel.pid"
-    php -S 127.0.0.1:8193 "$ROOT/tests/fake_maludb.php" >"$STATE/maludb.log.srv" 2>&1 & echo $! > "$STATE/maludb.pid"
+    php -S 127.0.0.1:$PK "$ROOT/tests/fake_kernel.php" >"$STATE/kernel.log" 2>&1 & echo $! > "$STATE/kernel.pid"
+    php -S 127.0.0.1:$PM "$ROOT/tests/fake_maludb.php" >"$STATE/maludb.log.srv" 2>&1 & echo $! > "$STATE/maludb.pid"
     if [ "${TS_APP:-php}" = "apache" ]; then
       mkdir -p "$STATE/apache"
       python3 - "$ROOT" "$STATE/apache" <<'PY'
@@ -41,9 +42,9 @@ open(out + '/main.conf', 'w').write('ServerRoot "/etc/apache2"\nDefaultRuntimeDi
 PY
       apache2 -f "$STATE/apache/main.conf" -k start
     else
-      ( cd "$ROOT" && PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8191 -t html tests/dev_router.php >"$STATE/app.log" 2>&1 & echo $! > "$STATE/app.pid" )
+      ( cd "$ROOT" && PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:$PA -t html tests/dev_router.php >"$STATE/app.log" 2>&1 & echo $! > "$STATE/app.pid" )
     fi
-    for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:8191/api/v1/health && break; sleep 0.2; done
-    echo "servers up (app :8191 ${TS_APP:-php}, fake kernel :8192, fake MaluDB :8193)" ;;
+    for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:$PA/api/v1/health && break; sleep 0.2; done
+    echo "servers up (app :$PA ${TS_APP:-php}, fake kernel :$PK, fake MaluDB :$PM)" ;;
   *) echo "usage: $0 start|stop" >&2; exit 2 ;;
 esac

@@ -19,12 +19,10 @@ $addUrl = static fn (int $d): string => $here . '&add=' . $d;
     <?php endif; ?>
     <?php if ($people !== []): ?>
         <form method="get" action="/availability" class="card mb-3" id="availability-person-form"><div class="card-body p-3">
-            <label class="form-label fs-12 text-muted" for="availability-person-field-member">Whose availability</label>
+            <label class="form-label fs-12 text-muted" for="availability-person-field-member-open">Whose availability</label>
             <div class="d-flex gap-2">
-                <select name="member" id="availability-person-field-member" class="form-select btn-touch">
-                    <option value="<?= (int) $me ?>">Mine</option>
-                    <?php foreach ($people as $p): if ($p['member_id'] === $me) { continue; } ?><option value="<?= (int) $p['member_id'] ?>" <?= $p['member_id'] === $member ? 'selected' : '' ?>><?= e($p['display_name']) ?></option><?php endforeach; ?>
-                </select>
+                <div class="flex-grow-1 min-w-0"><?= picker_field(['id' => 'availability-person-field-member', 'name' => 'member', 'source' => 'person', 'value' => $member, 'required' => true, 'title' => 'Whose availability', 'search' => 'Search people…',
+                    'params' => ['site_id' => (int) current_site_id(), 'self' => 1], 'placeholder' => 'Choose a person']) ?></div>
                 <button type="submit" class="btn btn-light btn-touch" id="availability-person-btn">Show</button>
             </div>
         </div></form>

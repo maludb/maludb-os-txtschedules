@@ -15,11 +15,9 @@ $curDay = shift_day($s);
         <select name="date" id="<?= e($idp) ?>-move-<?= $id ?>-day" class="form-select btn-touch mb-2">
             <?php foreach ($days as [$date, $dow, $dom]): ?><option value="<?= e($date) ?>" <?= $date === $curDay ? 'selected' : '' ?>><?= e($dow . ' ' . $dom) ?></option><?php endforeach; ?>
         </select>
-        <label class="form-label fs-12 text-muted mb-1" for="<?= e($idp) ?>-move-<?= $id ?>-person">Person</label>
-        <select name="assignee" id="<?= e($idp) ?>-move-<?= $id ?>-person" class="form-select btn-touch mb-2">
-            <option value="">Leave open</option>
-            <?php foreach ($people as $p): ?><option value="<?= (int) $p['member_id'] ?>" <?= (int) $p['member_id'] === (int) $s['assignee_member_id'] ? 'selected' : '' ?>><?= e($p['display_name']) ?></option><?php endforeach; ?>
-        </select>
+        <label class="form-label fs-12 text-muted mb-1" for="<?= e($idp) ?>-move-<?= $id ?>-person-open">Person</label>
+        <div class="mb-2"><?= picker_field(['id' => $idp . '-move-' . $id . '-person', 'name' => 'assignee', 'source' => 'person', 'value' => $s['assignee_member_id'], 'title' => 'Move to', 'search' => 'Search people…',
+                    'params' => ['site_id' => (int) $s['site_id']], 'placeholder' => 'Leave open']) ?></div>
         <label class="form-label fs-12 text-muted mb-1" for="<?= e($idp) ?>-move-<?= $id ?>-reason">If a warning stops it, say why (optional)</label>
         <input type="text" name="override_reason" id="<?= e($idp) ?>-move-<?= $id ?>-reason" class="form-control btn-touch mb-2" maxlength="500">
         <button type="submit" class="btn btn-primary btn-touch w-100" id="<?= e($idp) ?>-move-<?= $id ?>-save-btn">Move it</button>

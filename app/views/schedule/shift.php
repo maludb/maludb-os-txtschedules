@@ -73,11 +73,9 @@ $others = shift_names($s['others'] ?? [], 6);
                     <details id="shift-give-details"><summary class="btn btn-light btn-touch w-100" id="shift-give-open">Give to a colleague…</summary>
                         <div class="pt-3">
                             <?php if ($give === []): ?><div class="text-muted fs-12">No colleague here works this position.</div><?php else: ?>
-                            <label class="form-label fs-12 text-muted" for="give-form-field-colleague">Colleague</label>
-                            <select name="colleague" id="give-form-field-colleague" class="form-select btn-touch mb-2" required>
-                                <option value="">Choose…</option>
-                                <?php foreach ($give as $c): ?><option value="<?= (int) $c['member_id'] ?>"><?= e($c['display_name']) ?></option><?php endforeach; ?>
-                            </select>
+                            <label class="form-label fs-12 text-muted" for="give-form-field-colleague-open">Colleague</label>
+                            <div class="mb-2"><?= picker_field(['id' => 'give-form-field-colleague', 'name' => 'colleague', 'source' => 'colleague', 'value' => null, 'required' => true, 'title' => 'Give to a colleague', 'search' => 'Search colleagues…',
+                        'params' => ['shift_id' => $id], 'placeholder' => 'Choose a colleague']) ?></div>
                             <label class="form-label fs-12 text-muted" for="give-form-field-note">Note (optional)</label>
                             <input type="text" name="note" id="give-form-field-note" class="form-control btn-touch mb-2" maxlength="500">
                             <button type="submit" class="btn btn-primary btn-touch w-100" id="give-form-save-btn">Ask them</button>
@@ -91,12 +89,10 @@ $others = shift_names($s['others'] ?? [], 6);
                     <div class="pt-3">
                     <?php if ($give === []): ?><div class="text-muted fs-12">No colleague here works this position.</div><?php else: ?>
                         <form method="get" action="/shifts/<?= $id ?>" class="mb-3" id="swap-pick-form" hx-get="/shifts/<?= $id ?>" hx-target="#page-content" hx-push-url="true">
-                            <label class="form-label fs-12 text-muted" for="swap-form-field-with">Colleague</label>
-                            <div class="d-flex gap-2">
-                                <select name="swap_with" id="swap-form-field-with" class="form-select btn-touch" required>
-                                    <option value="">Choose…</option>
-                                    <?php foreach ($give as $c): ?><option value="<?= (int) $c['member_id'] ?>" <?= $swapWith === (int) $c['member_id'] ? 'selected' : '' ?>><?= e($c['display_name']) ?></option><?php endforeach; ?>
-                                </select>
+                            <label class="form-label fs-12 text-muted" for="swap-form-field-with-open">Colleague</label>
+                            <div class="d-flex flex-column flex-sm-row gap-2">
+                                <div class="flex-grow-1 min-w-0"><?= picker_field(['id' => 'swap-form-field-with', 'name' => 'swap_with', 'source' => 'colleague', 'value' => $swapWith, 'required' => true, 'title' => 'Swap with a colleague', 'search' => 'Search colleagues…',
+                                    'params' => ['shift_id' => $id], 'placeholder' => 'Choose a colleague']) ?></div>
                                 <button type="submit" class="btn btn-light btn-touch" id="swap-pick-btn">Show their shifts</button>
                             </div>
                         </form>

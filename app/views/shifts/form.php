@@ -36,11 +36,9 @@ $saveLabel = $live ? ($edit ? 'Change it and tell staff' : 'Add it and tell staf
             <select name="break" id="shift-form-field-break" class="form-select btn-touch mb-3">
                 <?php foreach ([0, 15, 30, 45, 60] as $b): ?><option value="<?= $b ?>" <?= $b === (int) $v['break'] ? 'selected' : '' ?>><?= $b === 0 ? 'No break' : $b . ' minutes' ?></option><?php endforeach; ?>
             </select>
-            <label class="form-label fs-12 text-muted" for="shift-form-field-assignee">Who</label>
-            <select name="assignee" id="shift-form-field-assignee" class="form-select btn-touch mb-2">
-                <option value="">Leave open</option>
-                <?php foreach ($people as $p): ?><option value="<?= (int) $p['member_id'] ?>" <?= (int) $p['member_id'] === (int) $v['assignee'] ? 'selected' : '' ?>><?= e($p['display_name']) ?></option><?php endforeach; ?>
-            </select>
+            <label class="form-label fs-12 text-muted" for="shift-form-field-assignee-open">Who</label>
+            <div class="mb-2"><?= picker_field(['id' => 'shift-form-field-assignee', 'name' => 'assignee', 'source' => 'person', 'value' => $v['assignee'], 'title' => 'Who works the shift', 'search' => 'Search people…',
+                    'params' => ['site_id' => (int) $site['site_id']], 'placeholder' => 'Leave open']) ?></div>
             <div id="shift-form-check" hx-get="/shifts/check.php" hx-trigger="change from:#shift-form delay:150ms" hx-include="#shift-form" hx-target="this" hx-swap="innerHTML" hx-sync="this:replace"><?= view('shifts/partials/check.php', ['check' => $check, 'oob' => false, 'reason' => '']) ?></div>
             <label class="form-label fs-12 text-muted mt-2" for="shift-form-field-note">Note (optional)</label>
             <input type="text" name="note" id="shift-form-field-note" class="form-control btn-touch" maxlength="200" value="<?= e($v['note']) ?>">

@@ -16,11 +16,9 @@ $siteId = (int) $site['site_id'];
         <?= csrf_field() ?><input type="hidden" name="site" value="<?= $siteId ?>">
         <div class="card mb-3"><div class="card-body">
             <?php if ($people !== []): ?>
-                <label class="form-label fs-12 text-muted" for="time-off-form-field-member">For</label>
-                <select name="member" id="time-off-form-field-member" class="form-select btn-touch mb-3">
-                    <option value="<?= (int) $me ?>">Me</option>
-                    <?php foreach ($people as $p): if ($p['member_id'] === $me) { continue; } ?><option value="<?= (int) $p['member_id'] ?>" <?= $p['member_id'] === $member ? 'selected' : '' ?>><?= e($p['display_name']) ?></option><?php endforeach; ?>
-                </select>
+                <label class="form-label fs-12 text-muted" for="time-off-form-field-member-open">For</label>
+                <div class="mb-3"><?= picker_field(['id' => 'time-off-form-field-member', 'name' => 'member', 'source' => 'person_approver', 'value' => $member, 'required' => true, 'title' => 'Who is it for', 'search' => 'Search people…',
+                    'params' => ['site_id' => $siteId, 'self' => 1], 'placeholder' => 'Choose a person']) ?></div>
             <?php endif; ?>
             <label class="form-label fs-12 text-muted" for="time-off-form-field-type">Kind of time off</label>
             <select name="time_off_type" id="time-off-form-field-type" class="form-select btn-touch mb-3" required>

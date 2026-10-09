@@ -54,7 +54,8 @@ screens, the agents, the decisions, the state), then — once Phase 1 exists —
   shift is cancelled, never deleted; a balance moves only through `ts_time_off_post()`; an exchange changes hands only
   through the `ts_exchange_*()` functions (the row lock makes one claim win); the rules engine is
   `ts_assignment_warnings()` — the builder, publishing, the marketplace and the tools all ask it.
-- Phone first: every staff screen designed at 375 px before desktop; no modals; full-page create/edit; cards for
+- Phone first: every staff screen designed at 375 px before desktop; no modals (one exception, besides `hx-confirm`: the record picker's single
+  `#record-picker` search dialog, `docs/record-picker.md` — it only chooses and closes); full-page create/edit; cards for
   named things, tables for ledgers; every name a link, every page a way back (the kernel's click-around rules).
 - Times are shown in the site's time zone (`sites.timezone`), with the zone when a person works at two.
 - Commit after every finished step on `main`, in the kernel repo's message style; never push.

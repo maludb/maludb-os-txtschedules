@@ -11,6 +11,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 DB=${TS_DEV_DB:-txtschedules_dev}
 ENVF=${TS_DEV_ENV:-/tmp/txtschedules-dev.env}
 PW=$(openssl rand -hex 16)
+PA=${TS_PORT:-8191}                                  # the proofs' ports: the application, the fake kernel (+1), the fake MaluDB (+2)
 PSQL="sudo -n -u postgres psql -v ON_ERROR_STOP=1 -q"
 $PSQL -c "DROP DATABASE IF EXISTS $DB" -c "CREATE DATABASE $DB"
 for f in "$ROOT"/db/0*.sql; do $PSQL -d "$DB" -f "$f" >/dev/null; done
@@ -30,7 +31,7 @@ APP_ENV=dev
 APP_DEBUG=1
 APP_NAME=txtSchedules
 APP_KEY=txtschedules
-APP_URL=http://127.0.0.1:8191
+APP_URL=http://127.0.0.1:$PA
 DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_NAME=$DB
@@ -43,9 +44,9 @@ MCP_ACTIVITY_DB_PASSWORD=$PW_ACT
 ACTION_TOKEN_KEY=$(openssl rand -hex 32)
 ACTIONS_RELAY_KEY=$(openssl rand -hex 32)
 OS_LAUNCHER_URL=https://app.example.invalid/
-OS_INTERNAL_URL=http://127.0.0.1:8192
+OS_INTERNAL_URL=http://127.0.0.1:$((PA+1))
 OS_APPLICATION_TOKEN=osapp_dev_$(openssl rand -hex 12)
-MALUDB_API_URL=http://127.0.0.1:8193
+MALUDB_API_URL=http://127.0.0.1:$((PA+2))
 MALUDB_API_TOKEN=dev-maludb-$(openssl rand -hex 8)
 ENV
 echo "scratch database $DB ready; environment in $ENVF"

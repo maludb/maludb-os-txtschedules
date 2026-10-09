@@ -11,7 +11,8 @@ ok($c === 422 && msg($b) === 'Pick a colleague here who works that position.', '
 [$c, $b] = act($priya, '/exchanges/give.php', ['shift' => $g, 'colleague' => 26]);
 ok($c === 422, 'nor herself');
 $page = page($priya, '/shifts/' . $g)['body'];
-ok(str_contains($page, 'id="give-form-field-colleague"') && str_contains($page, 'SMOKE Lee') && str_contains($page, 'SMOKE Ana') && !str_contains($page, 'SMOKE Marco') && !str_contains($page, 'SMOKE Joe'), 'the Give select lists colleagues here who hold the position — not Marco (main Downtown) or Joe (Downtown)');
+$cl = preg_match_all('/data-label="([^"]*)"/', req('GET', '/pick/?source=colleague&shift_id=' . $g, ['jar' => $priya])['body'], $mm) ? $mm[1] : [];
+ok(str_contains($page, 'id="give-form-field-colleague"') && str_contains($page, 'data-picker-source="colleague"') && in_array('SMOKE Lee', $cl, true) && in_array('SMOKE Ana', $cl, true) && !in_array('SMOKE Marco', $cl, true) && !in_array('SMOKE Joe', $cl, true), 'the Give picker (since the record picker, 2026-10-09) lists colleagues here who hold the position — not Marco (main Downtown) or Joe (Downtown)');
 [$c, $b] = act($priya, '/exchanges/give.php', ['shift' => $g, 'colleague' => 31, 'note' => 'SMOKE thanks']);
 $x = (int) $b['record_id'];
 ok($c === 200 && $b['location'] === "/exchanges/$x" && status_of($x) === 'pending_acceptance', 'Priya gives it to Lee: waiting for Lee (location ends in the exchange id)');

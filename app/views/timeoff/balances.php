@@ -10,12 +10,10 @@ $adjustable = array_values(array_filter($balances, static fn (array $b): bool =>
     <?= view('shared/notice.php', ['notice' => $notice]) ?>
     <?php if ($people !== []): ?>
         <form method="get" action="/time-off/balances" class="card mb-3" id="balances-person-form"><div class="card-body p-3">
-            <label class="form-label fs-12 text-muted" for="balances-person-field-member">Whose balances</label>
+            <label class="form-label fs-12 text-muted" for="balances-person-field-member-open">Whose balances</label>
             <div class="d-flex gap-2">
-                <select name="member" id="balances-person-field-member" class="form-select btn-touch">
-                    <option value="<?= (int) $me ?>">Mine</option>
-                    <?php foreach ($people as $p): if ($p['member_id'] === $me) { continue; } ?><option value="<?= (int) $p['member_id'] ?>" <?= $p['member_id'] === $member ? 'selected' : '' ?>><?= e($p['display_name']) ?></option><?php endforeach; ?>
-                </select>
+                <div class="flex-grow-1 min-w-0"><?= picker_field(['id' => 'balances-person-field-member', 'name' => 'member', 'source' => 'person_approver', 'value' => $member, 'required' => true, 'title' => 'Whose balances', 'search' => 'Search people…',
+                    'params' => ['site_id' => (int) current_site_id(), 'self' => 1], 'placeholder' => 'Choose a person']) ?></div>
                 <button type="submit" class="btn btn-light btn-touch" id="balances-person-btn">Show</button>
             </div>
         </div></form>

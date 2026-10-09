@@ -7,7 +7,7 @@
 chdir(dirname(__DIR__, 2));
 $GLOBALS['fails'] = 0;
 $GLOBALS['passes'] = 0;
-const BASE = 'http://127.0.0.1:8191';
+define('BASE', getenv('TS_BASE') ?: 'http://127.0.0.1:8191');   // TS_BASE: a proof that runs the application on another port (tests/picker/run.sh)
 function need(string $k): string { $v = getenv($k); if ($v === false || $v === '') { fwrite(STDERR, "$k is not set — run tests/phase2/run.sh\n"); exit(2); } return $v; }
 function ok(bool $c, string $l): void { $GLOBALS[$c ? 'passes' : 'fails']++; echo ($c ? '  ok   ' : '  FAIL ') . $l . "\n"; }
 function finish(): never { echo $GLOBALS['fails'] ? "{$GLOBALS['fails']} FAILED ({$GLOBALS['passes']} passed)\n" : "all {$GLOBALS['passes']} passed\n"; exit($GLOBALS['fails'] ? 1 : 0); }

@@ -148,7 +148,7 @@ Announcements · Reports (hours, labor vs budget, open shifts unfilled, exchange
 **Admin:** Restaurant settings (week, trades — D2, reminders, overtime), Rules (severity and parameters per rule),
 Positions, Time-off types and balances, Blackout dates, Day-parts.
 
-Rules of the look: no modals; full-page create/edit; every screen at 375 px; cards for named things (people,
+Rules of the look: no modals (the one exception, 2026-10-09: the record picker's search dialog, `docs/record-picker.md`); full-page create/edit; every screen at 375 px; cards for named things (people,
 positions, templates), tables for ledgers (shifts, requests, balances); every name a link; every page a way back.
 A site switcher in the shell for a person who holds several (the launcher's choice is the first).
 

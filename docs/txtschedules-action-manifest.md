@@ -14,6 +14,8 @@
 - **Ids** are kebab-case `{entity}-list`, `{entity}-add`, `{entity}-view`, `{entity}-edit`, plus named screens.
 - **Canonical URLs** need the rewrites in `deploy/apache-txtschedules.conf`: `/{x}/new` → `form.php`, `/{x}/{id}/edit` →
   `form.php?id=`, `/{x}/{id}` → `view.php?id=`. A staff screen is designed at 375 px first; every screen is a page, never a modal.
+- **`/pick/`** (2026-10-09) is the record picker's one search endpoint — `GET /pick/?source=&q=&page=&<declared params>` answers rows for the `#record-picker`
+  dialog, never a page, and is not an action (nothing is logged, nothing is in the registry). A source asks the right at the named site; see `docs/record-picker.md`.
 - **Prefill params** become query-string values the GET controller reads. The **site** is the shell's current
   restaurant (the launcher's choice, then the switcher) and is carried as `?site=` where a URL is shared.
 - **Every screen partial stamps** `data-screen`, `data-entity`, `data-record-id` on `#page-content`, so "that", "this
