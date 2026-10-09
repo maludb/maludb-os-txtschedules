@@ -79,6 +79,7 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/http.php';
 require_once __DIR__ . '/activity.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/switcher.php';          // the application switcher (K31): os_my_applications(), the header's Helpdesk button and menu
 require_once __DIR__ . '/directory.php';
 require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/picker.php';

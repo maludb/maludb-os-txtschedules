@@ -110,11 +110,7 @@ $navlink = function (string $id, string $url, string $icon, string $label) use (
             <div class="header-right ms-auto">
                 <div class="d-flex align-items-center">
                     <?= view('shared/site-switcher.php') ?>
-                    <div class="nxl-h-item d-none d-sm-flex">
-                        <a href="<?= e(launcher_url()) ?>" class="nxl-head-link me-0" data-bs-toggle="tooltip" title="All applications" id="header-launcher-link">
-                            <i class="feather-grid"></i>
-                        </a>
-                    </div>
+                    <?= view('shared/app-switcher.php') ?>
                     <div class="nxl-h-item dark-light-theme">
                         <a href="javascript:void(0);" class="nxl-head-link me-0 dark-button"><i class="feather-moon"></i></a>
                         <a href="javascript:void(0);" class="nxl-head-link me-0 light-button" style="display:none"><i class="feather-sun"></i></a>
